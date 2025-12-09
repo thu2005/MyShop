@@ -11,9 +11,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Interfaces\Services\" />
-    <Folder Include="Interfaces\Repositories\" />
     <Folder Include="Helpers\" />
+    <Folder Include="Interfaces\Factories\" />
+    <Folder Include="Interfaces\Strategies\" />
     <Folder Include="Services\" />
   </ItemGroup>
 
