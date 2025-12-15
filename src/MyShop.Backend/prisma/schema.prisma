@@ -1,0 +1,203 @@
+// This is your Prisma schema file
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== ENUMS ====================
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  STAFF
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  CANCELLED
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  BUY_X_GET_Y
+  MEMBER_DISCOUNT
+  WHOLESALE_DISCOUNT
+}
+
+// ==================== MODELS ====================
+
+// Person 1: Infrastructure & Authentication
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique @db.VarChar(50)
+  email     String   @unique @db.VarChar(100)
+  password  String   @db.VarChar(255)
+  role      UserRole @default(STAFF)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  createdOrders Order[] @relation("CreatedByUser")
+
+  @@map("users")
+  @@index([email])
+  @@index([username])
+}
+
+// Person 2: Products Management
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique @db.VarChar(100)
+  description String?  @db.Text
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  products Product[]
+
+  @@map("categories")
+  @@index([name])
+}
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(200)
+  description String?  @db.Text
+  sku         String   @unique @db.VarChar(50)
+  barcode     String?  @unique @db.VarChar(50)
+  price       Decimal  @db.Decimal(10, 2)
+  costPrice   Decimal? @db.Decimal(10, 2)
+  stock       Int      @default(0)
+  minStock    Int      @default(0)
+  imageUrl    String?  @db.VarChar(500)
+  categoryId  Int
+  isActive    Boolean  @default(true)
+  popularity  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  category   Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+
+  @@map("products")
+  @@index([categoryId])
+  @@index([name])
+  @@index([sku])
+  @@index([barcode])
+}
+
+// Person 5: Customers Management
+model Customer {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(100)
+  email       String?  @unique @db.VarChar(100)
+  phone       String   @db.VarChar(20)
+  address     String?  @db.Text
+  isMember    Boolean  @default(false)
+  memberSince DateTime?
+  totalSpent  Decimal  @default(0) @db.Decimal(12, 2)
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  orders Order[]
+
+  @@map("customers")
+  @@index([email])
+  @@index([phone])
+  @@index([name])
+}
+
+// Person 5: Discount Management
+model Discount {
+  id               Int          @id @default(autoincrement())
+  code             String       @unique @db.VarChar(50)
+  name             String       @db.VarChar(100)
+  description      String?      @db.Text
+  type             DiscountType
+  value            Decimal      @db.Decimal(10, 2) // percentage or fixed amount
+  minPurchase      Decimal?     @db.Decimal(10, 2)
+  maxDiscount      Decimal?     @db.Decimal(10, 2)
+  buyQuantity      Int?         // For BUY_X_GET_Y
+  getQuantity      Int?         // For BUY_X_GET_Y
+  isActive         Boolean      @default(true)
+  startDate        DateTime?
+  endDate          DateTime?
+  usageLimit       Int?
+  usageCount       Int          @default(0)
+  applicableToAll  Boolean      @default(true)
+  memberOnly       Boolean      @default(false)
+  wholesaleMinQty  Int?         // For WHOLESALE_DISCOUNT
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  // Relations
+  orders Order[]
+
+  @@map("discounts")
+  @@index([code])
+  @@index([type])
+}
+
+// Person 3: Orders Management
+model Order {
+  id           Int         @id @default(autoincrement())
+  orderNumber  String      @unique @db.VarChar(50)
+  customerId   Int?
+  userId       Int         // Staff who created the order
+  status       OrderStatus @default(PENDING)
+  subtotal     Decimal     @db.Decimal(10, 2)
+  discountId   Int?
+  discountAmount Decimal   @default(0) @db.Decimal(10, 2)
+  taxAmount    Decimal     @default(0) @db.Decimal(10, 2)
+  total        Decimal     @db.Decimal(10, 2)
+  notes        String?     @db.Text
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  completedAt  DateTime?
+
+  // Relations
+  customer   Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  createdBy  User        @relation("CreatedByUser", fields: [userId], references: [id])
+  discount   Discount?   @relation(fields: [discountId], references: [id], onDelete: SetNull)
+  orderItems OrderItem[]
+
+  @@map("orders")
+  @@index([orderNumber])
+  @@index([customerId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id              Int     @id @default(autoincrement())
+  orderId         Int
+  productId       Int
+  quantity        Int
+  unitPrice       Decimal @db.Decimal(10, 2)
+  subtotal        Decimal @db.Decimal(10, 2)
+  discountAmount  Decimal @default(0) @db.Decimal(10, 2)
+  total           Decimal @db.Decimal(10, 2)
+
+  // Relations
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@map("order_items")
+  @@index([orderId])
+  @@index([productId])
+}
