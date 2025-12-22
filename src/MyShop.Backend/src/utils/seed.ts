@@ -246,8 +246,10 @@ async function seed() {
     // 6. Seed Orders
     console.log('📦 Seeding orders...');
     const orders = await Promise.all([
-      prisma.order.create({
-        data: {
+      prisma.order.upsert({
+        where: { orderNumber: 'ORD-2024-001' },
+        update: {},
+        create: {
           orderNumber: 'ORD-2024-001',
           customerId: customers[0].id,
           userId: users[2].id, // staff1
@@ -279,8 +281,10 @@ async function seed() {
           },
         },
       }),
-      prisma.order.create({
-        data: {
+      prisma.order.upsert({
+        where: { orderNumber: 'ORD-2024-002' },
+        update: {},
+        create: {
           orderNumber: 'ORD-2024-002',
           customerId: customers[1].id,
           userId: users[2].id,
@@ -304,8 +308,10 @@ async function seed() {
           },
         },
       }),
-      prisma.order.create({
-        data: {
+      prisma.order.upsert({
+        where: { orderNumber: 'ORD-2024-003' },
+        update: {},
+        create: {
           orderNumber: 'ORD-2024-003',
           customerId: customers[2].id,
           userId: users[1].id, // manager1
@@ -331,6 +337,32 @@ async function seed() {
     ]);
     console.log(`   ✅ Created ${orders.length} orders\n`);
 
+    // 7. Seed License Keys for testing
+    console.log('🔑 Seeding license keys...');
+    const licenses = await Promise.all([
+      prisma.appLicense.upsert({
+        where: { licenseKey: 'MYSHOP-TEST-0001' },
+        update: {},
+        create: {
+          licenseKey: 'MYSHOP-TEST-0001',
+          activatedAt: new Date('2024-12-01'),
+          expiresAt: new Date('2025-12-01'), // 1 year
+          isActive: true,
+        },
+      }),
+      prisma.appLicense.upsert({
+        where: { licenseKey: 'MYSHOP-TRIAL-0001' },
+        update: {},
+        create: {
+          licenseKey: 'MYSHOP-TRIAL-0001',
+          activatedAt: new Date(),
+          expiresAt: new Date(new Date().getTime() + 15 * 24 * 60 * 60 * 1000), // 15 days
+          isActive: true,
+        },
+      }),
+    ]);
+    console.log(`   ✅ Created ${licenses.length} license keys\n`);
+
     console.log('✨ Database seeding completed successfully!\n');
     console.log('📊 Summary:');
     console.log(`   - Users: ${users.length}`);
@@ -338,7 +370,12 @@ async function seed() {
     console.log(`   - Products: ${products.length}`);
     console.log(`   - Customers: ${customers.length}`);
     console.log(`   - Discounts: ${discounts.length}`);
-    console.log(`   - Orders: ${orders.length}\n`);
+    console.log(`   - Orders: ${orders.length}`);
+    console.log(`   - License Keys: ${licenses.length}\n`);
+    console.log('🔐 Available License Keys for Testing:');
+    licenses.forEach((lic) => {
+      console.log(`   - ${lic.licenseKey} (expires: ${lic.expiresAt})`);
+    });
   } catch (error) {
     console.error('❌ Error seeding database:', error);
     process.exit(1);

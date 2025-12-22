@@ -487,6 +487,10 @@ export const typeDefs = gql`
     getSalesTargets(filter: SalesTargetFilterInput, pagination: PaginationInput): PaginatedSalesTargets!
     getMonthlyTarget(userId: Int!, month: Int!, year: Int!): SalesTarget
     getUserTargets(userId: Int!): [SalesTarget!]!
+
+    # App License
+    validateLicense(licenseKey: String!): AppLicense
+    checkTrialStatus: AppLicense
   }
 
   # ==================== MUTATIONS ====================
@@ -535,6 +539,11 @@ export const typeDefs = gql`
     createSalesTarget(input: CreateSalesTargetInput!): SalesTarget!
     updateSalesTarget(id: Int!, input: UpdateSalesTargetInput!): SalesTarget!
     deleteSalesTarget(id: Int!): Boolean!
+
+    # App License
+    activateTrial: AppLicense!
+    activateLicense(input: ActivateLicenseInput!): AppLicense!
+    deactivateLicense(licenseKey: String!): Boolean!
   }
 
   # ==================== COMMISSION ====================
@@ -613,5 +622,21 @@ export const typeDefs = gql`
     page: Int!
     pageSize: Int!
     totalPages: Int!
+  }
+
+  # ==================== APP LICENSE (TRIAL MODE) ====================
+  type AppLicense {
+    id: Int!
+    licenseKey: String!
+    activatedAt: DateTime!
+    expiresAt: DateTime!
+    isActive: Boolean!
+    isExpired: Boolean!
+    daysRemaining: Int!
+    createdAt: DateTime!
+  }
+
+  input ActivateLicenseInput {
+    licenseKey: String!
   }
 `;
