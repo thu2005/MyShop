@@ -52,6 +52,7 @@ model User {
   @@map("users")
   @@index([email])
   @@index([username])
+  @@index([role])
 }
 
 // Person 2: Products Management
@@ -200,4 +201,57 @@ model OrderItem {
   @@map("order_items")
   @@index([orderId])
   @@index([productId])
+}
+
+// ==================== ADVANCED FEATURES ====================
+
+// Trial License Management (15 days trial)
+model AppLicense {
+  id          Int      @id @default(autoincrement())
+  licenseKey  String   @unique @db.VarChar(100)
+  deviceId    String?  @db.VarChar(100) // Bind to device
+  activatedAt DateTime @default(now())
+  expiresAt   DateTime // Trial ends after 15 days
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@map("app_licenses")
+  @@index([licenseKey])
+  @@index([expiresAt])
+}
+
+// Commission Tracking (KPI)
+model Commission {
+  id               Int      @id @default(autoincrement())
+  userId           Int      // Staff ID
+  orderId          Int      @unique // One commission per order
+  orderTotal       Decimal  @db.Decimal(10, 2)
+  commissionRate   Decimal  @db.Decimal(5, 2) // % commission
+  commissionAmount Decimal  @db.Decimal(10, 2)
+  isPaid           Boolean  @default(false)
+  paidAt           DateTime?
+  createdAt        DateTime @default(now())
+
+  @@map("commissions")
+  @@index([userId])
+  @@index([isPaid])
+  @@index([createdAt])
+}
+
+// Sales Target for KPI tracking
+model SalesTarget {
+  id             Int      @id @default(autoincrement())
+  userId         Int      // Staff ID
+  month          Int      // 1-12
+  year           Int      // 2024, 2025...
+  targetAmount   Decimal  @db.Decimal(12, 2) // Monthly target
+  achievedAmount Decimal  @default(0) @db.Decimal(12, 2) // Actual sales
+  commissionRate Decimal  @db.Decimal(5, 2) // Default commission rate
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([userId, month, year]) // One target per user per month
+  @@map("sales_targets")
+  @@index([userId])
+  @@index([year, month])
 }
