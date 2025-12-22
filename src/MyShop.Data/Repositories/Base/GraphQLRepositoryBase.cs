@@ -54,7 +54,20 @@ namespace MyShop.Data.Repositories.Base
             var data = response.Data;
             if (data == null) return default;
 
-            return default; 
+            try
+            {
+                var resultData = data[queryName];
+                if (resultData == null) return default;
+                
+                // Use System.Text.Json or Newtonsoft via GraphQL.Client's built-in conversion
+                return ((object)resultData).ToString() is string json 
+                    ? System.Text.Json.JsonSerializer.Deserialize<TResult>(json, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+                    : default;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error parsing GraphQL response for query '{queryName}': {ex.Message}", ex);
+            }
         }
     }
 }
