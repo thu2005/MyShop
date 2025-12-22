@@ -4,9 +4,17 @@ This guide explains how to use the security infrastructure built for the MyShop 
 
 ## 1. Authentication (Login)
 The `AuthService` handles user sessions.
-- **Login**: Use `AuthService.LoginAsync(username, password, rememberMe)`.
+- **Login**: Use `AuthService.LoginAsync(username, password)`.
 - **Session**: Tokens are managed automatically by `SessionManager` via `LocalSettings`.
-- **Current User**: Access via `SessionManager.CurrentUser` or `ShellViewModel.CurrentUser`.
+
+### 🔑 Default Development Accounts
+After running `npm run seed` in the backend, these accounts are available:
+
+| Role | Username | Password |
+|------|----------|----------|
+| **ADMIN** | `admin` | `Admin@123456` |
+| **MANAGER** | `manager1` | `Password@123` |
+| **STAFF** | `staff1` | `Password@123` |
 
 ## 2. Authorization (RBAC)
 We use **Role-Based Access Control** with three roles: `ADMIN`, `MANAGER`, `STAFF`.
