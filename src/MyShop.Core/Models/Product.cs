@@ -13,30 +13,41 @@ namespace MyShop.Core.Models
         [MaxLength(200)]
         public string Name { get; set; } = string.Empty;
 
-        [MaxLength(1000)]
         public string? Description { get; set; }
 
         [Required]
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal Price { get; set; }
+        [MaxLength(50)]
+        public string Sku { get; set; } = string.Empty;
+
+        [MaxLength(50)]
+        public string? Barcode { get; set; }
 
         [Required]
-        public int StockQuantity { get; set; }
+        [Column(TypeName = "decimal(10,2)")]
+        public decimal Price { get; set; }
+
+        [Column(TypeName = "decimal(10,2)")]
+        public decimal? CostPrice { get; set; }
+
+        [Required]
+        public int Stock { get; set; }
+
+        public int MinStock { get; set; }
 
         [MaxLength(500)]
         public string? ImageUrl { get; set; }
 
-        // Foreign Key
         public int CategoryId { get; set; }
 
-        // Navigation Property
         [ForeignKey(nameof(CategoryId))]
         public Category? Category { get; set; }
 
         public bool IsActive { get; set; } = true;
 
+        public int Popularity { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public DateTime? UpdatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }
 }

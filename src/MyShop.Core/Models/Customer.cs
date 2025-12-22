@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MyShop.Core.Models
 {
@@ -11,20 +12,30 @@ namespace MyShop.Core.Models
 
         [Required]
         [MaxLength(100)]
-        public string FullName { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
 
         [MaxLength(100)]
         public string? Email { get; set; }
 
+        [Required]
         [MaxLength(20)]
-        public string? PhoneNumber { get; set; }
+        public string Phone { get; set; } = string.Empty;
 
-        [MaxLength(500)]
         public string? Address { get; set; }
 
-        // Navigation Property
-        public ICollection<Order> Orders { get; set; } = new List<Order>();
+        public bool IsMember { get; set; }
+
+        public DateTime? MemberSince { get; set; }
+
+        [Column(TypeName = "decimal(12,2)")]
+        public decimal TotalSpent { get; set; }
+
+        public string? Notes { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+        public ICollection<Order> Orders { get; set; } = new List<Order>();
     }
 }

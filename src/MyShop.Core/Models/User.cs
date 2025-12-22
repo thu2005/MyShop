@@ -9,7 +9,7 @@ namespace MyShop.Core.Models
         public int Id { get; set; }
 
         [Required]
-        [MaxLength(100)]
+        [MaxLength(50)]
         public string Username { get; set; } = string.Empty;
 
         [Required]
@@ -17,14 +17,15 @@ namespace MyShop.Core.Models
         public string PasswordHash { get; set; } = string.Empty;
 
         [MaxLength(100)]
-        public string? FullName { get; set; }
-
-        [MaxLength(100)]
         public string? Email { get; set; }
+
+        public UserRole Role { get; set; } = UserRole.STAFF;
 
         public bool IsActive { get; set; } = true;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime? LastLoginAt { get; set; }
     }

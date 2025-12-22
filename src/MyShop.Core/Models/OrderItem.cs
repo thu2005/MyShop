@@ -8,25 +8,28 @@ namespace MyShop.Core.Models
         [Key]
         public int Id { get; set; }
 
-        // Foreign Keys
         public int OrderId { get; set; }
-        public int ProductId { get; set; }
 
-        [Required]
-        public int Quantity { get; set; }
-
-        [Required]
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal UnitPrice { get; set; }
-
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal Subtotal => Quantity * UnitPrice;
-
-        // Navigation Properties
         [ForeignKey(nameof(OrderId))]
         public Order? Order { get; set; }
 
+        public int ProductId { get; set; }
+
         [ForeignKey(nameof(ProductId))]
         public Product? Product { get; set; }
+
+        public int Quantity { get; set; }
+
+        [Column(TypeName = "decimal(10,2)")]
+        public decimal UnitPrice { get; set; }
+
+        [Column(TypeName = "decimal(10,2)")]
+        public decimal Subtotal { get; set; }
+
+        [Column(TypeName = "decimal(10,2)")]
+        public decimal DiscountAmount { get; set; }
+
+        [Column(TypeName = "decimal(10,2)")]
+        public decimal Total { get; set; }
     }
 }

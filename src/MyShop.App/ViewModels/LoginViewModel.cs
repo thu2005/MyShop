@@ -11,14 +11,13 @@ namespace MyShop.App.ViewModels
         private readonly IAuthService _authService;
         private string _username = string.Empty;
         private string _password = string.Empty;
-        private string _errorMessage = string.Empty;
-        private bool _isLoading;
         private bool _rememberMe;
 
         public LoginViewModel(IAuthService authService)
         {
             _authService = authService;
             LoginCommand = new RelayCommand(async _ => await ExecuteLoginAsync(), _ => CanLogin());
+            OpenConfigCommand = new RelayCommand(_ => ExecuteOpenConfig());
         }
 
         public string Username
@@ -29,7 +28,6 @@ namespace MyShop.App.ViewModels
                 if (SetProperty(ref _username, value))
                 {
                     (LoginCommand as RelayCommand)?.RaiseCanExecuteChanged();
-                    OnPropertyChanged(nameof(HasError));
                 }
             }
         }
@@ -46,62 +44,36 @@ namespace MyShop.App.ViewModels
             }
         }
 
-        public string ErrorMessage
-        {
-            get => _errorMessage;
-            set
-            {
-                if (SetProperty(ref _errorMessage, value))
-                {
-                    OnPropertyChanged(nameof(HasError));
-                }
-            }
-        }
-
-        public bool IsLoading
-        {
-            get => _isLoading;
-            set => SetProperty(ref _isLoading, value);
-        }
-
         public bool RememberMe
         {
             get => _rememberMe;
             set => SetProperty(ref _rememberMe, value);
         }
 
-        // Property for XAML binding to control error message visibility
-        public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
-
         public ICommand LoginCommand { get; }
+        public ICommand OpenConfigCommand { get; }
 
         public event EventHandler? LoginSuccessful;
+        public event EventHandler? OpenConfigRequested;
 
         private bool CanLogin()
         {
             return !string.IsNullOrWhiteSpace(Username) &&
                    !string.IsNullOrWhiteSpace(Password) &&
-                   !IsLoading;
+                   !IsBusy;
         }
 
         private async Task ExecuteLoginAsync()
         {
             try
             {
-                IsLoading = true;
+                IsBusy = true;
                 ErrorMessage = string.Empty;
 
                 var user = await _authService.LoginAsync(Username, Password);
 
                 if (user != null)
                 {
-                    // Save credentials if RememberMe is checked
-                    if (RememberMe)
-                    {
-                        // TODO: Save to secure storage
-                        // await _authService.SaveCredentialsAsync(Username, Password);
-                    }
-
                     LoginSuccessful?.Invoke(this, EventArgs.Empty);
                 }
                 else
@@ -111,12 +83,17 @@ namespace MyShop.App.ViewModels
             }
             catch (Exception ex)
             {
-                ErrorMessage = $"Login failed: {ex.Message}";
+                ErrorMessage = $"An error occurred: {ex.Message}";
             }
             finally
             {
-                IsLoading = false;
+                IsBusy = false;
             }
+        }
+
+        private void ExecuteOpenConfig()
+        {
+            OpenConfigRequested?.Invoke(this, EventArgs.Empty);
         }
     }
 }

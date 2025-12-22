@@ -108,17 +108,6 @@ StyleCopReport.xml
 # Chutzpah Test files
 _Chutzpah*
 
-# Visual C++ cache files
-ipch/
-*.aps
-*.ncb
-*.opendb
-*.opensdf
-*.sdf
-*.cachefile
-*.VC.db
-*.VC.VC.opendb
-
 # Visual Studio profiler
 *.psess
 *.vsp
@@ -380,3 +369,6 @@ ehthumbs.db
 $RECYCLE.BIN/
 .AppleDouble
 .LSOverride
+
+## WinUI / Windows App SDK
+_pkg.dev/

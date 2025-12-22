@@ -1,0 +1,43 @@
+<Page
+    x:Class="MyShop.App.Views.ShellPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:converters="using:MyShop.App.Converters"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Page.Resources>
+        <converters:RoleToVisibilityConverter x:Key="RoleToVisibilityConverter" />
+    </Page.Resources>
+
+    <Grid>
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
+            <SymbolIcon Symbol="Accept" Margin="0,0,0,20">
+                <SymbolIcon.RenderTransform>
+                    <ScaleTransform ScaleX="3" ScaleY="3"/>
+                </SymbolIcon.RenderTransform>
+            </SymbolIcon>
+            
+            <TextBlock Text="Đăng nhập thành công!" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center"/>
+            <TextBlock Text="{x:Bind ViewModel.CurrentUser.Username, Mode=OneWay}" 
+                       HorizontalAlignment="Center" Foreground="{ThemeResource SystemControlPageTextBaseMediumBrush}"/>
+            
+            <TextBlock Text="{x:Bind ViewModel.UserRole, Mode=OneWay}" 
+                       HorizontalAlignment="Center" FontStyle="Italic" />
+
+            <!-- Demonstration of RBAC: Only visible to ADMIN -->
+            <Button Content="🛡️ Admin Control Panel" 
+                    Command="{x:Bind ViewModel.AdminPanelCommand}"
+                    Visibility="{x:Bind ViewModel.UserRole, Mode=OneWay, Converter={StaticResource RoleToVisibilityConverter}, ConverterParameter='ADMIN'}"
+                    HorizontalAlignment="Center" 
+                    Style="{StaticResource AccentButtonStyle}" />
+
+            <Button Content="Đăng xuất" 
+                    Command="{x:Bind ViewModel.LogoutCommand}" 
+                    HorizontalAlignment="Center" 
+                    Margin="0,20,0,0" />
+        </StackPanel>
+    </Grid>
+</Page>
