@@ -1,0 +1,255 @@
+<Page
+    x:Class="MyShop.App.Views.Dashboard"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:MyShop.App.Views"
+    xmlns:controls="using:MyShop.App.Controls"
+    xmlns:converters="using:MyShop.App.Converters"
+    xmlns:dto="using:MyShop.Core.Models.DTOs"
+    xmlns:lvc="using:LiveChartsCore.SkiaSharpView.WinUI"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Page.Resources>
+        <converters:BoolToColorConverter x:Key="BoolToColorConverter"/>
+        <converters:BoolToArrowGlyphConverter x:Key="BoolToArrowGlyphConverter"/>
+        <converters:CurrencyConverter x:Key="CurrencyConverter"/>
+        <converters:DateTimeToRelativeConverter x:Key="DateTimeToRelativeConverter"/>
+        <converters:NullToBoolConverter x:Key="NullToBoolConverter"/>
+        <converters:StringComparisonToBrushConverter x:Key="StringComparisonToBrushConverter"/>
+        <converters:StringComparisonToForegroundConverter x:Key="StringComparisonToForegroundConverter"/>
+    </Page.Resources>
+
+    <ScrollViewer>
+        <StackPanel Padding="32" Spacing="24">
+
+            <!-- Header -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Dashboard" FontSize="32" FontWeight="Bold" Foreground="#0C2B4E"/>
+                    <TextBlock Text="Home > Dashboard" 
+                               FontSize="14" 
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               Margin="0,4,0,0"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Spacing="6">
+                    <FontIcon Glyph="&#xE787;" FontSize="18" Foreground="#0C2B4E"/>
+                    <TextBlock Text="{x:Bind ViewModel.CurrentDateString, Mode=OneWay}" FontSize="16" Foreground="#0C2B4E" FontWeight="SemiBold"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Stats Cards -->
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <controls:StatCard Grid.Column="0"
+                                   Title="Total Products"
+                                   Value="{x:Bind ViewModel.Stats.TotalProducts, Mode=OneWay, Converter={StaticResource CurrencyConverter}}"
+                                   IconGlyph="&#xE7C0;"/>
+
+                <controls:StatCard Grid.Column="1"
+                                   Title="Total Orders"
+                                   Value="{x:Bind ViewModel.Stats.TotalOrders, Mode=OneWay, Converter={StaticResource CurrencyConverter}}"
+                                   IconGlyph="&#xE7BF;"/>
+
+                <controls:StatCard Grid.Column="2"
+                                   Title="Total Revenue"
+                                   Value="{x:Bind ViewModel.Stats.TotalRevenue, Mode=OneWay, Converter={StaticResource CurrencyConverter}}"
+                                   IconGlyph="&#xE8EC;"/>
+            </Grid>
+
+            <!-- Sales Graph + Best Sellers -->
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Sales Graph -->
+                <Border Grid.Column="0"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="24">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,16">
+                            <TextBlock Text="Sale Graph" FontSize="18" FontWeight="SemiBold"/>
+                            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" Spacing="8">
+                                <Button Content="WEEKLY" 
+                                        Command="{x:Bind ViewModel.ChangePeriodCommand}"
+                                        CommandParameter="WEEKLY"
+                                        Background="{x:Bind ViewModel.SelectedPeriod, Mode=OneWay, Converter={StaticResource StringComparisonToBrushConverter}, ConverterParameter=WEEKLY}"
+                                        Foreground="{x:Bind ViewModel.SelectedPeriod, Mode=OneWay, Converter={StaticResource StringComparisonToForegroundConverter}, ConverterParameter=WEEKLY}"
+                                        Height="32"
+                                        MinWidth="80"/>
+                                <Button Content="MONTHLY" 
+                                        Command="{x:Bind ViewModel.ChangePeriodCommand}"
+                                        CommandParameter="MONTHLY"
+                                        Background="{x:Bind ViewModel.SelectedPeriod, Mode=OneWay, Converter={StaticResource StringComparisonToBrushConverter}, ConverterParameter=MONTHLY}"
+                                        Foreground="{x:Bind ViewModel.SelectedPeriod, Mode=OneWay, Converter={StaticResource StringComparisonToForegroundConverter}, ConverterParameter=MONTHLY}"
+                                        Height="32"
+                                        MinWidth="80"/>
+                                <Button Content="YEARLY" 
+                                        Command="{x:Bind ViewModel.ChangePeriodCommand}"
+                                        CommandParameter="YEARLY"
+                                        Background="{x:Bind ViewModel.SelectedPeriod, Mode=OneWay, Converter={StaticResource StringComparisonToBrushConverter}, ConverterParameter=YEARLY}"
+                                        Foreground="{x:Bind ViewModel.SelectedPeriod, Mode=OneWay, Converter={StaticResource StringComparisonToForegroundConverter}, ConverterParameter=YEARLY}"
+                                        Height="32"
+                                        MinWidth="80"/>
+                            </StackPanel>
+                        </Grid>
+                        <lvc:CartesianChart Height="300"
+                                           Series="{x:Bind ViewModel.ChartSeries, Mode=OneWay}"
+                                           XAxes="{x:Bind ViewModel.ChartXAxes, Mode=OneWay}"
+                                           YAxes="{x:Bind ViewModel.ChartYAxes, Mode=OneWay}"
+                                           TooltipPosition="Top"
+                                           AnimationsSpeed="00:00:00.500"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Best Sellers -->
+                <Border Grid.Column="1"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="24">
+                    <StackPanel>
+                        <TextBlock Text="Best Sellers" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                        <ListView ItemsSource="{x:Bind ViewModel.TopProducts, Mode=OneWay}" SelectionMode="None">
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="dto:TopProductDto">
+                                    <Grid Margin="0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Ellipse Grid.Column="0" Width="40" Height="40" Fill="#1D546C" Margin="0,0,12,0"/>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{x:Bind Product.Name}" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{x:Bind Product.Price, Converter={StaticResource CurrencyConverter}}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                            <TextBlock Text="{x:Bind Revenue, Converter={StaticResource CurrencyConverter}}" FontWeight="Bold" HorizontalAlignment="Right"/>
+                                            <TextBlock Text="{x:Bind Quantity}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Right"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                        <Button Content="REPORT" 
+                                Background="#1D546C" 
+                                Foreground="White"
+                                HorizontalAlignment="Stretch" 
+                                Margin="0,16,0,0"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Recent Orders + Low Stock -->
+            <Grid ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Recent Orders -->
+                <Border Grid.Column="0"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="24">
+                    <StackPanel>
+                        <TextBlock Text="Recent Orders" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                        <ListView ItemsSource="{x:Bind ViewModel.RecentOrders, Mode=OneWay}" SelectionMode="None">
+                            <ListView.Header>
+                                <Grid Padding="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Order ID" FontWeight="SemiBold" FontSize="12"/>
+                                    <TextBlock Grid.Column="1" Text="Customer" FontWeight="SemiBold" FontSize="12"/>
+                                    <TextBlock Grid.Column="2" Text="Status" FontWeight="SemiBold" FontSize="12"/>
+                                    <TextBlock Grid.Column="3" Text="Amount" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Right"/>
+                                </Grid>
+                            </ListView.Header>
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="dto:OrderDto">
+                                    <Grid Padding="0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{x:Bind OrderNumber}" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1" Text="{x:Bind CustomerName}" VerticalAlignment="Center"/>
+                                        <Border Grid.Column="2" Background="#10059669" CornerRadius="4" Padding="8,4" HorizontalAlignment="Left">
+                                            <TextBlock Text="Paid" FontSize="12" Foreground="#059669"/>
+                                        </Border>
+                                        <TextBlock Grid.Column="3" Text="{x:Bind Total, Converter={StaticResource CurrencyConverter}}" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </StackPanel>
+                </Border>
+
+                <!-- Low Stock Products -->
+                <Border Grid.Column="1"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="24">
+                    <StackPanel>
+                        <TextBlock Text="Low Stock Products" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
+                        <ListView ItemsSource="{x:Bind ViewModel.LowStockProducts, Mode=OneWay}" SelectionMode="None">
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="dto:LowStockProductDto">
+                                    <Grid Margin="0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Ellipse Grid.Column="0" Width="40" Height="40" Fill="#1D546C" Margin="0,0,12,0"/>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{x:Bind Price, Converter={StaticResource CurrencyConverter}}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="2" VerticalAlignment="Center" FontWeight="Bold">
+                                            <Run Text="{x:Bind Stock}"/>
+                                            <Run Text=" left" FontWeight="Normal" FontSize="12"/>
+                                        </TextBlock>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                        <Button Content="REPORT" 
+                                Background="#1D546C" 
+                                Foreground="White"
+                                HorizontalAlignment="Stretch" 
+                                Margin="0,16,0,0"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</Page>
