@@ -16,6 +16,7 @@ namespace MyShop.App.ViewModels
             _authorizationService = authorizationService;
             LogoutCommand = new RelayCommand(_ => ExecuteLogout());
             AdminPanelCommand = new RelayCommand(_ => ExecuteOpenAdminPanel());
+            DashboardCommand = new RelayCommand(_ => ExecuteNavigateToDashboard());
         }
 
         public User? CurrentUser => _authService.CurrentUser;
@@ -26,8 +27,10 @@ namespace MyShop.App.ViewModels
 
         public ICommand LogoutCommand { get; }
         public ICommand AdminPanelCommand { get; }
+        public ICommand DashboardCommand { get; }
 
         public event System.Action? LogoutRequested;
+        public event System.Action? NavigateToDashboard;
 
         private void ExecuteLogout()
         {
@@ -39,6 +42,11 @@ namespace MyShop.App.ViewModels
         {
             // Demonstration of an action that only an Admin should trigger
             System.Diagnostics.Debug.WriteLine("Admin Panel opened.");
+        }
+
+        private void ExecuteNavigateToDashboard()
+        {
+            NavigateToDashboard?.Invoke();
         }
     }
 }

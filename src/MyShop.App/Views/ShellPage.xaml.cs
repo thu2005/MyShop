@@ -15,6 +15,7 @@ namespace MyShop.App.Views
             this.InitializeComponent();
             ViewModel = App.Current.Services.GetRequiredService<ShellViewModel>();
             ViewModel.LogoutRequested += OnLogoutRequested;
+            ViewModel.NavigateToDashboard += OnNavigateToDashboard;
         }
 
         private void OnLogoutRequested()
@@ -27,6 +28,11 @@ namespace MyShop.App.Views
             {
                 Frame.Navigate(typeof(LoginScreen));
             }
+        }
+
+        private void OnNavigateToDashboard()
+        {
+            Frame.Navigate(typeof(Dashboard));
         }
     }
 }

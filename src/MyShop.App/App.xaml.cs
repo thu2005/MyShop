@@ -23,20 +23,28 @@ namespace MyShop.App
             Services = services.BuildServiceProvider();
         }
 
+        public T GetService<T>() where T : class
+        {
+            return Services.GetRequiredService<T>();
+        }
         private void ConfigureServices(IServiceCollection services)
         {
+            services.AddTransient<DashboardViewModel>();
             // Infrastructure
             services.AddSingleton<IConfigService, ConfigService>();
             services.AddSingleton<ISessionManager, SessionManager>();
 
             // GraphQL Configuration (Initial load from config)
             var configService = new ConfigService();
-            services.AddSingleton(new GraphQLService(configService.GetServerUrl()));
+            var graphQLService = new GraphQLService(configService.GetServerUrl());
+            services.AddSingleton(graphQLService);
+            services.AddSingleton<IGraphQLService>(graphQLService);
 
             // Services
             services.AddSingleton<IAuthService, AuthService>();
             services.AddSingleton<IAuthorizationService, AuthorizationService>();
             services.AddSingleton<IEncryptionService, EncryptionService>();
+            services.AddSingleton<IDashboardService, DashboardService>();
 
             // Repositories (GraphQL-first)
             services.AddSingleton<IUserRepository, GraphQLUserRepository>();

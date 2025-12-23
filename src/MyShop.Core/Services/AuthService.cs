@@ -9,12 +9,14 @@ namespace MyShop.Core.Services
     public class AuthService : IAuthService
     {
         private readonly GraphQLService _graphQLService;
+        private readonly IGraphQLService _graphQLServiceInterface;
         private readonly ISessionManager _sessionManager;
         private readonly IConfigService _configService;
 
-        public AuthService(GraphQLService graphQLService, ISessionManager sessionManager, IConfigService configService)
+        public AuthService(GraphQLService graphQLService, IGraphQLService graphQLServiceInterface, ISessionManager sessionManager, IConfigService configService)
         {
             _graphQLService = graphQLService;
+            _graphQLServiceInterface = graphQLServiceInterface;
             _sessionManager = sessionManager;
             _configService = configService;
         }
@@ -73,12 +75,14 @@ namespace MyShop.Core.Services
                     
                     if (user != null)
                     {
-                        // Use reflection or a dedicated method in SessionManager if it exists
-                        // For now, I'll cast SessionManager or use the public SaveSession I just added
+                        // Save session
                         if (_sessionManager is SessionManager s)
                         {
                             s.SaveSession(token, user);
                         }
+                        
+                        // Set auth token for all future GraphQL requests
+                        _graphQLServiceInterface.SetAuthToken(token);
                         
                         System.Diagnostics.Debug.WriteLine("Login successful and session saved.");
                         return user;

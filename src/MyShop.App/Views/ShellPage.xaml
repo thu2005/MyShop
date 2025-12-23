@@ -27,6 +27,13 @@
             <TextBlock Text="{x:Bind ViewModel.UserRole, Mode=OneWay}" 
                        HorizontalAlignment="Center" FontStyle="Italic" />
 
+            <!-- Dashboard Button -->
+            <Button Content="📊 Dashboard" 
+                    Command="{x:Bind ViewModel.DashboardCommand}"
+                    HorizontalAlignment="Center" 
+                    Style="{StaticResource AccentButtonStyle}"
+                    Margin="0,20,0,0" />
+
             <!-- Demonstration of RBAC: Only visible to ADMIN -->
             <Button Content="🛡️ Admin Control Panel" 
                     Command="{x:Bind ViewModel.AdminPanelCommand}"
