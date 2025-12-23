@@ -12,6 +12,9 @@
     <EnableMsixTooling>true</EnableMsixTooling>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+  <ItemGroup>
+    <None Remove="Views\ProductsScreen.xaml" />
+  </ItemGroup>
 
   <ItemGroup>
     <Manifest Include="$(ApplicationManifest)" />
@@ -54,6 +57,11 @@
     <Folder Include="Helpers\" />
     <Folder Include="Converters\" />
     <Folder Include="Views\Dialogs\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Views\ProductsScreen.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Page Update="Views\LoginScreen.xaml">

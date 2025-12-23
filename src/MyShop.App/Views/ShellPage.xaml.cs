@@ -17,6 +17,12 @@ namespace MyShop.App.Views
             ViewModel.LogoutRequested += OnLogoutRequested;
         }
 
+        private void OnManageProductsClick(object sender, RoutedEventArgs e)
+        {
+            // Navigate the current Frame to your new ProductsScreen
+            this.Frame.Navigate(typeof(ProductsScreen));
+        }
+
         private void OnLogoutRequested()
         {
             if (Frame.CanGoBack)

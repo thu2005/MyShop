@@ -47,6 +47,7 @@ namespace MyShop.App
             services.AddTransient<LoginViewModel>();
             services.AddTransient<ConfigViewModel>();
             services.AddTransient<ShellViewModel>();
+            services.AddTransient<ProductViewModel>();
         }
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
