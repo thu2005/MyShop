@@ -66,6 +66,52 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+
+        <Style x:Key="DialogPrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#003F62"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid x:Name="RootGrid" Background="#003F62" CornerRadius="{TemplateBinding CornerRadius}">
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal"/>
+                                    <VisualState x:Name="PointerOver">
+                                        <VisualState.Setters>
+                                            <Setter Target="RootGrid.Background" Value="#004F7A"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Pressed">
+                                        <VisualState.Setters>
+                                            <Setter Target="RootGrid.Background" Value="#002F4A"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Disabled">
+                                        <VisualState.Setters>
+                                            <Setter Target="RootGrid.Background" Value="#CCCCCC"/>
+                                            <Setter Target="ContentPresenter.Foreground" Value="#666666"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                            <ContentPresenter x:Name="ContentPresenter"
+                                              Content="{TemplateBinding Content}"
+                                              Padding="{TemplateBinding Padding}"
+                                              HorizontalContentAlignment="Center"
+                                              VerticalContentAlignment="Center"
+                                              Foreground="{TemplateBinding Foreground}"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+
     </Page.Resources>
 
     <Grid Padding="24">
@@ -88,12 +134,14 @@
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
-                <Button Background="#003F62" Foreground="White" Padding="12,8" CornerRadius="4" Command="{x:Bind ViewModel.AddCustomerCommand}">
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
+                <Button x:Name="NewCustomerButton" Background="#003F62" Foreground="White" Padding="12,8" CornerRadius="4" Click="NewCustomerButton_Click">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon Glyph="&#xE710;" FontSize="16"/> <!-- Add -->
                         <TextBlock Text="New Customer"/>
                     </StackPanel>
                 </Button>
+            </StackPanel>
             </StackPanel>
         </Grid>
 
@@ -107,15 +155,13 @@
 
             <!-- Tabs -->
             <StackPanel Orientation="Horizontal" Spacing="4" Background="White" CornerRadius="8" Padding="4">
-                <RadioButton Content="All Customers" IsChecked="True" Style="{StaticResource TabRadioButtonStyle}" />
-                <RadioButton Content="Members" Style="{StaticResource TabRadioButtonStyle}" />
+                <RadioButton x:Name="AllCustomersRadio" Content="All Customers" IsChecked="True" Style="{StaticResource TabRadioButtonStyle}" Checked="FilterRadio_Checked" Tag="All" />
+                <RadioButton x:Name="MembersRadio" Content="Members" Style="{StaticResource TabRadioButtonStyle}" Checked="FilterRadio_Checked" Tag="Members" />
             </StackPanel>
 
             <!-- Search & Date -->
             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
-                <TextBox PlaceholderText="Search customers..." Width="250" Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-
-                </TextBox>
+                <TextBox PlaceholderText="Search customers..." Width="250" VerticalAlignment="Center" Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                 <CalendarDatePicker PlaceholderText="From"/>
                 <CalendarDatePicker PlaceholderText="To"/>
             </StackPanel>

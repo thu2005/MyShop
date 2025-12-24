@@ -5,7 +5,6 @@ using MyShop.Core.Services;
 using MyShop.Data.Repositories.Base;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace MyShop.Data.Repositories
@@ -29,6 +28,10 @@ namespace MyShop.Data.Repositories
                             email
                             phone
                             address
+                            isMember
+                            memberSince
+                            totalSpent
+                            notes
                             createdAt
                             updatedAt
                         }
@@ -46,92 +49,75 @@ namespace MyShop.Data.Repositories
             {
                 Query = @"
                     query GetCustomers {
-                        customers(pagination: { pageSize: 100 }) {
+                        customers {
                             customers {
                                 id
                                 name
                                 email
                                 phone
                                 address
+                                isMember
+                                memberSince
+                                totalSpent
+                                notes
                                 createdAt
+                                updatedAt
                             }
                         }
                     }"
             };
 
-            var response = await _graphQLService.Client.SendQueryAsync<CustomersResponse>(request);
-
-            if (response.Errors != null && response.Errors.Any())
-            {
-                throw new Exception($"GraphQL Error: {response.Errors[0].Message}");
-            }
-
+            var response = await _graphQLService.Client.SendQueryAsync<CustomersQueryResponse>(request);
             return response.Data?.Customers?.Customers ?? new List<Customer>();
         }
 
-        public async Task<Customer?> GetByEmailAsync(string email)
+        public async Task<(List<Customer> customers, int total)> GetCustomersAsync(
+            int page = 1,
+            int pageSize = 20,
+            string? searchText = null,
+            bool? isMember = null)
         {
+            var filter = new Dictionary<string, object>();
+            if (!string.IsNullOrWhiteSpace(searchText))
+            {
+                filter["name"] = searchText;
+            }
+            if (isMember.HasValue)
+            {
+                filter["isMember"] = isMember.Value;
+            }
+
             var request = new GraphQLRequest
             {
                 Query = @"
-                    query GetCustomerByEmail($email: String!) {
-                        customerByEmail(email: $email) {
-                            id
-                            name
-                            email
-                            phone
-                            address
-                            createdAt
+                    query GetCustomers($pagination: PaginationInput, $filter: CustomerFilterInput) {
+                        customers(pagination: $pagination, filter: $filter) {
+                            customers {
+                                id
+                                name
+                                email
+                                phone
+                                address
+                                isMember
+                                memberSince
+                                totalSpent
+                                notes
+                                createdAt
+                                updatedAt
+                            }
+                            total
                         }
                     }",
-                Variables = new { email }
+                Variables = new
+                {
+                    pagination = new { page, pageSize },
+                    filter = filter.Count > 0 ? filter : null
+                }
             };
 
-            var response = await _graphQLService.Client.SendQueryAsync<CustomerResponse>(request);
-            return response.Data?.Customer;
-        }
-
-        public async Task<Customer?> GetByPhoneAsync(string phone)
-        {
-            var request = new GraphQLRequest
-            {
-                Query = @"
-                    query GetCustomerByPhone($phone: String!) {
-                        customerByPhone(phone: $phone) {
-                            id
-                            name
-                            email
-                            phone
-                            address
-                            createdAt
-                        }
-                    }",
-                Variables = new { phone }
-            };
-
-            var response = await _graphQLService.Client.SendQueryAsync<CustomerResponse>(request);
-            return response.Data?.Customer;
-        }
-
-        public async Task<List<Customer>> SearchAsync(string keyword)
-        {
-            var request = new GraphQLRequest
-            {
-                Query = @"
-                    query SearchCustomers($keyword: String!) {
-                        searchCustomers(keyword: $keyword) {
-                            id
-                            name
-                            email
-                            phone
-                            address
-                        }
-                    }",
-                Variables = new { keyword }
-            };
-
-            var response = await _graphQLService.Client.SendQueryAsync<SearchCustomersResponse>(request);
-            return response.Data?.SearchCustomers ?? new List<Customer>();
+            var response = await _graphQLService.Client.SendQueryAsync<CustomersQueryResponse>(request);
+            var data = response.Data?.Customers;
+            return (data?.Customers ?? new List<Customer>(), data?.Total ?? 0);
         }
 
         public override async Task<Customer> AddAsync(Customer entity)
@@ -139,14 +125,19 @@ namespace MyShop.Data.Repositories
             var request = new GraphQLRequest
             {
                 Query = @"
-                    mutation CreateCustomer($input: CustomerInput!) {
+                    mutation CreateCustomer($input: CreateCustomerInput!) {
                         createCustomer(input: $input) {
                             id
                             name
                             email
                             phone
                             address
+                            isMember
+                            memberSince
+                            totalSpent
+                            notes
                             createdAt
+                            updatedAt
                         }
                     }",
                 Variables = new
@@ -156,7 +147,9 @@ namespace MyShop.Data.Repositories
                         name = entity.Name,
                         email = entity.Email,
                         phone = entity.Phone,
-                        address = entity.Address
+                        address = entity.Address,
+                        isMember = entity.IsMember,
+                        notes = entity.Notes
                     }
                 }
             };
@@ -170,9 +163,18 @@ namespace MyShop.Data.Repositories
             var request = new GraphQLRequest
             {
                 Query = @"
-                    mutation UpdateCustomer($id: Int!, $input: CustomerInput!) {
+                    mutation UpdateCustomer($id: Int!, $input: UpdateCustomerInput!) {
                         updateCustomer(id: $id, input: $input) {
                             id
+                            name
+                            email
+                            phone
+                            address
+                            isMember
+                            memberSince
+                            totalSpent
+                            notes
+                            updatedAt
                         }
                     }",
                 Variables = new
@@ -183,7 +185,9 @@ namespace MyShop.Data.Repositories
                         name = entity.Name,
                         email = entity.Email,
                         phone = entity.Phone,
-                        address = entity.Address
+                        address = entity.Address,
+                        isMember = entity.IsMember,
+                        notes = entity.Notes
                     }
                 }
             };
@@ -202,60 +206,123 @@ namespace MyShop.Data.Repositories
                 Variables = new { id }
             };
 
-            await _graphQLService.Client.SendMutationAsync<DeleteResponse>(request);
+            await _graphQLService.Client.SendMutationAsync<DeleteCustomerResponse>(request);
         }
 
         public override async Task<int> CountAsync()
         {
+            var (_, total) = await GetCustomersAsync(1, 1);
+            return total;
+        }
+
+        public async Task<Customer?> GetByEmailAsync(string email)
+        {
             var request = new GraphQLRequest
             {
                 Query = @"
-                    query GetCustomersTotal {
-                        customers {
-                            total
+                    query GetCustomerByEmail($email: String!) {
+                        customers(filter: { email: $email }) {
+                            customers {
+                                id
+                                name
+                                email
+                                phone
+                                address
+                                isMember
+                                memberSince
+                                totalSpent
+                                notes
+                                createdAt
+                                updatedAt
+                            }
                         }
-                    }"
+                    }",
+                Variables = new { email }
             };
 
-            var response = await _graphQLService.Client.SendQueryAsync<CustomersResponse>(request);
-            return response.Data?.Customers?.Total ?? 0;
+            var response = await _graphQLService.Client.SendQueryAsync<CustomersQueryResponse>(request);
+            return response.Data?.Customers?.Customers?.FirstOrDefault();
+        }
+
+        public async Task<Customer?> GetByPhoneAsync(string phone)
+        {
+            var request = new GraphQLRequest
+            {
+                Query = @"
+                    query GetCustomerByPhone($phone: String!) {
+                        customers(filter: { phone: $phone }) {
+                            customers {
+                                id
+                                name
+                                email
+                                phone
+                                address
+                                isMember
+                                memberSince
+                                totalSpent
+                                notes
+                                createdAt
+                                updatedAt
+                            }
+                        }
+                    }",
+                Variables = new { phone }
+            };
+
+            var response = await _graphQLService.Client.SendQueryAsync<CustomersQueryResponse>(request);
+            return response.Data?.Customers?.Customers?.FirstOrDefault();
+        }
+
+        public async Task<List<Customer>> SearchAsync(string keyword)
+        {
+            var request = new GraphQLRequest
+            {
+                Query = @"
+                    query SearchCustomers($keyword: String!) {
+                        customers(filter: { name: $keyword }) {
+                            customers {
+                                id
+                                name
+                                email
+                                phone
+                                address
+                                isMember
+                                memberSince
+                                totalSpent
+                                notes
+                                createdAt
+                                updatedAt
+                            }
+                        }
+                    }",
+                Variables = new { keyword }
+            };
+
+            var response = await _graphQLService.Client.SendQueryAsync<CustomersQueryResponse>(request);
+            return response.Data?.Customers?.Customers ?? new List<Customer>();
         }
 
         // Response types
-        private class CustomerResponse
+        private class CustomerResponse { public Customer? Customer { get; set; } }
+        
+        private class CustomersQueryResponse
         {
-            public Customer? Customer { get; set; }
+            public CustomerListData? Customers { get; set; }
         }
-
-        private class CustomersResponse
+        
+        private class CustomerListData
         {
-            public CustomersData? Customers { get; set; }
-        }
-
-        private class CustomersData
-        {
-            public List<Customer> Customers { get; set; } = new();
+            public List<Customer>? Customers { get; set; }
             public int Total { get; set; }
         }
-
-        private class SearchCustomersResponse
+        
+        private class CustomersResponse
         {
-            public List<Customer> SearchCustomers { get; set; } = new();
+            public CustomerListData? Customers { get; set; }
         }
-
-        private class CreateCustomerResponse
-        {
-            public Customer? CreateCustomer { get; set; }
-        }
-
-        private class UpdateCustomerResponse
-        {
-            public Customer? UpdateCustomer { get; set; }
-        }
-
-        private class DeleteResponse
-        {
-            public bool DeleteCustomer { get; set; }
-        }
+        
+        private class CreateCustomerResponse { public Customer? CreateCustomer { get; set; } }
+        private class UpdateCustomerResponse { public Customer? UpdateCustomer { get; set; } }
+        private class DeleteCustomerResponse { public bool DeleteCustomer { get; set; } }
     }
 }

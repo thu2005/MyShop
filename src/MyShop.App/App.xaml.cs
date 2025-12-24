@@ -60,6 +60,7 @@ namespace MyShop.App
             services.AddSingleton<IOrderRepository, GraphQLOrderRepository>();
             services.AddSingleton<ICustomerRepository, GraphQLCustomerRepository>();
             services.AddSingleton<IDiscountRepository, GraphQLDiscountRepository>();
+            services.AddSingleton<ICustomerRepository, GraphQLCustomerRepository>();
 
             services.AddTransient<MainWindow>();
             services.AddTransient<LoginViewModel>();
