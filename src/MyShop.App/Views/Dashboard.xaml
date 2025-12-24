@@ -20,6 +20,8 @@
         <converters:NullToBoolConverter x:Key="NullToBoolConverter"/>
         <converters:StringComparisonToBrushConverter x:Key="StringComparisonToBrushConverter"/>
         <converters:StringComparisonToForegroundConverter x:Key="StringComparisonToForegroundConverter"/>
+        <converters:OrderStatusToBackgroundConverter x:Key="OrderStatusToBackgroundConverter"/>
+        <converters:OrderStatusToForegroundConverter x:Key="OrderStatusToForegroundConverter"/>
     </Page.Resources>
 
     <ScrollViewer>
@@ -176,12 +178,12 @@
                         <TextBlock Text="Recent Orders" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
                         <ListView ItemsSource="{x:Bind ViewModel.RecentOrders, Mode=OneWay}" SelectionMode="None">
                             <ListView.Header>
-                                <Grid Padding="0,0,0,8">
+                                <Grid Padding="0,8,0,8">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="1*"/>
+                                        <ColumnDefinition Width="2*"/>
+                                        <ColumnDefinition Width="1.5*"/>
+                                        <ColumnDefinition Width="1.5*"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="Order ID" FontWeight="SemiBold" FontSize="12"/>
                                     <TextBlock Grid.Column="1" Text="Customer" FontWeight="SemiBold" FontSize="12"/>
@@ -191,17 +193,23 @@
                             </ListView.Header>
                             <ListView.ItemTemplate>
                                 <DataTemplate x:DataType="dto:OrderDto">
-                                    <Grid Padding="0,12">
+                                    <Grid Padding="0">
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="1*"/>
+                                            <ColumnDefinition Width="2*"/>
+                                            <ColumnDefinition Width="1.5*"/>
+                                            <ColumnDefinition Width="1.5*"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="{x:Bind OrderNumber}" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="0" Text="{x:Bind Id}" VerticalAlignment="Center"/>
                                         <TextBlock Grid.Column="1" Text="{x:Bind CustomerName}" VerticalAlignment="Center"/>
-                                        <Border Grid.Column="2" Background="#10059669" CornerRadius="4" Padding="8,4" HorizontalAlignment="Left">
-                                            <TextBlock Text="Paid" FontSize="12" Foreground="#059669"/>
+                                        <Border Grid.Column="2" 
+                                                Background="{x:Bind Status, Converter={StaticResource OrderStatusToBackgroundConverter}}" 
+                                                CornerRadius="4" 
+                                                Padding="8,4" 
+                                                HorizontalAlignment="Left">
+                                            <TextBlock Text="{x:Bind Status}" 
+                                                       FontSize="12" 
+                                                       Foreground="{x:Bind Status, Converter={StaticResource OrderStatusToForegroundConverter}}"/>
                                         </Border>
                                         <TextBlock Grid.Column="3" Text="{x:Bind Total, Converter={StaticResource CurrencyConverter}}" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                                     </Grid>
