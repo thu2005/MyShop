@@ -217,5 +217,40 @@ namespace MyShop.App.ViewModels
             // Update UI
             Products = new ObservableCollection<Product>(source.ToList());
         }
+
+        public async Task DeleteProductAsync(int productId)
+        {
+            try
+            {
+                IsBusy = true;
+                await _productRepository.DeleteAsync(productId);
+
+                // 1. Remove from main cache
+                var productToRemove = _allProducts.FirstOrDefault(p => p.Id == productId);
+                if (productToRemove != null)
+                {
+                    _allProducts.Remove(productToRemove);
+                }
+
+                // 2. Remove from search results if active
+                var searchItemToRemove = _currentSearchResults.FirstOrDefault(p => p.Id == productId);
+                if (searchItemToRemove != null)
+                {
+                    _currentSearchResults.Remove(searchItemToRemove);
+                }
+
+                // 3. Refresh UI
+                RefreshCategoryStats();
+                FilterProducts();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Delete Error: {ex.Message}");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
     }
 }

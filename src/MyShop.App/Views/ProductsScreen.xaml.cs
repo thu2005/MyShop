@@ -60,5 +60,37 @@ namespace MyShop.App.Views
                 }
             }
         }
+
+        private async void OnDeleteProductClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is Product productToDelete)
+            {
+                // 1. Create Confirmation Dialog
+                var dialog = new ContentDialog
+                {
+                    Title = "Delete Product",
+                    Content = $"Are you sure you want to permanently delete '{productToDelete.Name}'?",
+                    PrimaryButtonText = "Delete",
+                    CloseButtonText = "Cancel",
+                    DefaultButton = ContentDialogButton.Close,
+                    XamlRoot = this.XamlRoot
+                };
+
+                // 2. Style the Delete button to look dangerous (Red)
+                var primaryButtonStyle = new Style(typeof(Button));
+                primaryButtonStyle.Setters.Add(new Setter(Button.BackgroundProperty, new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red)));
+                primaryButtonStyle.Setters.Add(new Setter(Button.ForegroundProperty, new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.White)));
+                dialog.PrimaryButtonStyle = primaryButtonStyle;
+
+                // 3. Show Dialog
+                var result = await dialog.ShowAsync();
+
+                // 4. Perform Delete if confirmed
+                if (result == ContentDialogResult.Primary)
+                {
+                    await ViewModel.DeleteProductAsync(productToDelete.Id);
+                }
+            }
+        }
     }
 }
