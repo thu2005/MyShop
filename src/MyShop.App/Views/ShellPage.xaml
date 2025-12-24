@@ -41,7 +41,14 @@
 
         <NavigationView.MenuItems>
             <NavigationViewItem Content="DASHBOARD" Tag="Dashboard" Icon="ViewAll" FontWeight="SemiBold"/>
-            <NavigationViewItem Content="ALL PRODUCTS" Tag="Products" Icon="Shop" FontWeight="SemiBold"/>
+
+            <NavigationViewItemHeader Content="Inventory" />
+            <NavigationViewItem Content="All Products" Tag="Products_0" Icon="Shop" FontWeight="SemiBold"/>
+
+            <NavigationViewItemHeader Content="Categories" x:Name="CategoryHeader"/>
+
+            <NavigationViewItemSeparator/>
+
             <NavigationViewItem Content="ORDER LIST" Tag="Orders" Icon="List" FontWeight="SemiBold"/>
             <NavigationViewItem Content="REPORT" Tag="Reports" Icon="Document" FontWeight="SemiBold"/>
         </NavigationView.MenuItems>

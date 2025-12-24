@@ -9,124 +9,99 @@
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="220"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
+    <Grid Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-        <Border Grid.Column="0" 
-                Background="{ThemeResource LayerFillColorDefaultBrush}" 
-                BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" 
-                BorderThickness="0,0,1,0" Padding="0,20">
-            <StackPanel>
-                <TextBlock Text="Categories" FontWeight="Bold" Margin="20,0,0,16" FontSize="16"/>
+        <StackPanel Grid.Row="0" Margin="0,0,0,20">
+            <TextBlock Text="All Products" FontSize="24" FontWeight="Bold"/>
+            <TextBlock Text="Home > All Products" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" Margin="0,4,0,0"/>
+        </StackPanel>
 
-                <ListView ItemsSource="{x:Bind ViewModel.Categories, Mode=OneWay}" 
-                          SelectedItem="{x:Bind ViewModel.SelectedCategory, Mode=TwoWay}"
-                          SelectionMode="Single">
-                    <ListView.ItemTemplate>
-                        <DataTemplate x:DataType="vm:CategoryStat">
-                            <TextBlock Text="{x:Bind DisplayText}" Margin="0,5"/>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
+        <Grid Grid.Row="1" Margin="0,0,0,24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <AutoSuggestBox PlaceholderText="Search products..." Width="200" QueryIcon="Find"
+                            QuerySubmitted="OnSearchQuerySubmitted"
+                            TextChanged="OnSearchTextChanged"/>
+
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10">
+                <Button Content="ADD NEW CATEGORY" CornerRadius="4"/>
+                <Button Content="➕ ADD NEW PRODUCT" Click="OnAddProductClick" Style="{StaticResource AccentButtonStyle}" CornerRadius="4"/>
             </StackPanel>
-        </Border>
-
-        <Grid Grid.Column="1" Padding="24">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
-
-            <StackPanel Grid.Row="0" Margin="0,0,0,20">
-                <TextBlock Text="All Products" FontSize="24" FontWeight="Bold"/>
-                <TextBlock Text="Home > All Products" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" FontSize="12" Margin="0,4,0,0"/>
-            </StackPanel>
-
-            <Grid Grid.Row="1" Margin="0,0,0,24">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <AutoSuggestBox PlaceholderText="Search products..." Width="200" QueryIcon="Find"
-                                QuerySubmitted="OnSearchQuerySubmitted"
-                                TextChanged="OnSearchTextChanged"/>
-
-                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="10">
-                    <Button Content="ADD NEW CATEGORY" CornerRadius="4"/>
-                    <Button Content="➕ ADD NEW PRODUCT" Click="OnAddProductClick" Style="{StaticResource AccentButtonStyle}" CornerRadius="4"/>
-                </StackPanel>
-            </Grid>
-
-            <GridView Grid.Row="2" ItemsSource="{x:Bind ViewModel.Products, Mode=OneWay}" SelectionMode="None">
-                <GridView.ItemContainerStyle>
-                    <Style TargetType="GridViewItem">
-                        <Setter Property="Margin" Value="0,0,20,20"/>
-                    </Style>
-                </GridView.ItemContainerStyle>
-                <GridView.ItemTemplate>
-                    <DataTemplate x:DataType="models:Product">
-                        <Grid Width="280" 
-                              Background="{ThemeResource LayerFillColorDefaultBrush}" 
-                              CornerRadius="8" Padding="16" 
-                              BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" 
-                              BorderThickness="1">
-
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <Grid Grid.Row="0" Margin="0,0,0,12">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="60"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-
-                                <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" CornerRadius="8" Height="60" Width="60">
-                                    <FontIcon Glyph="&#xE739;" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-                                </Border>
-
-                                <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
-                                    <TextBlock Text="{x:Bind Name}" FontWeight="Bold" TextTrimming="CharacterEllipsis"/>
-                                    <TextBlock Text="{x:Bind Price}" FontWeight="Bold" Margin="0,4,0,0"/>
-                                </StackPanel>
-
-                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
-                                    <Button Background="Transparent" BorderThickness="0" Padding="4"
-                            Click="OnEditProductClick" Tag="{x:Bind}" ToolTipService.ToolTip="Edit">
-                                        <FontIcon Glyph="&#xE70F;" FontSize="14"/>
-                                    </Button>
-                                    <Button Background="Transparent" BorderThickness="0" Padding="4"
-                            Click="OnDeleteProductClick" Tag="{x:Bind}" ToolTipService.ToolTip="Delete">
-                                        <FontIcon Glyph="&#xE74D;" FontSize="14" Foreground="#FF5555"/>
-                                    </Button>
-                                </StackPanel>
-                            </Grid>
-
-                            <TextBlock Grid.Row="1" Text="{x:Bind Description}" FontSize="10" 
-                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" 
-                       Height="30" TextTrimming="CharacterEllipsis" Margin="0,0,0,12"/>
-
-                            <Border Grid.Row="2" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" Padding="10" CornerRadius="4">
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
-                                    <TextBlock Text="Stock:" FontSize="11" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-                                    <TextBlock Text="{x:Bind Stock}" FontSize="11" FontWeight="Bold"/>
-                                </StackPanel>
-                            </Border>
-                        </Grid>
-                    </DataTemplate>
-                </GridView.ItemTemplate>
-            </GridView>
-
-            <ProgressRing Grid.Row="2" IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}" Width="50" Height="50" HorizontalAlignment="Center" VerticalAlignment="Center"/>
         </Grid>
+
+        <GridView Grid.Row="2" ItemsSource="{x:Bind ViewModel.Products, Mode=OneWay}" SelectionMode="None">
+            <GridView.ItemContainerStyle>
+                <Style TargetType="GridViewItem">
+                    <Setter Property="Margin" Value="0,0,20,20"/>
+                </Style>
+            </GridView.ItemContainerStyle>
+            <GridView.ItemTemplate>
+                <DataTemplate x:DataType="models:Product">
+                    <Grid Width="280" 
+                          Background="{ThemeResource LayerFillColorDefaultBrush}" 
+                          CornerRadius="8" Padding="16" 
+                          BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" 
+                          BorderThickness="1">
+
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0" Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="60"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Border Background="{ThemeResource SystemControlBackgroundBaseLowBrush}" CornerRadius="8" Height="60" Width="60">
+                                <FontIcon Glyph="&#xE739;" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                            </Border>
+
+                            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="{x:Bind Name}" FontWeight="Bold" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock Text="{x:Bind Price}" FontWeight="Bold" Margin="0,4,0,0"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top">
+                                <Button Background="Transparent" BorderThickness="0" Padding="4"
+                                        Click="OnEditProductClick" Tag="{x:Bind}" ToolTipService.ToolTip="Edit">
+                                    <FontIcon Glyph="&#xE70F;" FontSize="14"/>
+                                </Button>
+                                <Button Background="Transparent" BorderThickness="0" Padding="4"
+                                        Click="OnDeleteProductClick" Tag="{x:Bind}" ToolTipService.ToolTip="Delete">
+                                    <FontIcon Glyph="&#xE74D;" FontSize="14" Foreground="#FF5555"/>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Grid.Row="1" Text="{x:Bind Description}" FontSize="10" 
+                                   Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" 
+                                   Height="30" TextTrimming="CharacterEllipsis" Margin="0,0,0,12"/>
+
+                        <Border Grid.Row="2" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" Padding="10" CornerRadius="4">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
+                                <TextBlock Text="Stock:" FontSize="11" Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
+                                <TextBlock Text="{x:Bind Stock}" FontSize="11" FontWeight="Bold"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </DataTemplate>
+            </GridView.ItemTemplate>
+        </GridView>
+
+        <ProgressRing Grid.Row="2" IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}" Width="50" Height="50" HorizontalAlignment="Center" VerticalAlignment="Center"/>
     </Grid>
 </Page>

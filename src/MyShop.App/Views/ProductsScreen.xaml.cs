@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Xaml.Navigation; // Added for NavigationEventArgs
 using MyShop.App.ViewModels;
 using MyShop.App.Views.Dialogs;
 using MyShop.Core.Models;
@@ -16,6 +17,29 @@ namespace MyShop.App.Views
         {
             this.InitializeComponent();
             ViewModel = App.Current.Services.GetService<ProductViewModel>();
+        }
+
+        // NEW: Handle incoming navigation parameter (CategoryId)
+        protected override async void OnNavigatedTo(NavigationEventArgs e)
+        {
+            base.OnNavigatedTo(e);
+
+            // Ensure products are loaded if this is the first visit
+            if (ViewModel.Products.Count == 0)
+            {
+                await ViewModel.LoadProductsAsync();
+            }
+
+            // Check if a specific Category ID was passed
+            if (e.Parameter is int categoryId)
+            {
+                ViewModel.SelectCategoryById(categoryId);
+            }
+            else
+            {
+                // If no parameter (or 0), show all products
+                ViewModel.SelectCategoryById(0);
+            }
         }
 
         private async void OnAddProductClick(object sender, RoutedEventArgs e)
@@ -46,7 +70,6 @@ namespace MyShop.App.Views
 
         private async void OnEditProductClick(object sender, RoutedEventArgs e)
         {
-            // Get the product from the btton's tag
             if (sender is Button button && button.Tag is Product productToEdit)
             {
                 var dialog = new EditProductDialog(productToEdit);
@@ -65,7 +88,6 @@ namespace MyShop.App.Views
         {
             if (sender is Button button && button.Tag is Product productToDelete)
             {
-                // 1. Create Confirmation Dialog
                 var dialog = new ContentDialog
                 {
                     Title = "Delete Product",
@@ -76,16 +98,13 @@ namespace MyShop.App.Views
                     XamlRoot = this.XamlRoot
                 };
 
-                // 2. Style the Delete button to look dangerous (Red)
                 var primaryButtonStyle = new Style(typeof(Button));
                 primaryButtonStyle.Setters.Add(new Setter(Button.BackgroundProperty, new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red)));
                 primaryButtonStyle.Setters.Add(new Setter(Button.ForegroundProperty, new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.White)));
                 dialog.PrimaryButtonStyle = primaryButtonStyle;
 
-                // 3. Show Dialog
                 var result = await dialog.ShowAsync();
 
-                // 4. Perform Delete if confirmed
                 if (result == ContentDialogResult.Primary)
                 {
                     await ViewModel.DeleteProductAsync(productToDelete.Id);
