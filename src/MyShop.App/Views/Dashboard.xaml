@@ -55,7 +55,7 @@
                 <controls:StatCard Grid.Column="0"
                                    Title="Total Products"
                                    Value="{x:Bind ViewModel.Stats.TotalProducts, Mode=OneWay, Converter={StaticResource CurrencyConverter}}"
-                                   IconGlyph="&#xE7C0;"/>
+                                   IconGlyph="&#xE7F8;"/>
 
                 <controls:StatCard Grid.Column="1"
                                    Title="Total Orders"
@@ -65,7 +65,7 @@
                 <controls:StatCard Grid.Column="2"
                                    Title="Total Revenue"
                                    Value="{x:Bind ViewModel.Stats.TotalRevenue, Mode=OneWay, Converter={StaticResource CurrencyConverter}}"
-                                   IconGlyph="&#xE8EC;"/>
+                                   IconGlyph="&#xE1D0;"/>
             </Grid>
 
             <!-- Sales Graph + Best Sellers -->
