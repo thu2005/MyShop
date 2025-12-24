@@ -12,39 +12,89 @@
         <converters:RoleToVisibilityConverter x:Key="RoleToVisibilityConverter" />
     </Page.Resources>
 
-    <Grid>
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
-            <SymbolIcon Symbol="Accept" Margin="0,0,0,20">
-                <SymbolIcon.RenderTransform>
-                    <ScaleTransform ScaleX="3" ScaleY="3"/>
-                </SymbolIcon.RenderTransform>
-            </SymbolIcon>
-            
-            <TextBlock Text="Đăng nhập thành công!" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center"/>
-            <TextBlock Text="{x:Bind ViewModel.CurrentUser.Username, Mode=OneWay}" 
-                       HorizontalAlignment="Center" Foreground="{ThemeResource SystemControlPageTextBaseMediumBrush}"/>
-            
-            <TextBlock Text="{x:Bind ViewModel.UserRole, Mode=OneWay}" 
-                       HorizontalAlignment="Center" FontStyle="Italic" />
+    <NavigationView x:Name="NavView" 
+                    PaneDisplayMode="Left"
+                    IsBackButtonVisible="Collapsed"
+                    IsSettingsVisible="False"
+                    OpenPaneLength="250"
+                    Background="White">
 
-            <!-- Dashboard Button -->
-            <Button Content="📊 Dashboard" 
-                    Command="{x:Bind ViewModel.DashboardCommand}"
-                    HorizontalAlignment="Center" 
-                    Style="{StaticResource AccentButtonStyle}"
-                    Margin="0,20,0,0" />
+        <NavigationView.Resources>
+             <SolidColorBrush x:Key="NavigationViewItemForeground" Color="Black" />
+             <SolidColorBrush x:Key="NavigationViewItemForegroundSelected" Color="White" />
+             <SolidColorBrush x:Key="NavigationViewItemForegroundPointerOver" Color="Black" />
+             <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPointerOver" Color="White" />
+             <SolidColorBrush x:Key="NavigationViewItemBackgroundSelected" Color="#004060" /> <!-- Dark Blue -->
+             <SolidColorBrush x:Key="NavigationViewItemBackgroundPointerOver" Color="#F0F0F0" />
+             <SolidColorBrush x:Key="NavigationViewItemBackgroundSelectedPointerOver" Color="#004060" /> <!-- Keep blue when selected and hovered -->
+        </NavigationView.Resources>
 
-            <!-- Demonstration of RBAC: Only visible to ADMIN -->
-            <Button Content="🛡️ Admin Control Panel" 
-                    Command="{x:Bind ViewModel.AdminPanelCommand}"
-                    Visibility="{x:Bind ViewModel.UserRole, Mode=OneWay, Converter={StaticResource RoleToVisibilityConverter}, ConverterParameter='ADMIN'}"
-                    HorizontalAlignment="Center" 
-                    Style="{StaticResource AccentButtonStyle}" />
+        <NavigationView.PaneHeader>
+            <Grid Padding="20">
+                <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Spacing="10">
+                    <!-- Logo Placeholder -->
+                    <Viewbox Width="40" Height="40">
+                       <SymbolIcon Symbol="FourBars" Foreground="#004060"/>
+                    </Viewbox>
+                </StackPanel>
+            </Grid>
+        </NavigationView.PaneHeader>
 
-            <Button Content="Đăng xuất" 
-                    Command="{x:Bind ViewModel.LogoutCommand}" 
-                    HorizontalAlignment="Center" 
-                    Margin="0,20,0,0" />
-        </StackPanel>
-    </Grid>
+        <NavigationView.MenuItems>
+            <NavigationViewItem Content="DASHBOARD" Tag="Dashboard" Icon="ViewAll" FontWeight="SemiBold"/>
+            <NavigationViewItem Content="ALL PRODUCTS" Tag="Products" Icon="Shop" FontWeight="SemiBold"/>
+            <NavigationViewItem Content="ORDER LIST" Tag="Orders" Icon="List" FontWeight="SemiBold"/>
+            <NavigationViewItem Content="REPORT" Tag="Reports" Icon="Document" FontWeight="SemiBold"/>
+        </NavigationView.MenuItems>
+
+        <NavigationView.Content>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Top Bar -->
+                <Grid Grid.Row="0" Height="60" Background="White" Padding="20,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- Right Side: Search, Notif, Profile -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="20" VerticalAlignment="Center">
+                        <Button Background="Transparent" BorderThickness="0">
+                            <SymbolIcon Symbol="Find" Foreground="#0C2B4E"/>
+                        </Button>
+                        <Button Background="Transparent" BorderThickness="0">
+                            <SymbolIcon Symbol="Message" Foreground="#0C2B4E"/>
+                        </Button>
+                        
+                        <Button Background="White" BorderBrush="#E0E0E0" BorderThickness="1" Padding="10,5">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="{x:Bind ViewModel.UserRole, Mode=OneWay}" 
+                                           FontWeight="Bold" 
+                                           Foreground="#0C2B4E"
+                                           VerticalAlignment="Center"/>
+                                <FontIcon Glyph="&#xE70D;" FontSize="12" Foreground="#0C2B4E" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <Button.Flyout>
+                                <MenuFlyout>
+                                    <MenuFlyoutItem Text="Profile" Icon="Contact"/>
+                                    <MenuFlyoutItem Text="Admin Panel" Icon="Admin" 
+                                                    Command="{x:Bind ViewModel.AdminPanelCommand}"
+                                                    Visibility="{x:Bind ViewModel.UserRole, Mode=OneWay, Converter={StaticResource RoleToVisibilityConverter}, ConverterParameter='ADMIN'}"/>
+                                    <MenuFlyoutSeparator />
+                                    <MenuFlyoutItem Text="Logout" Icon="Cancel" Command="{x:Bind ViewModel.LogoutCommand}"/>
+                                </MenuFlyout>
+                            </Button.Flyout>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Main Content Frame -->
+                <Frame x:Name="ContentFrame" Grid.Row="1" Background="#F5F5F5"/>
+            </Grid>
+        </NavigationView.Content>
+    </NavigationView>
 </Page>
