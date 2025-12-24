@@ -6,6 +6,8 @@ using MyShop.Core.Services;
 using MyShop.Data.Repositories;
 using MyShop.App.ViewModels;
 using System;
+using LiveChartsCore;
+using LiveChartsCore.SkiaSharpView;
 
 namespace MyShop.App
 {
@@ -17,6 +19,11 @@ namespace MyShop.App
         public App()
         {
             this.InitializeComponent();
+
+            LiveChartsCore.LiveCharts.Configure(config =>
+                config.AddSkiaSharp()
+                      .AddDefaultMappers()
+                      .AddLightTheme());
 
             var services = new ServiceCollection();
             ConfigureServices(services);
@@ -49,12 +56,16 @@ namespace MyShop.App
             // Repositories (GraphQL-first)
             services.AddSingleton<IUserRepository, GraphQLUserRepository>();
             services.AddSingleton<IProductRepository, GraphQLProductRepository>();
+            // services.AddSingleton<ICategoryRepository, GraphQLCategoryRepository>();
+            services.AddSingleton<IReportRepository, GraphQLReportRepository>();
 
             // ViewModels
             services.AddTransient<MainWindow>();
             services.AddTransient<LoginViewModel>();
             services.AddTransient<ConfigViewModel>();
+            services.AddTransient<ConfigViewModel>();
             services.AddTransient<ShellViewModel>();
+            services.AddTransient<ReportsViewModel>();
         }
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
