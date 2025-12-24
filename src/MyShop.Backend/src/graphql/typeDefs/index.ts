@@ -427,6 +427,81 @@ export const typeDefs = gql`
     revenueByDate: [RevenueByDate!]!
   }
 
+  # Report Types
+  enum PeriodType {
+    WEEKLY
+    MONTHLY
+    YEARLY
+    CUSTOM
+  }
+
+  enum TimelineGrouping {
+    DAY
+    WEEK
+    MONTH
+  }
+
+  input ReportPeriodInput {
+    period: PeriodType!
+    startDate: DateTime
+    endDate: DateTime
+  }
+
+  input TopProductsInput {
+    startDate: DateTime!
+    endDate: DateTime!
+  }
+
+  input TopCustomersInput {
+    startDate: DateTime!
+    endDate: DateTime!
+    limit: Int = 10
+  }
+
+  input TimelineInput {
+    startDate: DateTime!
+    endDate: DateTime!
+    groupBy: TimelineGrouping = DAY
+  }
+
+  type PeriodReport {
+    totalProductsSold: Int!
+    totalOrders: Int!
+    totalRevenue: Decimal!
+    totalProfit: Decimal!
+    previousTotalProductsSold: Int
+    previousTotalOrders: Int
+    previousTotalRevenue: Decimal
+    previousTotalProfit: Decimal
+    productsChange: Float
+    ordersChange: Float
+    revenueChange: Float
+    profitChange: Float
+    periodStart: DateTime!
+    periodEnd: DateTime!
+  }
+
+  type ProductSalesData {
+    productId: Int!
+    productName: String!
+    quantitySold: Int!
+    revenue: Decimal!
+  }
+
+  type CustomerSalesData {
+    customerId: Int
+    customerName: String!
+    totalOrders: Int!
+    totalSpent: Decimal!
+  }
+
+  type RevenueProfit {
+    date: String!
+    revenue: Decimal!
+    profit: Decimal!
+    orders: Int!
+  }
+
   # ==================== QUERIES ====================
   type Query {
     # Auth
@@ -477,6 +552,12 @@ export const typeDefs = gql`
     # Dashboard & Reports
     dashboardStats: DashboardStats!
     salesReport(dateRange: DateRangeInput!): SalesReport!
+    
+    # Report Queries
+    reportByPeriod(input: ReportPeriodInput!): PeriodReport!
+    topProductsByQuantity(input: TopProductsInput!): [ProductSalesData!]!
+    topCustomers(input: TopCustomersInput!): [CustomerSalesData!]!
+    revenueAndProfitTimeline(input: TimelineInput!): [RevenueProfit!]!
 
     # Commissions
     getCommissions(filter: CommissionFilterInput, pagination: PaginationInput): PaginatedCommissions!

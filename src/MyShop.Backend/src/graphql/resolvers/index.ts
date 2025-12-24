@@ -11,6 +11,7 @@ import { dashboardResolvers } from './dashboard.resolver';
 import { commissionResolvers } from './commission.resolver';
 import { salesTargetResolvers } from './salesTarget.resolver';
 import { appLicenseResolvers } from './appLicense.resolver';
+import { reportResolvers } from './report.resolver';
 
 // Custom Decimal scalar for handling numbers
 const DecimalScalar = new GraphQLScalarType({
@@ -45,6 +46,7 @@ export const resolvers = {
     ...discountResolvers.Query,
     ...orderResolvers.Query,
     ...dashboardResolvers.Query,
+    ...reportResolvers.Query,
     ...commissionResolvers.Query,
     ...salesTargetResolvers.Query,
     ...appLicenseResolvers.Query,
