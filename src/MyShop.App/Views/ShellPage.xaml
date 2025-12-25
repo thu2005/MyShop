@@ -42,10 +42,11 @@
         <NavigationView.MenuItems>
             <NavigationViewItem Content="DASHBOARD" Tag="Dashboard" Icon="ViewAll" FontWeight="SemiBold"/>
 
-            <NavigationViewItemHeader Content="Inventory" />
-            <NavigationViewItem Content="All Products" Tag="Products_0" Icon="Shop" FontWeight="SemiBold"/>
-
-            <NavigationViewItemHeader Content="Categories" x:Name="CategoryHeader"/>
+            <NavigationViewItem Content="ALL PRODUCTS" 
+                                x:Name="AllProductsNavItem"
+                                Tag="Products_0" 
+                                Icon="Shop" 
+                                FontWeight="SemiBold"/>
 
             <NavigationViewItemSeparator/>
 

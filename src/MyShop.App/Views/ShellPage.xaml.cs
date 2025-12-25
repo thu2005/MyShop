@@ -20,59 +20,55 @@ namespace MyShop.App.Views
             NavView.SelectionChanged += NavView_SelectionChanged;
             NavView.Loaded += NavView_Loaded;
 
-            // Subscribe to collection changes to update UI
+            // Subscribe to collection changes
             ViewModel.Categories.CollectionChanged += Categories_CollectionChanged;
         }
 
         private void Categories_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
-            // Rebuild the dynamic category menu items
             RefreshCategoryMenuItems();
         }
 
         private void RefreshCategoryMenuItems()
         {
-            // 1. Find the index of the Category Header  
-            int headerIndex = NavView.MenuItems.IndexOf(CategoryHeader);
-            if (headerIndex < 0) return;
+            // Clear existing children from the "All Products" item
+            AllProductsNavItem.MenuItems.Clear();
 
-            // 2. Remove existing dynamic items (items between Header and Separator/End)  
-            while (NavView.MenuItems.Count > headerIndex + 1)
-            {
-                var item = NavView.MenuItems[headerIndex + 1];
-                if (item is NavigationViewItemSeparator || (item is NavigationViewItem ni && ni.Tag.ToString() == "Orders"))
-                    break;
-                NavView.MenuItems.RemoveAt(headerIndex + 1);
-            }
-
-            // 3. Add new items  
-            // Skip ID 0 (All Products) because we have a static "All Products" button  
+            // Add categories as children
+            // Skip ID 0 because that is the parent "All Products" itself
             foreach (var cat in ViewModel.Categories.Where(c => c.Id != 0))
             {
                 var item = new NavigationViewItem
                 {
-                    Content = cat.DisplayText, // "Iphone (5)"  
-                    Tag = $"Products_{cat.Id}", // Tag format: "Products_ID"  
-                    Icon = new SymbolIcon(Symbol.Folder)
+                    Content = cat.DisplayText,
+                    Tag = $"Products_{cat.Id}", // Tag format: "Products_ID"
+                    Icon = new SymbolIcon(Symbol.Folder) // Optional: Add folder icon
                 };
 
-                // Set the tooltip using ToolTipService.SetToolTip  
+                // Add tooltip for stock count
                 ToolTipService.SetToolTip(item, $"{cat.Count} items in stock");
 
-                NavView.MenuItems.Insert(++headerIndex, item);
+                AllProductsNavItem.MenuItems.Add(item);
             }
         }
 
         private void NavView_Loaded(object sender, RoutedEventArgs e)
         {
             NavView.SelectedItem = NavView.MenuItems[0]; // Dashboard
-            // Initial populate if data is already there
-            if (ViewModel.Categories.Count > 0) RefreshCategoryMenuItems();
+
+            // Initial populate
+            if (ViewModel.Categories.Count > 0)
+            {
+                RefreshCategoryMenuItems();
+            }
         }
 
         private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
         {
-            if (args.IsSettingsSelected) { /* ... */ }
+            if (args.IsSettingsSelected)
+            {
+                // ContentFrame.Navigate(typeof(SettingsPage));
+            }
             else
             {
                 var selectedItem = args.SelectedItem as NavigationViewItem;
@@ -97,9 +93,15 @@ namespace MyShop.App.Views
                     {
                         switch (tag)
                         {
-                            case "Dashboard": pageType = typeof(Dashboard); break;
-                            case "Orders": pageType = typeof(OrdersPage); break;
-                            case "Reports": pageType = typeof(ReportsPage); break;
+                            case "Dashboard":
+                                pageType = typeof(Dashboard);
+                                break;
+                            case "Orders":
+                                pageType = typeof(OrdersPage);
+                                break;
+                            case "Reports":
+                                pageType = typeof(ReportsPage);
+                                break;
                         }
                     }
 
@@ -111,7 +113,16 @@ namespace MyShop.App.Views
             }
         }
 
-        // ... (Logout and other handlers remain the same)
-        private void OnLogoutRequested() { /*...*/ }
+        private void OnLogoutRequested()
+        {
+            if (Frame.CanGoBack)
+            {
+                Frame.GoBack();
+            }
+            else
+            {
+                Frame.Navigate(typeof(LoginScreen));
+            }
+        }
     }
 }
