@@ -207,26 +207,25 @@ export const reportResolvers = {
         where: {
           createdAt: { gte: new Date(startDate), lte: new Date(endDate) },
           status: 'COMPLETED',
+          customerId: { not: null },
         },
         include: {
           customer: true,
         },
       });
 
-      const customerSales = new Map<string, { id: number | null; name: string; orders: number; spent: Prisma.Decimal }>();
+      const customerSales = new Map<number, { name: string; orders: number; spent: Prisma.Decimal }>();
 
       for (const order of orders) {
-        const customerId = order.customerId;
-        const customerName = order.customer?.name || 'Walk-in Customer';
-        const key = customerId ? `customer_${customerId}` : `order_${order.id}`;
+        const customerId = order.customerId!; // Safe to use ! since we filtered out nulls
+        const customerName = order.customer!.name;
 
-        const existing = customerSales.get(key);
+        const existing = customerSales.get(customerId);
         if (existing) {
           existing.orders += 1;
           existing.spent = existing.spent.add(order.total);
         } else {
-          customerSales.set(key, {
-            id: customerId,
+          customerSales.set(customerId, {
             name: customerName,
             orders: 1,
             spent: new Prisma.Decimal(order.total),
@@ -234,11 +233,11 @@ export const reportResolvers = {
         }
       }
 
-      return Array.from(customerSales.values())
-        .sort((a, b) => b.spent.comparedTo(a.spent))
+      return Array.from(customerSales.entries())
+        .sort((a, b) => b[1].spent.comparedTo(a[1].spent))
         .slice(0, limit)
-        .map((data) => ({
-          customerId: data.id,
+        .map(([customerId, data]) => ({
+          customerId: customerId,
           customerName: data.name,
           totalOrders: data.orders,
           totalSpent: data.spent,

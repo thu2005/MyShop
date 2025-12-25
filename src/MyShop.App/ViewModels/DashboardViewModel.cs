@@ -226,9 +226,9 @@ public partial class DashboardViewModel : ObservableObject
                 Values = values,
                 Name = "Revenue",
                 Fill = null,
-                Stroke = new SolidColorPaint(SKColors.DeepSkyBlue) { StrokeThickness = 3 },
+                Stroke = new SolidColorPaint(new SKColor(0x00, 0x3F, 0x62)) { StrokeThickness = 3 },
                 GeometrySize = 10,
-                GeometryFill = new SolidColorPaint(SKColors.DeepSkyBlue),
+                GeometryFill = new SolidColorPaint(new SKColor(0x00, 0x3F, 0x62)),
                 GeometryStroke = new SolidColorPaint(SKColors.White) { StrokeThickness = 2 }
             }
         };
