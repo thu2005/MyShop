@@ -64,7 +64,6 @@ namespace MyShop.App
             services.AddTransient<MainWindow>();
             services.AddTransient<LoginViewModel>();
             services.AddTransient<ConfigViewModel>();
-            services.AddTransient<ConfigViewModel>();
             services.AddTransient<ShellViewModel>();
 
             services.AddTransient<ProductViewModel>();

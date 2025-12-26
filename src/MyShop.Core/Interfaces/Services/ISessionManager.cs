@@ -8,5 +8,7 @@ namespace MyShop.Core.Interfaces.Services
         string? Token { get; set; }
         bool IsAuthenticated { get; }
         void ClearSession();
+
+        void SaveSession(string token, User user);
     }
 }

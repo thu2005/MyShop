@@ -73,14 +73,8 @@ namespace MyShop.Core.Services
                     
                     if (user != null)
                     {
-                        // Save session
-                        if (_sessionManager is SessionManager s)
-                        {
-                            s.SaveSession(token, user);
-                        }
-                        
-                        // Set auth token for all future GraphQL requests
-                        _graphQLService.SetAuthToken(token);
+                        // Save session 
+                        _sessionManager.SaveSession(token, user);
                         
                         System.Diagnostics.Debug.WriteLine("Login successful and session saved.");
                         return user;
