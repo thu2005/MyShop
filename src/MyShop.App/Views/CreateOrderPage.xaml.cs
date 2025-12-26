@@ -21,7 +21,9 @@ namespace MyShop.App.Views
         private ObservableCollection<Product> _availableProducts;
         private ObservableCollection<Customer> _customers;
         private ObservableCollection<Discount> _discounts;
+
         private Customer _selectedCustomer;
+        private Discount _selectedDiscount;
 
         public CreateOrderPage()
         {
@@ -81,7 +83,7 @@ namespace MyShop.App.Views
                     _discounts.Add(discount);
                 }
 
-                DiscountComboBox.ItemsSource = _discounts;
+
             }
             catch (Exception ex)
             {
@@ -216,9 +218,69 @@ namespace MyShop.App.Views
             }
         }
 
-        private void OnDiscountSelectionChanged(object sender, SelectionChangedEventArgs e)
+        private async void OnSelectDiscountClick(object sender, RoutedEventArgs e)
         {
+             var dialog = new ContentDialog
+            {
+                Title = "Select Discount",
+                SecondaryButtonText = "Cancel",
+                XamlRoot = this.XamlRoot,
+                DefaultButton = ContentDialogButton.Secondary,
+                Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style,
+                SecondaryButtonStyle = this.Resources["DialogPrimaryButtonStyle"] as Style
+            };
+
+            var listView = new ListView
+            {
+                SelectionMode = ListViewSelectionMode.None,
+                IsItemClickEnabled = true,
+                ItemTemplate = this.Resources["DiscountSelectionTemplate"] as DataTemplate,
+                ItemsSource = _discounts,
+                MaxHeight = 400
+            };
+
+            listView.ItemClick += (s, args) =>
+            {
+                if (args.ClickedItem is Discount selected)
+                {
+                    _selectedDiscount = selected;
+                    dialog.Hide();
+                    UpdateDiscountUI();
+                    UpdateTotals();
+                }
+            };
+            
+            var container = new Grid();
+            container.Children.Add(listView);
+            dialog.Content = container;
+
+            await dialog.ShowAsync();
+        }
+
+        private void OnRemoveDiscountClick(object sender, RoutedEventArgs e)
+        {
+            _selectedDiscount = null;
+            UpdateDiscountUI();
             UpdateTotals();
+        }
+
+        private void UpdateDiscountUI()
+        {
+            if (_selectedDiscount != null)
+            {
+                SelectDiscountButton.Content = new TextBlock 
+                { 
+                    Text = _selectedDiscount.Name, 
+                    Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Black),
+                    VerticalAlignment = VerticalAlignment.Center
+                };
+                RemoveDiscountButton.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                SelectDiscountButton.Content = "Select Discount";
+                RemoveDiscountButton.Visibility = Visibility.Collapsed;
+            }
         }
 
         private void UpdateTotals()
@@ -226,19 +288,19 @@ namespace MyShop.App.Views
             decimal subtotal = _orderItems.Sum(i => i.Total);
             decimal discountAmount = 0;
 
-            if (DiscountComboBox.SelectedItem is Discount discount)
+            if (_selectedDiscount != null)
             {
-                if (discount.Type == DiscountType.PERCENTAGE)
+                if (_selectedDiscount.Type == DiscountType.PERCENTAGE)
                 {
-                    discountAmount = subtotal * (discount.Value / 100);
-                    if (discount.MaxDiscount.HasValue && discountAmount > discount.MaxDiscount.Value)
+                    discountAmount = subtotal * (_selectedDiscount.Value / 100);
+                    if (_selectedDiscount.MaxDiscount.HasValue && discountAmount > _selectedDiscount.MaxDiscount.Value)
                     {
-                        discountAmount = discount.MaxDiscount.Value;
+                        discountAmount = _selectedDiscount.MaxDiscount.Value;
                     }
                 }
-                else if (discount.Type == DiscountType.FIXED_AMOUNT)
+                else if (_selectedDiscount.Type == DiscountType.FIXED_AMOUNT)
                 {
-                    discountAmount = discount.Value;
+                    discountAmount = _selectedDiscount.Value;
                 }
             }
 
@@ -247,7 +309,7 @@ namespace MyShop.App.Views
 
             SubtotalText.Text = $"{subtotal:N0} ₫";
             DiscountAmountText.Text = $"-{discountAmount:N0} ₫";
-            TotalText.Text = $"{total:N0} ₫";
+            TotalAmountText.Text = $"{total:N0} ₫";
         }
 
         private void OnClearCustomerClick(object sender, RoutedEventArgs e)
@@ -391,7 +453,7 @@ namespace MyShop.App.Views
             var newOrder = new Order
             {
                 CustomerId = _selectedCustomer?.Id,
-                DiscountId = (DiscountComboBox.SelectedItem as Discount)?.Id,
+                DiscountId = _selectedDiscount?.Id,
                 Notes = NotesTextBox.Text,
                 Status = selectedStatus,
                 OrderItems = _orderItems.ToList(),

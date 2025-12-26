@@ -53,6 +53,20 @@
             </Setter>
         </Style>
 
+        <DataTemplate x:Key="DiscountSelectionTemplate" x:DataType="models:Discount">
+            <Grid Padding="12" Background="Transparent">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold" Foreground="#1A1A1A"/>
+                    <TextBlock Text="Coupon Code" FontSize="12" Foreground="#666666"/>
+                </StackPanel>
+                <TextBlock Grid.Column="1" Text="{x:Bind Value, Converter={StaticResource CurrencyConverter}}" FontWeight="Bold" VerticalAlignment="Center" Foreground="#00796B"/>
+            </Grid>
+        </DataTemplate>
+
         <DataTemplate x:Key="ProductSelectionTemplate" x:DataType="models:Product">
             <Grid Padding="12" Background="Transparent" ColumnSpacing="16">
                 <Grid.ColumnDefinitions>
@@ -280,17 +294,19 @@
                  <TextBlock Grid.Row="1" Text="Tax (0%)" Foreground="#666666" Margin="0,0,0,8"/>
                  <TextBlock Grid.Row="1" Grid.Column="1" Text="0 ₫" FontWeight="SemiBold" HorizontalAlignment="Right" Margin="0,0,0,8"/>
                  
-                 <TextBlock Grid.Row="2" Text="Discount" Foreground="#666666" Margin="0,0,0,8"/>
-                 <ComboBox Grid.Row="2" Grid.Column="1" x:Name="DiscountComboBox" PlaceholderText="Select Discount" Width="150" HorizontalAlignment="Right" Margin="0,0,0,8" SelectionChanged="OnDiscountSelectionChanged" DisplayMemberPath="Name"/>
-                 <TextBlock Grid.Row="2" Grid.Column="1" x:Name="DiscountAmountText" Text="-0 ₫" FontWeight="SemiBold" HorizontalAlignment="Right" Margin="0,28,0,0" Foreground="#27AE60"/>
+                 <TextBlock Grid.Row="2" Text="Discount" Foreground="#666666" Margin="0,0,0,16"/>
+                 <StackPanel Grid.Row="2" Grid.Column="1" HorizontalAlignment="Right" Spacing="8" Margin="0,0,0,16" Orientation="Horizontal">
+                    <Button x:Name="SelectDiscountButton" Content="Select Discount" Click="OnSelectDiscountClick" Width="150" HorizontalContentAlignment="Left" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" Foreground="#1A1A1A"/>
+                    <Button x:Name="RemoveDiscountButton" Visibility="Collapsed" Click="OnRemoveDiscountClick" Background="Transparent" BorderThickness="0" Padding="4" ToolTipService.ToolTip="Remove Discount">
+                        <FontIcon Glyph="&#xE74D;" FontSize="16" Foreground="#FF5555"/>
+                    </Button>
+                    <TextBlock x:Name="DiscountAmountText" Text="-0 ₫" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="#27AE60" Margin="8,0,0,0"/>
+                 </StackPanel>
                  
-                 <TextBlock Grid.Row="3" Text="Shipping Rate" Foreground="#666666" Margin="0,0,0,16"/>
-                 <TextBlock Grid.Row="3" Grid.Column="1" Text="0 ₫" FontWeight="SemiBold" HorizontalAlignment="Right" Margin="0,0,0,16"/>
+                 <Border Grid.Row="3" Grid.ColumnSpan="2" BorderBrush="#E0E0E0" BorderThickness="0,1,0,0" Margin="0,0,0,16"/>
                  
-                 <Border Grid.Row="4" Grid.ColumnSpan="2" Height="1" Background="#E0E0E0" Margin="0,0,0,16"/>
-                 
-                 <TextBlock Grid.Row="4" Text="Total" FontSize="18" FontWeight="Bold" Margin="0,16,0,0"/>
-                 <TextBlock Grid.Row="4" Grid.Column="1" x:Name="TotalText" Text="0 ₫" FontSize="18" FontWeight="Bold" HorizontalAlignment="Right" Margin="0,16,0,0"/>
+                 <TextBlock Grid.Row="4" Text="Total" FontSize="18" FontWeight="Bold" Foreground="#1A1A1A"/>
+                 <TextBlock Grid.Row="4" Grid.Column="1" x:Name="TotalAmountText" Text="0 ₫" FontSize="18" FontWeight="Bold" HorizontalAlignment="Right" Foreground="#1A1A1A"/>
             </Grid>
         </Grid>
     </ScrollViewer>
