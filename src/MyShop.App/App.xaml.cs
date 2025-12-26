@@ -52,10 +52,11 @@ namespace MyShop.App
             services.AddSingleton<IAuthorizationService, AuthorizationService>();
             services.AddSingleton<IEncryptionService, EncryptionService>();
             services.AddSingleton<IDashboardService, DashboardService>();
+            services.AddSingleton<IImageUploadService>(sp => new ImageUploadService("http://localhost:4000"));
 
             services.AddSingleton<IUserRepository, GraphQLUserRepository>();
             services.AddSingleton<IProductRepository, GraphQLProductRepository>();
-            // services.AddSingleton<ICategoryRepository, GraphQLCategoryRepository>();
+            services.AddSingleton<ICategoryRepository, GraphQLCategoryRepository>();
             services.AddSingleton<IReportRepository, GraphQLReportRepository>();
             services.AddSingleton<IOrderRepository, GraphQLOrderRepository>();
             services.AddSingleton<ICustomerRepository, GraphQLCustomerRepository>();
@@ -68,6 +69,8 @@ namespace MyShop.App
             services.AddTransient<ShellViewModel>();
 
             services.AddTransient<ProductViewModel>();
+            services.AddTransient<ProductDetailViewModel>();
+            services.AddTransient<AddProductViewModel>();
             services.AddTransient<ReportsViewModel>();
             services.AddTransient<OrderViewModel>();
 
