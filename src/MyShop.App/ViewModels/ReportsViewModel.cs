@@ -20,6 +20,8 @@ namespace MyShop.App.ViewModels
 {
     public partial class ReportsViewModel : ObservableObject
     {
+        public string CurrentDateString => DateTime.Now.ToString("MMM d, yyyy");
+
         private readonly IReportRepository _reportRepository;
         private PeriodType _selectedPeriod = PeriodType.WEEKLY;
         private DateTimeOffset? _startDate = DateTimeOffset.Now.AddDays(-7);
