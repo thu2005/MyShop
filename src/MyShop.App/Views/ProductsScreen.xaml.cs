@@ -111,5 +111,13 @@ namespace MyShop.App.Views
                 }
             }
         }
+
+        private void OnProductCardClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is Product product)
+            {
+                Frame.Navigate(typeof(ProductDetailScreen), product);
+            }
+        }
     }
 }

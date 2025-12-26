@@ -30,6 +30,7 @@ namespace MyShop.Data.Repositories
                             sku
                             barcode
                             price
+                            costPrice
                             stock
                             minStock
                             imageUrl
@@ -56,10 +57,17 @@ namespace MyShop.Data.Repositories
                             products {
                                 id
                                 name
+                                description
                                 sku
                                 price
+                                costPrice
                                 stock
+                                popularity
                                 categoryId
+                                category {
+                                    id
+                                    name
+                                }
                                 isActive
                                 imageUrl 
                             }
@@ -213,11 +221,12 @@ namespace MyShop.Data.Repositories
                     input = new
                     {
                         name = entity.Name,
+                        description = entity.Description,
                         sku = entity.Sku,
                         price = entity.Price,
+                        costPrice = entity.CostPrice,
                         stock = entity.Stock,
                         categoryId = entity.CategoryId,
-                        isActive = entity.IsActive,
                         imageUrl = entity.ImageUrl // Include this if updating image is allowed
                     }
                 }
