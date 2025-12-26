@@ -109,8 +109,8 @@
                 <StackPanel Spacing="12">
                     <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                         <TextBlock Text="New Order" FontSize="24" FontWeight="Bold" Foreground="#1A1A1A"/>
-                        <Border CornerRadius="4" Padding="8,4" Background="#E0F2F1" VerticalAlignment="Center">
-                            <TextBlock Text="PENDING" FontSize="12" FontWeight="SemiBold" Foreground="#00796B"/>
+                        <Border x:Name="StatusBadgeBorder" CornerRadius="4" Padding="8,4" Background="#E0F2F1" VerticalAlignment="Center">
+                            <TextBlock x:Name="StatusBadgeText" Text="PENDING" FontSize="12" FontWeight="SemiBold" Foreground="#00796B"/>
                         </Border>
                     </StackPanel>
                     
@@ -121,7 +121,7 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Top">
-                    <ComboBox x:Name="StatusComboBox" Width="150" SelectedIndex="0" Header="Status">
+                    <ComboBox x:Name="StatusComboBox" Width="150" SelectedIndex="0" Header="Status" SelectionChanged="OnStatusChanged">
                          <ComboBoxItem Content="Pending" Tag="PENDING"/>
                          <ComboBoxItem Content="Processing" Tag="PROCESSING"/>
                          <ComboBoxItem Content="Completed" Tag="COMPLETED"/>
@@ -131,6 +131,8 @@
                     <Button Background="White" BorderThickness="1" BorderBrush="#E0E0E0" Padding="12,8" CornerRadius="4" VerticalAlignment="Bottom" Margin="0,0,0,1">
                         <FontIcon Glyph="&#xE749;" FontSize="16"/> <!-- Print -->
                     </Button>
+
+                    <Button Content="Cancel" Click="OnCancelClick" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" Foreground="#333333" Padding="16,8" CornerRadius="4" VerticalAlignment="Bottom" Margin="0,0,0,1"/>
                     
                     <Button Background="#003F62" Foreground="White" Padding="24,8" CornerRadius="4" VerticalAlignment="Bottom" Click="OnSaveOrderClick" Margin="0,0,0,1">
                         <TextBlock Text="Save" FontWeight="SemiBold"/>

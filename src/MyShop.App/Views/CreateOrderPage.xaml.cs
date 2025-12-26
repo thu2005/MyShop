@@ -480,5 +480,44 @@ namespace MyShop.App.Views
                 await errorDialog.ShowAsync();
             }
         }
+
+        private void OnCancelClick(object sender, RoutedEventArgs e)
+        {
+            if (Frame.CanGoBack)
+            {
+                Frame.GoBack();
+            }
+        }
+
+        private void OnStatusChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (StatusComboBox.SelectedItem is ComboBoxItem item && item.Tag is string tag)
+            {
+                StatusBadgeText.Text = tag;
+
+                // Default Pending Colors use #E0F2F1 and #00796B
+                var bgColor = Windows.UI.Color.FromArgb(255, 224, 242, 241); 
+                var fgColor = Windows.UI.Color.FromArgb(255, 0, 121, 107);
+
+                switch (tag)
+                {
+                    case "PROCESSING":
+                        bgColor = Windows.UI.Color.FromArgb(255, 227, 242, 253); // #E3F2FD
+                        fgColor = Windows.UI.Color.FromArgb(255, 13, 71, 161);   // #0D47A1
+                        break;
+                    case "COMPLETED":
+                        bgColor = Windows.UI.Color.FromArgb(255, 232, 245, 233); // #E8F5E9
+                        fgColor = Windows.UI.Color.FromArgb(255, 46, 125, 50);   // #2E7D32
+                        break;
+                     case "CANCELLED":
+                        bgColor = Windows.UI.Color.FromArgb(255, 255, 235, 238); // #FFEBEE
+                        fgColor = Windows.UI.Color.FromArgb(255, 198, 40, 40);   // #C62828
+                        break;
+                }
+
+                StatusBadgeBorder.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(bgColor);
+                StatusBadgeText.Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(fgColor);
+            }
+        }
     }
 }
