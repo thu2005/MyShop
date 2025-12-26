@@ -21,6 +21,14 @@ namespace MyShop.App.Views
             NavView.Loaded += NavView_Loaded;
 
             ViewModel.Categories.CollectionChanged += Categories_CollectionChanged;
+
+            this.Unloaded += ShellPage_Unloaded;
+        }
+
+        private void ShellPage_Unloaded(object sender, RoutedEventArgs e)
+        {
+            ViewModel.LogoutRequested -= OnLogoutRequested;
+            ViewModel.Categories.CollectionChanged -= Categories_CollectionChanged;
         }
 
         private void Categories_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)

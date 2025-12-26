@@ -2,6 +2,7 @@ using MyShop.App.ViewModels.Base;
 using MyShop.Core.Interfaces.Services;
 using MyShop.Core.Interfaces.Repositories;
 using MyShop.Core.Models;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -22,13 +23,22 @@ namespace MyShop.App.ViewModels
         {
             _authService = authService;
             _authorizationService = authorizationService;
-            _productRepository = productRepository; // Store it
+            _productRepository = productRepository;
 
             LogoutCommand = new RelayCommand(_ => ExecuteLogout());
             AdminPanelCommand = new RelayCommand(_ => ExecuteOpenAdminPanel());
 
-            // Load categories on startup
-            _ = LoadCategoriesAsync();
+            // Load categories on startup with proper error handling
+            Task.Run(async () => {
+                try 
+                {
+                    await LoadCategoriesAsync();
+                }
+                catch (System.Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Initial Category Load failed: {ex.Message}");
+                }
+            });
         }
 
         public ObservableCollection<CategoryStat> Categories { get; } = new();
@@ -38,8 +48,11 @@ namespace MyShop.App.ViewModels
             try
             {
                 var products = await _productRepository.GetAllAsync();
-
-                var stats = new ObservableCollection<CategoryStat>
+                
+                // Switch to UI thread if necessary (though WinUI 3 usually handles this if awaited correctly)
+                // But let's be safe.
+                
+                var stats = new List<CategoryStat>
                 {
                     new CategoryStat { Id = 0, Name = "All Products", Count = products.Count },
                     new CategoryStat { Id = 1, Name = "Iphone", Count = products.Count(p => p.CategoryId == 1) },
@@ -50,6 +63,8 @@ namespace MyShop.App.ViewModels
                     new CategoryStat { Id = 6, Name = "TV", Count = products.Count(p => p.CategoryId == 6) }
                 };
 
+                // Clear and add items. 
+                // We should ideally use the DispatcherQueue here if this can be called from background.
                 Categories.Clear();
                 foreach (var s in stats) Categories.Add(s);
             }

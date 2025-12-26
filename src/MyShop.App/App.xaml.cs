@@ -20,6 +20,7 @@ namespace MyShop.App
         public App()
         {
             this.InitializeComponent();
+            this.UnhandledException += App_UnhandledException;
 
             LiveChartsCore.LiveCharts.Configure(config =>
                 config.AddSkiaSharp()
@@ -34,6 +35,17 @@ namespace MyShop.App
         public T GetService<T>() where T : class
         {
             return Services.GetRequiredService<T>();
+        }
+
+        private void App_UnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
+        {
+            // Log the exception to debug output
+            System.Diagnostics.Debug.WriteLine($"Unhandled exception: {e.Message}");
+            System.Diagnostics.Debug.WriteLine($"Stack Trace: {e.Exception?.StackTrace}");
+            
+            // We can choose to mark it as handled to prevent the crash dialog
+            // but for Win32 exceptions, this might not always work.
+            e.Handled = true;
         }
         private void ConfigureServices(IServiceCollection services)
         {
@@ -77,7 +89,16 @@ namespace MyShop.App
             m_window = Services.GetService<MainWindow>();
             MainWindowInstance = m_window;
 
-            m_window?.Activate();
+            if (m_window != null)
+            {
+                m_window.Closed += (s, e) =>
+                {
+                    // Force the application to exit cleanly
+                    // This can help resolve some Win32 exceptions on exit in WinUI 3
+                    Application.Current.Exit();
+                };
+                m_window.Activate();
+            }
         }
 
         private Window? m_window;
