@@ -319,6 +319,10 @@ export const orderResolvers = {
 
       const existingOrder = await context.prisma.order.findUnique({
         where: { id },
+        include: {
+          orderItems: true,
+          discount: true,
+        },
       });
 
       if (!existingOrder) {
@@ -327,25 +331,137 @@ export const orderResolvers = {
         });
       }
 
-      // Update completion date if status is COMPLETED
-      const updateData: any = { ...input };
-      if (input.status === 'COMPLETED' && existingOrder.status !== 'COMPLETED') {
-        updateData.completedAt = new Date();
+      // Block editing COMPLETED or CANCELLED orders
+      if (existingOrder.status === 'COMPLETED' || existingOrder.status === 'CANCELLED') {
+        throw new GraphQLError(`Cannot edit order with status ${existingOrder.status}`, {
+          extensions: { code: 'BAD_USER_INPUT' },
+        });
       }
 
-      const order = await context.prisma.order.update({
-        where: { id },
-        data: updateData,
-        include: {
-          customer: true,
-          createdBy: true,
-          discount: true,
-          orderItems: {
-            include: {
-              product: true,
+      const order = await context.prisma.$transaction(async (tx) => {
+        // Prepare base update data (without items)
+        const updateData: any = {};
+
+        if (input.customerId !== undefined) {
+          updateData.customerId = input.customerId;
+        }
+        if (input.discountId !== undefined) {
+          updateData.discountId = input.discountId;
+        }
+        if (input.status !== undefined) {
+          updateData.status = input.status;
+          if (input.status === 'COMPLETED' && existingOrder.status !== 'COMPLETED') {
+            updateData.completedAt = new Date();
+          }
+        }
+        if (input.notes !== undefined) {
+          updateData.notes = input.notes;
+        }
+
+        // Handle order items if provided
+        if (input.items && Array.isArray(input.items)) {
+          const existingItems = existingOrder.orderItems;
+          const newItems = input.items;
+
+          // Build maps for comparison
+          const existingItemMap = new Map(existingItems.map(item => [item.productId, item]));
+          const newItemProductIds = new Set(newItems.map((item: any) => item.productId));
+
+          // Items to delete (exist in old but not in new)
+          const itemsToDelete = existingItems.filter(item => !newItemProductIds.has(item.productId));
+
+          // Items to update or create
+          for (const newItem of newItems) {
+            const existingItem = existingItemMap.get(newItem.productId);
+
+            if (existingItem) {
+              // Update existing item
+              const itemSubtotal = new Prisma.Decimal(newItem.quantity).mul(new Prisma.Decimal(newItem.unitPrice));
+              await tx.orderItem.update({
+                where: { id: existingItem.id },
+                data: {
+                  quantity: newItem.quantity,
+                  unitPrice: new Prisma.Decimal(newItem.unitPrice),
+                  subtotal: itemSubtotal,
+                  total: itemSubtotal, // Can apply item-level discount here if needed
+                },
+              });
+            } else {
+              // Create new item
+              const itemSubtotal = new Prisma.Decimal(newItem.quantity).mul(new Prisma.Decimal(newItem.unitPrice));
+              await tx.orderItem.create({
+                data: {
+                  orderId: id,
+                  productId: newItem.productId,
+                  quantity: newItem.quantity,
+                  unitPrice: new Prisma.Decimal(newItem.unitPrice),
+                  subtotal: itemSubtotal,
+                  discountAmount: new Prisma.Decimal(0),
+                  total: itemSubtotal,
+                },
+              });
+            }
+          }
+
+          // Delete removed items
+          for (const itemToDelete of itemsToDelete) {
+            await tx.orderItem.delete({
+              where: { id: itemToDelete.id },
+            });
+          }
+
+          // Recalculate order totals
+          const updatedItems = await tx.orderItem.findMany({
+            where: { orderId: id },
+          });
+
+          const subtotal = updatedItems.reduce(
+            (sum, item) => sum.add(item.total),
+            new Prisma.Decimal(0)
+          );
+
+          // Apply discount if exists
+          let discountAmount = new Prisma.Decimal(0);
+          const discountId = input.discountId !== undefined ? input.discountId : existingOrder.discountId;
+
+          if (discountId) {
+            const discount = await tx.discount.findUnique({ where: { id: discountId } });
+            if (discount && discount.isActive) {
+              if (discount.type === 'PERCENTAGE') {
+                discountAmount = subtotal.mul(discount.value).div(100);
+                if (discount.maxDiscount && discountAmount.greaterThan(discount.maxDiscount)) {
+                  discountAmount = discount.maxDiscount;
+                }
+              } else {
+                discountAmount = discount.value;
+              }
+            }
+          }
+
+          const total = subtotal.sub(discountAmount);
+
+          updateData.subtotal = subtotal;
+          updateData.discountAmount = discountAmount;
+          updateData.total = total;
+        }
+
+        // Perform the update
+        const updatedOrder = await tx.order.update({
+          where: { id },
+          data: updateData,
+          include: {
+            customer: true,
+            createdBy: true,
+            discount: true,
+            orderItems: {
+              include: {
+                product: true,
+              },
             },
           },
-        },
+        });
+
+        return updatedOrder;
       });
 
       return order;

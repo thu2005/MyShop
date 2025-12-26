@@ -336,7 +336,23 @@ namespace MyShop.Data.Repositories
                             id
                             orderNumber
                             status
+                            customerId
+                            discountId
+                            subtotal
+                            discountAmount
+                            total
                             notes
+                            customer {
+                                id
+                                name
+                            }
+                            orderItems {
+                                id
+                                productId
+                                quantity
+                                unitPrice
+                                total
+                            }
                         }
                     }",
                 Variables = new
@@ -344,8 +360,16 @@ namespace MyShop.Data.Repositories
                     id = entity.Id,
                     input = new
                     {
+                        customerId = entity.CustomerId,
+                        discountId = entity.DiscountId,
                         status = entity.Status.ToString(),
-                        notes = entity.Notes
+                        notes = entity.Notes,
+                        items = entity.OrderItems?.Select(item => new
+                        {
+                            productId = item.ProductId,
+                            quantity = item.Quantity,
+                            unitPrice = item.UnitPrice
+                        }).ToArray()
                     }
                 }
             };

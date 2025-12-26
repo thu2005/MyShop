@@ -26,6 +26,7 @@ namespace MyShop.Data.Repositories
                         discount(id: $id) {
                             id
                             code
+                            name
                             description
                             type
                             value
@@ -55,6 +56,7 @@ namespace MyShop.Data.Repositories
                             discounts {
                                 id
                                 code
+                                name
                                 description
                                 type
                                 value
@@ -87,6 +89,7 @@ namespace MyShop.Data.Repositories
                         activeDiscounts {
                             id
                             code
+                            name
                             description
                             type
                             value
@@ -112,6 +115,7 @@ namespace MyShop.Data.Repositories
                         discountByCode(code: $code) {
                             id
                             code
+                            name
                             description
                             type
                             value
@@ -138,6 +142,7 @@ namespace MyShop.Data.Repositories
                         createDiscount(input: $input) {
                             id
                             code
+                            name
                             description
                             type
                             value

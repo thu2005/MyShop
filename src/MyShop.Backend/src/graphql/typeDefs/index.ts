@@ -210,6 +210,9 @@ export const typeDefs = gql`
   }
 
   input UpdateOrderInput {
+    customerId: Int
+    discountId: Int
+    items: [OrderItemInput!]
     status: OrderStatus
     notes: String
   }
