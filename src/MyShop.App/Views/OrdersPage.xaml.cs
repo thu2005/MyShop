@@ -65,16 +65,9 @@ namespace MyShop.App.Views
             }
         }
 
-        private async void OnAddOrderClick(object sender, RoutedEventArgs e)
+        private void OnAddOrderClick(object sender, RoutedEventArgs e)
         {
-            var dialog = new Dialogs.CreateOrderDialog(ViewModel);
-            dialog.XamlRoot = this.XamlRoot;
-
-            var result = await dialog.ShowAsync();
-            if (result == ContentDialogResult.Primary)
-            {
-                await ViewModel.LoadOrdersAsync();
-            }
+            Frame.Navigate(typeof(CreateOrderPage), ViewModel);
         }
 
         private async void OnViewOrderClick(object sender, RoutedEventArgs e)
