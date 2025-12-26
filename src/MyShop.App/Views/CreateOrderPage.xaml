@@ -177,7 +177,7 @@
             </Grid>
 
             <!-- Products Section -->
-            <Grid Grid.Row="2" Background="White" CornerRadius="8" Padding="24" BorderBrush="#E0E0E0" BorderThickness="1" MinHeight="400">
+            <Grid Grid.Row="2" Background="White" CornerRadius="8" Padding="24" BorderBrush="#E0E0E0" BorderThickness="1">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
