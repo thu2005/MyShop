@@ -89,102 +89,76 @@ namespace MyShop.App.Views
             }
         }
 
-        private void OnAddProductClick(object sender, RoutedEventArgs e)
+        private async void OnAddProductClick(object sender, RoutedEventArgs e)
         {
-            // Create a temporary Flyout to show product list
-            var stackPanel = new StackPanel { Spacing = 8, Padding = new Thickness(12) };
-
-            foreach (var product in _availableProducts)
+            var dialog = new ContentDialog
             {
-                var button = new Button
-                {
-                    HorizontalAlignment = HorizontalAlignment.Stretch,
-                    HorizontalContentAlignment = HorizontalAlignment.Stretch,
-                    Tag = product,
-                    Padding = new Thickness(12),
-                    Margin = new Thickness(0, 0, 0, 8),
-                    Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.White),
-                    BorderBrush = new Microsoft.UI.Xaml.Media.SolidColorBrush(Windows.UI.Color.FromArgb(255, 224, 224, 224)), // #E0E0E0
-                    BorderThickness = new Thickness(1),
-                    CornerRadius = new CornerRadius(4)
-                };
+                XamlRoot = this.XamlRoot,
+                Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style,
+                Title = "Select Product",
+                SecondaryButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Secondary,
+                SecondaryButtonStyle = this.Resources["DialogPrimaryButtonStyle"] as Style
+            };
 
-                var grid = new Grid();
-                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(100) });
-                grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(100) });
+            var container = new Grid { Height = 500, Width = 600, RowSpacing = 16 };
+            container.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            container.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
 
-                var nameStack = new StackPanel();
-                var nameText = new TextBlock
-                {
-                    Text = product.Name,
-                    FontWeight = Microsoft.UI.Text.FontWeights.SemiBold
-                };
-                var skuText = new TextBlock
-                {
-                    Text = product.Sku,
-                    FontSize = 11,
-                    Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Windows.UI.Color.FromArgb(255, 102, 102, 102)) // #666666
-                };
-                nameStack.Children.Add(nameText);
-                nameStack.Children.Add(skuText);
-                Grid.SetColumn(nameStack, 0);
+            // Search Box
+            var searchBox = new AutoSuggestBox 
+            { 
+                PlaceholderText = "Search by Name or SKU...",
+                QueryIcon = new SymbolIcon(Symbol.Find),
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            };
 
-                var stockText = new TextBlock
-                {
-                    Text = $"Stock: {product.Stock}",
-                    VerticalAlignment = VerticalAlignment.Center,
-                    FontSize = 12
-                };
-                Grid.SetColumn(stockText, 1);
+            // ListView
+            var listView = new ListView 
+            { 
+                SelectionMode = ListViewSelectionMode.None,
+                IsItemClickEnabled = true,
+                ItemTemplate = this.Resources["ProductSelectionTemplate"] as DataTemplate,
+                ItemsSource = _availableProducts // Bind to full list initially
+            };
 
-                var priceText = new TextBlock
+            // Search Logic
+            searchBox.TextChanged += (s, args) => 
+            {
+                if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput)
                 {
-                    Text = $"{product.Price:N0} ₫",
-                    VerticalAlignment = VerticalAlignment.Center,
-                    FontWeight = Microsoft.UI.Text.FontWeights.Bold,
-                    HorizontalAlignment = HorizontalAlignment.Right
-                };
-                Grid.SetColumn(priceText, 2);
-
-                grid.Children.Add(nameStack);
-                grid.Children.Add(stockText);
-                grid.Children.Add(priceText);
-
-                button.Content = grid;
-                button.Click += (s, args) =>
-                {
-                    if (s is Button btn && btn.Tag is Product selectedProduct)
+                    var query = s.Text.ToLower();
+                    if (string.IsNullOrWhiteSpace(query))
                     {
-                        AddProductToOrder(selectedProduct);
-                        if (sender is Button addButton && addButton.Flyout is Flyout flyout)
-                        {
-                            flyout.Hide();
-                        }
+                        listView.ItemsSource = _availableProducts;
                     }
-                };
-
-                stackPanel.Children.Add(button);
-            }
-
-            var scrollViewer = new ScrollViewer
-            {
-                Content = stackPanel,
-                MaxHeight = 400,
-                MinWidth = 500
+                    else
+                    {
+                        listView.ItemsSource = _availableProducts.Where(p => 
+                            (p.Name != null && p.Name.ToLower().Contains(query)) || 
+                            (p.Sku != null && p.Sku.ToLower().Contains(query))
+                        ).ToList();
+                    }
+                }
             };
 
-            var flyout = new Flyout
+            // Add Item Logic
+            listView.ItemClick += (s, args) =>
             {
-                Content = scrollViewer,
-                Placement = Microsoft.UI.Xaml.Controls.Primitives.FlyoutPlacementMode.Bottom
+                if (args.ClickedItem is Product selectedProduct)
+                {
+                    AddProductToOrder(selectedProduct);
+                    dialog.Hide(); 
+                }
             };
 
-            if (sender is Button addProductButton)
-            {
-                addProductButton.Flyout = flyout;
-                flyout.ShowAt(addProductButton);
-            }
+            Grid.SetRow(searchBox, 0);
+            Grid.SetRow(listView, 1);
+            container.Children.Add(searchBox);
+            container.Children.Add(listView);
+
+            dialog.Content = container;
+            await dialog.ShowAsync();
         }
 
         private void AddProductToOrder(Product product)

@@ -23,48 +23,57 @@
             <Setter Property="Foreground" Value="#1A1A1A"/>
         </Style>
 
-        <Style x:Key="DialogPrimaryButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#003F62"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="CornerRadius" Value="4"/>
-            <Setter Property="Padding" Value="12,8"/>
-            <Setter Property="Template">
+        <Style x:Key="DialogPrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource AccentButtonStyle}">
+             <Setter Property="Background" Value="#003F62"/>
+             <Setter Property="Foreground" Value="White"/>
+             <Setter Property="HorizontalAlignment" Value="Stretch"/>
+             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Grid x:Name="RootGrid" Background="#003F62" CornerRadius="{TemplateBinding CornerRadius}">
+                        <Grid x:Name="RootGrid" Background="{TemplateBinding Background}" CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}">
                             <VisualStateManager.VisualStateGroups>
                                 <VisualStateGroup x:Name="CommonStates">
-                                    <VisualState x:Name="Normal"/>
+                                    <VisualState x:Name="Normal" />
                                     <VisualState x:Name="PointerOver">
-                                        <VisualState.Setters>
-                                            <Setter Target="RootGrid.Background" Value="#004F7A"/>
-                                        </VisualState.Setters>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="RootGrid" Storyboard.TargetProperty="(Grid.Background).(SolidColorBrush.Color)" To="#005A8C" Duration="0:0:0.1" />
+                                        </Storyboard>
                                     </VisualState>
                                     <VisualState x:Name="Pressed">
-                                        <VisualState.Setters>
-                                            <Setter Target="RootGrid.Background" Value="#002F4A"/>
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="Disabled">
-                                        <VisualState.Setters>
-                                            <Setter Target="RootGrid.Background" Value="#CCCCCC"/>
-                                            <Setter Target="ContentPresenter.Foreground" Value="#666666"/>
-                                        </VisualState.Setters>
+                                        <Storyboard>
+                                            <ColorAnimation Storyboard.TargetName="RootGrid" Storyboard.TargetProperty="(Grid.Background).(SolidColorBrush.Color)" To="#002F49" Duration="0:0:0.05" />
+                                        </Storyboard>
                                     </VisualState>
                                 </VisualStateGroup>
                             </VisualStateManager.VisualStateGroups>
-                            <ContentPresenter x:Name="ContentPresenter"
-                                              Content="{TemplateBinding Content}"
-                                              Padding="{TemplateBinding Padding}"
-                                              HorizontalContentAlignment="Center"
-                                              VerticalContentAlignment="Center"
-                                              Foreground="{TemplateBinding Foreground}"/>
+                            <ContentPresenter x:Name="ContentPresenter" HorizontalAlignment="Center" VerticalAlignment="Center" Content="{TemplateBinding Content}" ContentTransitions="{TemplateBinding ContentTransitions}" ContentTemplate="{TemplateBinding ContentTemplate}" Foreground="{TemplateBinding Foreground}"/>
                         </Grid>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <DataTemplate x:Key="ProductSelectionTemplate" x:DataType="models:Product">
+            <Grid Padding="12" Background="Transparent" ColumnSpacing="16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold"/>
+                    <TextBlock Text="{x:Bind Sku}" FontSize="12" Foreground="#666666"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                    <TextBlock Text="Stock:" FontSize="12" Foreground="#666666"/>
+                    <TextBlock Text="{x:Bind Stock}" FontSize="12" Foreground="#666666"/>
+                </StackPanel>
+                
+                <TextBlock Grid.Column="2" Text="{x:Bind Price, Converter={StaticResource CurrencyConverter}}" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Right" MinWidth="100" TextAlignment="Right"/>
+            </Grid>
+        </DataTemplate>
     </Page.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
