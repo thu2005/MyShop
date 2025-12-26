@@ -17,6 +17,7 @@ namespace MyShop.App.Views
         public OrderViewModel ViewModel { get; set; }
         public int? OrderIdToView { get; set; }
         public bool IsReadOnly { get; set; }
+        public bool IsEditMode { get; set; }
     }
 
     public sealed partial class CreateOrderPage : Page
@@ -31,6 +32,9 @@ namespace MyShop.App.Views
 
         private Customer _selectedCustomer;
         private Discount _selectedDiscount;
+        private int? _editingOrderId;
+        private DateTime _originalCreatedAt;
+        private string _originalOrderNumber;
 
         public CreateOrderPage()
         {
@@ -53,6 +57,7 @@ namespace MyShop.App.Views
             OrderViewModel vm = null;
             int? orderId = null;
             bool isReadOnly = false;
+            bool isEditMode = false;
 
             if (e.Parameter is OrderViewModel v)
             {
@@ -63,6 +68,7 @@ namespace MyShop.App.Views
                 vm = args.ViewModel;
                 orderId = args.OrderIdToView;
                 isReadOnly = args.IsReadOnly;
+                isEditMode = args.IsEditMode;
             }
 
             _viewModel = vm ?? App.Current.GetService<OrderViewModel>();
@@ -73,6 +79,13 @@ namespace MyShop.App.Views
             if (orderId.HasValue)
             {
                await LoadOrderForView(orderId.Value);
+               
+               if (isEditMode)
+               {
+                   _editingOrderId = orderId.Value;
+                   PageTitleText.Text = "Edit Order";
+                   SaveButton.Content = new TextBlock { Text = "Update Order", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold };
+               }
             }
             
             if (isReadOnly)
@@ -478,32 +491,55 @@ namespace MyShop.App.Views
 
             var newOrder = new Order
             {
+                Id = _editingOrderId ?? 0,
                 CustomerId = _selectedCustomer?.Id,
                 DiscountId = _selectedDiscount?.Id,
                 Notes = NotesTextBox.Text,
                 Status = selectedStatus,
                 OrderItems = _orderItems.ToList(),
-                CreatedAt = DateTime.Now,
+                CreatedAt = _editingOrderId.HasValue ? _originalCreatedAt : DateTime.Now,
                 UpdatedAt = DateTime.Now,
-                OrderNumber = "ORD-" + DateTime.Now.Ticks.ToString().Substring(10) // Temporary gen
+                OrderNumber = _editingOrderId.HasValue ? _originalOrderNumber : "ORD-" + DateTime.Now.Ticks.ToString().Substring(10)
             };
 
-            var createdOrder = await _viewModel.CreateOrderAsync(newOrder);
-
-            if (createdOrder != null)
+            if (_editingOrderId.HasValue)
             {
-                Frame.GoBack();
+                 var success = await _viewModel.UpdateOrderAsync(newOrder);
+                 if (success)
+                 {
+                     Frame.GoBack();
+                 }
+                 else
+                 {
+                     var errorDialog = new ContentDialog
+                    {
+                        Title = "Error",
+                        Content = _viewModel.ErrorMessage ?? "Failed to update order",
+                        CloseButtonText = "OK",
+                        XamlRoot = this.XamlRoot
+                    };
+                    await errorDialog.ShowAsync();
+                 }
             }
             else
             {
-                var errorDialog = new ContentDialog
+                var createdOrder = await _viewModel.CreateOrderAsync(newOrder);
+
+                if (createdOrder != null)
                 {
-                    Title = "Error",
-                    Content = _viewModel.ErrorMessage ?? "Failed to create order",
-                    CloseButtonText = "OK",
-                    XamlRoot = this.XamlRoot
-                };
-                await errorDialog.ShowAsync();
+                    Frame.GoBack();
+                }
+                else
+                {
+                    var errorDialog = new ContentDialog
+                    {
+                        Title = "Error",
+                        Content = _viewModel.ErrorMessage ?? "Failed to create order",
+                        CloseButtonText = "OK",
+                        XamlRoot = this.XamlRoot
+                    };
+                    await errorDialog.ShowAsync();
+                }
             }
         }
 
@@ -550,6 +586,9 @@ namespace MyShop.App.Views
         {
             var order = await _viewModel.GetOrderDetailsAsync(orderId);
             if (order == null) return;
+
+            _originalCreatedAt = order.CreatedAt;
+            _originalOrderNumber = order.OrderNumber;
 
             // Set Customer
             _selectedCustomer = order.Customer;

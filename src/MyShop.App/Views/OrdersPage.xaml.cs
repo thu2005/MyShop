@@ -98,16 +98,41 @@ namespace MyShop.App.Views
 
         private async void OnEditOrderClick(object sender, RoutedEventArgs e)
         {
-            if (sender is Button button && button.Tag is Order order)
-            {
-                var dialog = new Dialogs.EditOrderDialog(ViewModel, order);
-                dialog.XamlRoot = this.XamlRoot;
+             // Handle both Button and MenuFlyoutItem triggers
+            Order order = null;
 
-                var result = await dialog.ShowAsync();
-                if (result == ContentDialogResult.Primary)
+            if (sender is Button button && button.Tag is Order o1)
+            {
+                order = o1;
+            }
+            else if (sender is MenuFlyoutItem item && item.Tag is Order o2)
+            {
+                order = o2;
+            }
+
+            if (order != null)
+            {
+                // Block editing completed or cancelled orders
+                if (order.Status == OrderStatus.COMPLETED || order.Status == OrderStatus.CANCELLED)
                 {
-                    await ViewModel.LoadOrdersAsync();
+                    var dialog = new ContentDialog
+                    {
+                        Title = "Cannot Edit Order",
+                        Content = $"Orders with status '{order.Status}' cannot be edited.",
+                        CloseButtonText = "OK",
+                        XamlRoot = this.XamlRoot
+                    };
+                    await dialog.ShowAsync();
+                    return;
                 }
+
+                var navParams = new CreateOrderPageNavigationParams 
+                { 
+                    ViewModel = ViewModel,
+                    OrderIdToView = order.Id,
+                    IsEditMode = true
+                };
+                Frame.Navigate(typeof(CreateOrderPage), navParams);
             }
         }
 
