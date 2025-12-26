@@ -60,6 +60,7 @@ namespace MyShop.App
             services.AddSingleton<IOrderRepository, GraphQLOrderRepository>();
             services.AddSingleton<ICustomerRepository, GraphQLCustomerRepository>();
             services.AddSingleton<IDiscountRepository, GraphQLDiscountRepository>();
+            services.AddSingleton<ICustomerRepository, GraphQLCustomerRepository>();
 
             services.AddTransient<MainWindow>();
             services.AddTransient<LoginViewModel>();
@@ -70,6 +71,7 @@ namespace MyShop.App
             services.AddTransient<ReportsViewModel>();
             services.AddTransient<OrderViewModel>();
 
+            services.AddTransient<CustomersViewModel>();
         }
 
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)

@@ -103,7 +103,10 @@ namespace MyShop.App.Views
                             case "Orders":
                                 pageType = typeof(OrdersPage);
                                 break;
-                            case "Reports":
+                            case "Customers":
+                            pageType = typeof(CustomersPage);
+                            break;
+                        case "Reports":
                                 pageType = typeof(ReportsPage);
                                 break;
                         }
