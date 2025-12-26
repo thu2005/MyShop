@@ -17,7 +17,7 @@
         <converters:CurrencyConverter x:Key="CurrencyConverter" />
     </Page.Resources>
 
-    <Grid Padding="24" Background="#F8F9FC">
+    <Grid Padding="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -33,8 +33,11 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Spacing="4">
-                <TextBlock Text="All Products" FontSize="24" FontWeight="Bold" Foreground="#111827"/>
-                <TextBlock Text="Home > All Products" Foreground="#6B7280" FontSize="14"/>
+               <TextBlock Text="Products" FontSize="32" FontWeight="Bold" Foreground="#0C2B4E"/>
+               <TextBlock Text="Home > Products" 
+                               FontSize="14" 
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               Margin="0,4,0,0"/>
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
@@ -44,7 +47,7 @@
                     <TextBlock Text="Product" FontWeight="SemiBold"/>
                 </StackPanel>
             </Button>
-                <Button Background="#0F3D5E" Foreground="White" CornerRadius="6" Padding="12,6" BorderThickness="0">
+                <Button Background="#0F3D5E" Foreground="White" CornerRadius="6" Padding="12,6" BorderThickness="0" Click="OnAddCategoryClick">
                      <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon Glyph="&#xE710;" FontSize="12"/>
                         <TextBlock Text="Category" FontWeight="SemiBold"/>

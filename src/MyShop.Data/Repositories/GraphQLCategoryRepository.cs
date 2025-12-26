@@ -81,8 +81,7 @@ namespace MyShop.Data.Repositories
                     input = new
                     {
                         name = entity.Name,
-                        description = entity.Description,
-                        isActive = entity.IsActive
+                        description = entity.Description
                     }
                 }
             };

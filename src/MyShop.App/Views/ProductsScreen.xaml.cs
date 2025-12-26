@@ -180,5 +180,67 @@ namespace MyShop.App.Views
             
             ViewModel.SetSorting(primaryTag, secondaryTag);
         }
+
+        private async void OnAddCategoryClick(object sender, RoutedEventArgs e)
+        {
+            var dialog = new Dialogs.AddCategoryDialog();
+            dialog.XamlRoot = this.XamlRoot;
+
+            var result = await dialog.ShowAsync();
+
+            if (result == ContentDialogResult.Primary && dialog.NewCategory != null)
+            {
+                try
+                {
+                    // Get category repository
+                    var categoryRepo = App.Current.Services.GetService<MyShop.Core.Interfaces.Repositories.ICategoryRepository>();
+                    await categoryRepo.AddAsync(dialog.NewCategory);
+
+                    // Find the ShellPage in the navigation stack and reload its categories
+                    var frame = this.Frame;
+                    while (frame != null)
+                    {
+                        if (frame.Content is ShellPage shellPage)
+                        {
+                            await shellPage.ViewModel.LoadCategoriesAsync();
+                            break;
+                        }
+                        // Try to get parent frame
+                        var parent = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(frame);
+                        frame = null;
+                        while (parent != null)
+                        {
+                            if (parent is Microsoft.UI.Xaml.Controls.Frame parentFrame)
+                            {
+                                frame = parentFrame;
+                                break;
+                            }
+                            parent = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(parent);
+                        }
+                    }
+
+                    // // Show success message
+                    // var successDialog = new ContentDialog
+                    // {
+                    //     Title = "Success",
+                    //     Content = $"Category '{dialog.NewCategory.Name}' has been added successfully.",
+                    //     CloseButtonText = "OK",
+                    //     XamlRoot = this.XamlRoot
+                    // };
+                    // await successDialog.ShowAsync();
+                }
+                catch (Exception ex)
+                {
+                    var errorDialog = new ContentDialog
+                    {
+                        Title = "Error",
+                        Content = $"Failed to add category: {ex.Message}",
+                        CloseButtonText = "OK",
+                        XamlRoot = this.XamlRoot
+                    };
+                    await errorDialog.ShowAsync();
+                }
+            }
+        }
     }
 }
