@@ -147,11 +147,58 @@ namespace MyShop.Data.Repositories
             return response.Data?.RevenueAndProfitTimeline ?? new List<RevenueProfit>();
         }
 
+        public async Task<List<StaffPerformanceData>> GetAllStaffPerformanceAsync(DateTime startDate, DateTime endDate)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[GraphQLReportRepository] Calling allStaffPerformance with startDate={startDate}, endDate={endDate}");
+                
+                var request = new GraphQLRequest
+                {
+                    Query = @"
+                    query AllStaffPerformance($input: StaffPerformanceInput!) {
+                        allStaffPerformance(input: $input) {
+                            staffId
+                            username
+                            email
+                            totalOrders
+                            totalRevenue
+                            totalProfit
+                        }
+                    }",
+                    Variables = new { 
+                        input = new { 
+                            startDate = startDate.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
+                            endDate = endDate.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+                        } 
+                    }
+                };
+
+                var response = await _graphQLService.Client.SendQueryAsync<StaffPerformanceResponse>(request);
+                
+                if (response.Errors != null && response.Errors.Length > 0)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[GraphQLReportRepository] GraphQL Errors: {string.Join(", ", response.Errors.Select(e => e.Message))}");
+                }
+                
+                var result = response.Data?.AllStaffPerformance ?? new List<StaffPerformanceData>();
+                System.Diagnostics.Debug.WriteLine($"[GraphQLReportRepository] Response received: {result.Count} staff members");
+                
+                return result;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[GraphQLReportRepository] Exception: {ex.Message}\n{ex.StackTrace}");
+                throw;
+            }
+        }
+
         // Response wrappers
         private class ReportResponse { public PeriodReport? ReportByPeriod { get; set; } }
         private class TopProductsResponse { public List<ProductSalesData>? TopProductsByQuantity { get; set; } }
         private class TopCustomersResponse { public List<CustomerSalesData>? TopCustomers { get; set; } }
         private class TimelineResponse { public List<RevenueProfit>? RevenueAndProfitTimeline { get; set; } }
+        private class StaffPerformanceResponse { public List<StaffPerformanceData>? AllStaffPerformance { get; set; } }
 
         // Override unused base methods
         public override Task<object?> GetByIdAsync(int id) => throw new NotImplementedException();

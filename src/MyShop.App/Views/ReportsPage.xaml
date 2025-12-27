@@ -7,6 +7,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:lvc="using:LiveChartsCore.SkiaSharpView.WinUI"
     xmlns:vm="using:MyShop.App.ViewModels"
+    xmlns:models="using:MyShop.Core.Models"
     mc:Ignorable="d"
     Background="#F5F5F5">
 
@@ -192,6 +193,7 @@
         <Grid Grid.Row="3" ColumnSpacing="16" RowSpacing="16">
             <Grid.RowDefinitions>
                 <RowDefinition Height="300"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="300"/>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
@@ -266,7 +268,7 @@
             </Border>
 
             <!-- Revenue & Profit Chart -->
-            <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="12" Padding="24">
+            <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="12" Padding="24">
                  <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -279,6 +281,60 @@
                                         Series="{x:Bind ViewModel.RevenueProfitSeries, Mode=OneWay}"
                                         XAxes="{x:Bind ViewModel.RevenueProfitXAxes, Mode=OneWay}">
                     </lvc:CartesianChart>
+                </Grid>
+            </Border>
+
+            <!-- Staff Performance Table -->
+            <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="12" Padding="24">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <TextBlock Text="Staff Performance" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                    
+                    <Grid Grid.Row="1" Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto" MinWidth="150"/>
+                            <ColumnDefinition Width="Auto" MinWidth="80"/>
+                            <ColumnDefinition Width="Auto" MinWidth="120"/>
+                            <ColumnDefinition Width="Auto" MinWidth="120"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Name" Foreground="Gray" FontSize="12"/>
+                        <TextBlock Grid.Column="1" Text="Email" Foreground="Gray" FontSize="12"/>
+                        <TextBlock Grid.Column="2" Text="Orders" Foreground="Gray" FontSize="12" HorizontalAlignment="Right"/>
+                        <TextBlock Grid.Column="3" Text="Revenue" Foreground="Gray" FontSize="12" HorizontalAlignment="Right"/>
+                        <TextBlock Grid.Column="4" Text="Profit" Foreground="Gray" FontSize="12" HorizontalAlignment="Right"/>
+                    </Grid>
+
+                    <ListView Grid.Row="2" ItemsSource="{x:Bind ViewModel.AllStaff, Mode=OneWay}" SelectionMode="None">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="models:StaffPerformanceData">
+                                <Grid Margin="-15,8,-10,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto" MinWidth="150"/>
+                                        <ColumnDefinition Width="Auto" MinWidth="80"/>
+                                        <ColumnDefinition Width="Auto" MinWidth="120"/>
+                                        <ColumnDefinition Width="Auto" MinWidth="120"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <PersonPicture DisplayName="{x:Bind Username}" Height="32" Width="32"/>
+                                        <TextBlock Text="{x:Bind Username}" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                    
+                                    <TextBlock Grid.Column="1" Text="{x:Bind Email}" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                    <TextBlock Grid.Column="2" Text="{x:Bind TotalOrders}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+                                    <TextBlock Grid.Column="3" Text="{x:Bind TotalRevenue}" VerticalAlignment="Center" HorizontalAlignment="Right" FontWeight="SemiBold"/>
+                                    <TextBlock Grid.Column="4" Text="{x:Bind TotalProfit}" VerticalAlignment="Center" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="#1D546C"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
                 </Grid>
             </Border>
 

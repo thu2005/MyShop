@@ -61,4 +61,14 @@ namespace MyShop.Core.Models
         public decimal Profit { get; set; }
         public int Orders { get; set; }
     }
+
+    public class StaffPerformanceData
+    {
+        public int StaffId { get; set; }
+        public string Username { get; set; } = string.Empty;
+        public string? Email { get; set; }
+        public int TotalOrders { get; set; }
+        public decimal TotalRevenue { get; set; }
+        public decimal TotalProfit { get; set; }
+    }
 }

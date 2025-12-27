@@ -155,6 +155,9 @@ namespace MyShop.App.ViewModels
         private IEnumerable<ICartesianAxis> _revenueProfitXAxes = Array.Empty<ICartesianAxis>();
 
         public ObservableCollection<CustomerSalesData> TopCustomers => _topCustomers;
+        
+        private ObservableCollection<StaffPerformanceData> _allStaff = new();
+        public ObservableCollection<StaffPerformanceData> AllStaff => _allStaff;
 
         public ObservableCollection<PeriodType> Periods { get; } = new ObservableCollection<PeriodType>(Enum.GetValues(typeof(PeriodType)).Cast<PeriodType>());
 
@@ -253,8 +256,28 @@ namespace MyShop.App.ViewModels
                 var customers = await _reportRepository.GetTopCustomersAsync(start, end);
                 _topCustomers.Clear();
                 foreach (var c in customers) _topCustomers.Add(c);
+                
+                // 4. Load All Staff Performance
+                try
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ReportsViewModel] Loading staff performance from {start} to {end}");
+                    var staff = await _reportRepository.GetAllStaffPerformanceAsync(start, end);
+                    System.Diagnostics.Debug.WriteLine($"[ReportsViewModel] Loaded {staff.Count} staff members");
+                    
+                    _allStaff.Clear();
+                    foreach (var s in staff)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[ReportsViewModel] Staff: {s.Username}, Orders: {s.TotalOrders}, Revenue: {s.TotalRevenue}");
+                        _allStaff.Add(s);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[ReportsViewModel] Error loading staff: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[ReportsViewModel] Stack trace: {ex.StackTrace}");
+                }
 
-                // 4. Load Revenue/Profit Timeline Chart (Column Chart)
+                // 5. Load Revenue/Profit Timeline Chart (Column Chart)
                 var timelineGrouping = TimelineGrouping.DAY;
                 if (_selectedPeriod == PeriodType.MONTHLY || _selectedPeriod == PeriodType.YEARLY) timelineGrouping = TimelineGrouping.MONTH;
                 

@@ -11,5 +11,6 @@ namespace MyShop.Core.Interfaces.Repositories
         Task<List<ProductSalesData>> GetTopProductsByQuantityAsync(DateTime startDate, DateTime endDate);
         Task<List<CustomerSalesData>> GetTopCustomersAsync(DateTime startDate, DateTime endDate, int limit = 10);
         Task<List<RevenueProfit>> GetRevenueAndProfitTimelineAsync(DateTime startDate, DateTime endDate, TimelineGrouping groupBy = TimelineGrouping.DAY);
+        Task<List<StaffPerformanceData>> GetAllStaffPerformanceAsync(DateTime startDate, DateTime endDate);
     }
 }
