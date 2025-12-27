@@ -8,8 +8,13 @@
     xmlns:lvc="using:LiveChartsCore.SkiaSharpView.WinUI"
     xmlns:vm="using:MyShop.App.ViewModels"
     xmlns:models="using:MyShop.Core.Models"
+    xmlns:converters="using:MyShop.App.Converters"
     mc:Ignorable="d"
     Background="#F5F5F5">
+
+    <Page.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    </Page.Resources>
 
     <ScrollViewer>
         <Grid Padding="24">
@@ -285,7 +290,13 @@
             </Border>
 
             <!-- Staff Performance Table -->
-            <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Background="White" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="12" Padding="0">
+            <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" 
+                    Background="White" 
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" 
+                    BorderThickness="1" 
+                    CornerRadius="12" 
+                    Padding="0"
+                    Visibility="{x:Bind ViewModel.IsAdmin, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>

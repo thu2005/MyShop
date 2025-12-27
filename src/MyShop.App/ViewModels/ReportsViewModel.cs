@@ -8,6 +8,7 @@ using Microsoft.UI;
 using Microsoft.UI.Xaml.Media;
 using MyShop.App.ViewModels.Base;
 using MyShop.Core.Interfaces.Repositories;
+using MyShop.Core.Interfaces.Services;
 using MyShop.Core.Models;
 using SkiaSharp;
 using System;
@@ -23,6 +24,9 @@ namespace MyShop.App.ViewModels
         public string CurrentDateString => DateTime.Now.ToString("MMM d, yyyy");
 
         private readonly IReportRepository _reportRepository;
+        private readonly IAuthService _authService;
+        private readonly IAuthorizationService _authorizationService;
+        
         private PeriodType _selectedPeriod = PeriodType.WEEKLY;
         private DateTimeOffset? _startDate = DateTimeOffset.Now.AddDays(-7);
         private DateTimeOffset? _endDate = DateTimeOffset.Now;
@@ -42,9 +46,21 @@ namespace MyShop.App.ViewModels
         [ObservableProperty]
         private bool _isBusy;
 
-        public ReportsViewModel(IReportRepository reportRepository)
+        // Role-based properties
+        public User? CurrentUser => _authService.CurrentUser;
+        public UserRole UserRole => CurrentUser?.Role ?? UserRole.STAFF;
+        public bool IsAdmin => _authorizationService.IsAuthorized(UserRole.ADMIN);
+        public bool IsStaff => !IsAdmin;
+
+        public ReportsViewModel(
+            IReportRepository reportRepository,
+            IAuthService authService,
+            IAuthorizationService authorizationService)
         {
             _reportRepository = reportRepository;
+            _authService = authService;
+            _authorizationService = authorizationService;
+            
             LoadReportCommand = new AsyncRelayCommand(LoadReportAsync);
             
             // Initialize default dates
@@ -373,25 +389,33 @@ namespace MyShop.App.ViewModels
             var profitValues = timeline.Select(t => (double)t.Profit).ToArray();
             var labels = timeline.Select(t => t.Date).ToArray();
 
-            RevenueProfitSeries = new ISeries[]
+            // Build series list based on user role
+            var seriesList = new List<ISeries>
             {
                 new ColumnSeries<double>
                 {
                     Name = "Revenue",
                     Values = revenueValues,
-                    Fill = new SolidColorPaint(new SKColor(176, 224, 230)), // PowderBlue
+                    Fill = new SolidColorPaint(new SKColor(150, 200, 215)), // PowderBlue
                     Stroke = null,
                     MaxBarWidth = 30 
-                },
-                new ColumnSeries<double>
+                }
+            };
+
+            // Only show Profit for ADMIN users
+            if (IsAdmin)
+            {
+                seriesList.Add(new ColumnSeries<double>
                 {
                     Name = "Profit",
                     Values = profitValues,
                     Fill = new SolidColorPaint(new SKColor(0, 64, 96)), // Dark Blue
                     Stroke = null,
                     MaxBarWidth = 30 
-                }
-            };
+                });
+            }
+
+            RevenueProfitSeries = seriesList.ToArray();
 
             RevenueProfitXAxes = new Axis[]
             {
