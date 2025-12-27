@@ -171,6 +171,19 @@ namespace MyShop.App.Views
             ViewModel.SetPriceRange(minPrice, maxPrice);
         }
 
+        private void OnClearFiltersClick(object sender, RoutedEventArgs e)
+        {
+            // Clear UI controls
+            SearchBox.Text = string.Empty;
+            FromPriceBox.Text = string.Empty;
+            ToPriceBox.Text = string.Empty;
+            PrimarySortComboBox.SelectedIndex = -1;
+            SecondarySortComboBox.SelectedIndex = -1;
+            
+            // Clear ViewModel filters
+            ViewModel.ClearFilters();
+        }
+
         private void OnPrimarySortChanged(object sender, SelectionChangedEventArgs e)
         {
             if (PrimarySortComboBox.SelectedItem is ComboBoxItem selectedItem)

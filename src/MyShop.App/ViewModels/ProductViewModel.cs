@@ -138,6 +138,86 @@ namespace MyShop.App.ViewModels
             SelectedCategory = new CategoryStat { Id = categoryId };
         }
 
+        public async void ClearFilters()
+        {
+            // Reset all filter states
+            _currentSearchTerm = string.Empty;
+            _currentSearchResults.Clear();
+            _minPrice = null;
+            _maxPrice = null;
+            _primarySort = null;
+            _secondarySort = null;
+            SelectedCategory = null;
+
+            // Reload all products
+            await LoadProductsAsync();
+        }
+
+        public async Task FilterProductsAsync()
+        {
+            if (IsBusy) return;
+
+            try
+            {
+                IsBusy = true;
+                ErrorMessage = null;
+
+                List<Product> filteredProducts;
+
+                // Priority 1: Filter by search term using API if exists
+                if (!string.IsNullOrWhiteSpace(_currentSearchTerm))
+                {
+                    filteredProducts = await _productRepository.SearchByNameAsync(_currentSearchTerm);
+                }
+                // Priority 2: Filter by category using API if selected
+                else if (SelectedCategory != null && SelectedCategory.Id != 0)
+                {
+                    filteredProducts = await _productRepository.GetByCategoryAsync(SelectedCategory.Id);
+                }
+                else
+                {
+                    // No filter selected, get all
+                    filteredProducts = await _productRepository.GetAllAsync();
+                }
+
+                // Then apply additional client-side filters on the API results
+                
+                // Filter by category if search was used (client-side)
+                if (!string.IsNullOrWhiteSpace(_currentSearchTerm) && SelectedCategory != null && SelectedCategory.Id != 0)
+                {
+                    filteredProducts = filteredProducts.Where(p => p.CategoryId == SelectedCategory.Id).ToList();
+                }
+
+                // Filter by custom price range if set (client-side)
+                if (_minPrice.HasValue)
+                {
+                    filteredProducts = filteredProducts.Where(p => p.Price >= _minPrice.Value).ToList();
+                }
+                if (_maxPrice.HasValue)
+                {
+                    filteredProducts = filteredProducts.Where(p => p.Price <= _maxPrice.Value).ToList();
+                }
+
+                // Apply sorting
+                var sorted = ApplySorting(filteredProducts);
+
+                _filteredProducts.Clear();
+                _filteredProducts.AddRange(sorted.ToList());
+
+                CurrentPage = 1;
+                UpdatePagination();
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = $"Failed to filter products: {ex.Message}";
+                System.Diagnostics.Debug.WriteLine($"Error filtering products: {ex.Message}");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
         private void FilterProducts()
         {
             IEnumerable<Product> source = string.IsNullOrWhiteSpace(_currentSearchTerm)
