@@ -117,6 +117,10 @@ namespace MyShop.App.Views
                         case "Reports":
                                 pageType = typeof(ReportsPage);
                                 break;
+                            case "Users":
+                                // STEP 2: Điều hướng đến trang quản lý nhân viên
+                                pageType = typeof(UsersPage);
+                                break;
                         }
                     }
 

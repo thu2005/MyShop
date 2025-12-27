@@ -54,7 +54,6 @@
             <NavigationViewItem Content="CUSTOMERS" Tag="Customers" Icon="People" FontWeight="SemiBold"/>
             <NavigationViewItem Content="REPORT" Tag="Reports" Icon="Document" FontWeight="SemiBold"/>
             
-            <!-- STEP 1: Thêm mục quản lý nhân viên (Chỉ Admin mới thấy) -->
             <NavigationViewItem Content="STAFF ACCOUNTS" 
                                 Tag="Users" 
                                 Icon="Admin" 

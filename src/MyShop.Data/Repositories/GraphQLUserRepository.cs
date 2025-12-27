@@ -28,6 +28,7 @@ namespace MyShop.Data.Repositories
                             email
                             role
                             isActive
+                            createdAt
                         }
                     }",
                 Variables = new { id }
@@ -44,17 +45,22 @@ namespace MyShop.Data.Repositories
                 Query = @"
                     query GetUsers {
                         users {
-                            id
-                            username
-                            email
-                            role
-                            isActive
+                            users {
+                                id
+                                username
+                                email
+                                role
+                                isActive
+                                createdAt
+                            }
+                            total
                         }
                     }"
             };
 
             var response = await _graphQLService.Client.SendQueryAsync<UsersResponse>(request);
-            return response.Data?.Users ?? new List<User>();
+            // Backend trả về object có field 'users' là mảng, nên ta lấy .Users.Users
+            return response.Data?.Users?.Users ?? new List<User>();
         }
 
         public async Task<User?> GetByUsernameAsync(string username)
@@ -80,24 +86,90 @@ namespace MyShop.Data.Repositories
 
         public async Task<bool> ValidateCredentialsAsync(string username, string password)
         {
-            // Note: Validation is typically handled by the Auth service/mutations in GraphQL
-            // But if we need it here, we'd call a specific login simulation or trust the auth flow.
-            // For now, mirroring the intent:
             return false; // Authentication should use IAuthService.LoginAsync
         }
 
         public override async Task<User> AddAsync(User entity)
         {
-            // Implement based on backend schema if needed
-            throw new NotImplementedException("User creation via repository not yet implemented in GraphQL.");
+            var request = new GraphQLRequest
+            {
+                Query = @"
+                    mutation CreateUser($input: CreateUserInput!) {
+                        createUser(input: $input) {
+                            id
+                            username
+                            email
+                            role
+                            isActive
+                            createdAt
+                        }
+                    }",
+                Variables = new
+                {
+                    input = new
+                    {
+                        username = entity.Username,
+                        email = entity.Email,
+                        password = entity.PasswordHash, // Hash should be provided by ViewModel or handled by backend
+                        role = entity.Role.ToString().ToUpper()
+                    }
+                }
+            };
+
+            var response = await _graphQLService.Client.SendMutationAsync<CreateUserResponse>(request);
+            return response.Data?.CreateUser ?? throw new Exception("Failed to create user.");
         }
 
-        public override Task UpdateAsync(User entity) => throw new NotImplementedException();
-        public override Task DeleteAsync(int id) => throw new NotImplementedException();
+        public override async Task UpdateAsync(User entity)
+        {
+            var request = new GraphQLRequest
+            {
+                Query = @"
+                    mutation UpdateUser($id: Int!, $input: UpdateUserInput!) {
+                        updateUser(id: $id, input: $input) {
+                            id
+                            username
+                            email
+                            role
+                            isActive
+                        }
+                    }",
+                Variables = new
+                {
+                    id = entity.Id,
+                    input = new
+                    {
+                        username = entity.Username,
+                        email = entity.Email,
+                        role = entity.Role.ToString().ToUpper(),
+                        isActive = entity.IsActive
+                    }
+                }
+            };
+
+            await _graphQLService.Client.SendMutationAsync<object>(request);
+        }
+
+        public override async Task DeleteAsync(int id)
+        {
+            var request = new GraphQLRequest
+            {
+                Query = @"
+                    mutation DeleteUser($id: Int!) {
+                        deleteUser(id: $id)
+                    }",
+                Variables = new { id }
+            };
+
+            await _graphQLService.Client.SendMutationAsync<object>(request);
+        }
+
         public override Task<int> CountAsync() => throw new NotImplementedException();
 
         private class UserResponse { public User? User { get; set; } }
-        private class UsersResponse { public List<User>? Users { get; set; } }
+        private class UsersResponse { public UserListResponse? Users { get; set; } }
+        private class UserListResponse { public List<User>? Users { get; set; } public int Total { get; set; } }
         private class UserByUsernameResponse { public User? UserByUsername { get; set; } }
+        private class CreateUserResponse { public User? CreateUser { get; set; } }
     }
 }

@@ -14,6 +14,9 @@
             <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
             <converters:BoolToVisibilityConverter x:Key="InvertedBoolToVisibilityConverter" Invert="True" />
             <converters:RoleToVisibilityConverter x:Key="RoleToVisibilityConverter" />
+            <converters:StatusToColorConverter x:Key="StatusToColorConverter" />
+            <converters:StatusLabelConverter x:Key="StatusLabelConverter" />
+            <converters:DateTimeToRelativeConverter x:Key="DateTimeToRelativeConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>
