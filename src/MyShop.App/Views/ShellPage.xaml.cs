@@ -189,6 +189,14 @@ namespace MyShop.App.Views
                     Margin = new Thickness(0, 8, 0, 0)
                 };
 
+                var errorText = new TextBlock
+                {
+                    Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red),
+                    Visibility = Visibility.Collapsed,
+                    Margin = new Thickness(0, 4, 0, 0),
+                    TextWrapping = TextWrapping.Wrap
+                };
+
                 // Move cursor to end of text when dialog opens
                 inputBox.Loaded += (s, args) =>
                 {
@@ -204,7 +212,8 @@ namespace MyShop.App.Views
                         Children =
                         {
                             new TextBlock { Text = "Category Name:" },
-                            inputBox
+                            inputBox,
+                            errorText
                         }
                     },
                     PrimaryButtonText = "Save",
@@ -213,11 +222,43 @@ namespace MyShop.App.Views
                     XamlRoot = this.XamlRoot
                 };
 
-                var result = await dialog.ShowAsync();
+                ContentDialogResult result;
+                bool success = false;
 
-                if (result == ContentDialogResult.Primary && !string.IsNullOrWhiteSpace(inputBox.Text))
+                while (!success)
                 {
-                    await ViewModel.UpdateCategoryAsync(categoryId, inputBox.Text.Trim());
+                    result = await dialog.ShowAsync();
+
+                    if (result != ContentDialogResult.Primary)
+                    {
+                        break; // User cancelled
+                    }
+
+                    // Validate empty input
+                    if (string.IsNullOrWhiteSpace(inputBox.Text))
+                    {
+                        errorText.Text = "⚠️ Category name cannot be empty.";
+                        errorText.Visibility = Visibility.Visible;
+                        dialog.Hide();
+                        continue; // Retry
+                    }
+
+                    try
+                    {
+                        await ViewModel.UpdateCategoryAsync(categoryId, inputBox.Text.Trim());
+                        success = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        // Show error message inline
+                        errorText.Text = ex.Message.Contains("already exists") 
+                            ? "⚠️ Category name already exists. Please choose a different name."
+                            : $"⚠️ Error: {ex.Message}";
+                        errorText.Visibility = Visibility.Visible;
+                        
+                        // Keep dialog open for retry
+                        dialog.Hide();
+                    }
                 }
             }
         }

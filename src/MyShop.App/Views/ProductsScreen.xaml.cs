@@ -223,10 +223,16 @@ namespace MyShop.App.Views
             var dialog = new Dialogs.AddCategoryDialog();
             dialog.XamlRoot = this.XamlRoot;
 
-            var result = await dialog.ShowAsync();
-
-            if (result == ContentDialogResult.Primary && dialog.NewCategory != null)
+            bool success = false;
+            while (!success)
             {
+                var result = await dialog.ShowAsync();
+
+                if (result != ContentDialogResult.Primary || dialog.NewCategory == null)
+                {
+                    break; // User cancelled
+                }
+
                 try
                 {
                     // Get category repository
@@ -256,26 +262,19 @@ namespace MyShop.App.Views
                         }
                     }
 
-                    // // Show success message
-                    // var successDialog = new ContentDialog
-                    // {
-                    //     Title = "Success",
-                    //     Content = $"Category '{dialog.NewCategory.Name}' has been added successfully.",
-                    //     CloseButtonText = "OK",
-                    //     XamlRoot = this.XamlRoot
-                    // };
-                    // await successDialog.ShowAsync();
+                    success = true;
                 }
                 catch (Exception ex)
                 {
-                    var errorDialog = new ContentDialog
-                    {
-                        Title = "Error",
-                        Content = $"Failed to add category: {ex.Message}",
-                        CloseButtonText = "OK",
-                        XamlRoot = this.XamlRoot
-                    };
-                    await errorDialog.ShowAsync();
+                    // Show error in dialog
+                    dialog.ErrorText.Text = ex.Message.Contains("already exists")
+                        ? "⚠️ Category name already exists. Please choose a different name."
+                        : $"⚠️ Error: {ex.Message}";
+                    dialog.ErrorText.Visibility = Visibility.Visible;
+
+                    // Reset for retry
+                    dialog.NewCategory = null;
+                    dialog.Hide();
                 }
             }
         }
