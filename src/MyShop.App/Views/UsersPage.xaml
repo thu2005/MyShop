@@ -9,6 +9,10 @@
     mc:Ignorable="d"
     Background="#F5F7FA">
 
+    <Page.Resources>
+        <converters:DateFormatConverter x:Key="DateFormatConverter"/>
+    </Page.Resources>
+
     <Grid Padding="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/> <!-- Header -->
@@ -106,7 +110,7 @@
                                 <TextBlock Text="{x:Bind IsActive, Converter={StaticResource StatusLabelConverter}}" FontSize="12"/>
                             </StackPanel>
 
-                            <TextBlock Grid.Column="5" Text="{x:Bind CreatedAt, Converter={StaticResource DateTimeToRelativeConverter}}" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="5" Text="{x:Bind CreatedAt, Converter={StaticResource DateFormatConverter}}" VerticalAlignment="Center"/>
 
                             <Button Grid.Column="6" Background="Transparent" BorderThickness="0" HorizontalAlignment="Center">
                                 <SymbolIcon Symbol="More"/>
