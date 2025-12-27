@@ -130,10 +130,13 @@
                         Padding="24">
                     <StackPanel>
                         <TextBlock Text="Best Sellers" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
-                        <ListView ItemsSource="{x:Bind ViewModel.TopProducts, Mode=OneWay}" SelectionMode="None">
+                        <ListView ItemsSource="{x:Bind ViewModel.TopProducts, Mode=OneWay}" 
+                                  SelectionMode="None"
+                                  IsItemClickEnabled="True"
+                                  ItemClick="OnBestSellerItemClick">
                             <ListView.ItemTemplate>
                                 <DataTemplate x:DataType="dto:TopProductDto">
-                                    <Grid Margin="-8,8">
+                                    <Grid Margin="-12,8">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="*"/>
@@ -151,7 +154,7 @@
                                             <TextBlock Text="{x:Bind Product.Name}" FontWeight="SemiBold"/>
                                             <TextBlock Text="{x:Bind Product.Price, Converter={StaticResource CurrencyConverter}}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                                         </StackPanel>
-                                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                        <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="12,0,0,0">
                                             <TextBlock Text="{x:Bind Revenue, Converter={StaticResource CurrencyConverter}}" FontWeight="Bold" HorizontalAlignment="Right"/>
                                             <TextBlock Text="{x:Bind Quantity}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Right"/>
                                         </StackPanel>
@@ -160,6 +163,7 @@
                             </ListView.ItemTemplate>
                         </ListView>
                         <Button Content="REPORT" 
+                                Click="OnReportClick"
                                 Background="#1D546C" 
                                 Foreground="White"
                                 HorizontalAlignment="Stretch" 
@@ -253,10 +257,13 @@
                         Padding="24">
                     <StackPanel>
                         <TextBlock Text="Low Stock Products" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
-                        <ListView ItemsSource="{x:Bind ViewModel.LowStockProducts, Mode=OneWay}" SelectionMode="None">
+                        <ListView ItemsSource="{x:Bind ViewModel.LowStockProducts, Mode=OneWay}" 
+                                  SelectionMode="None"
+                                  IsItemClickEnabled="True"
+                                  ItemClick="OnLowStockItemClick">
                             <ListView.ItemTemplate>
                                 <DataTemplate x:DataType="dto:LowStockProductDto">
-                                    <Grid Margin="-8,8">
+                                    <Grid Margin="-12,8">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="*"/>
@@ -283,6 +290,7 @@
                             </ListView.ItemTemplate>
                         </ListView>
                         <Button Content="REPORT" 
+                                Click="OnReportClick"
                                 Background="#1D546C" 
                                 Foreground="White"
                                 HorizontalAlignment="Stretch" 

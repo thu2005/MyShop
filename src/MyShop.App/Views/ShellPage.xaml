@@ -13,6 +13,7 @@
     </Page.Resources>
 
     <NavigationView x:Name="NavView" 
+                    x:FieldModifier="public"
                     PaneDisplayMode="Left"
                     IsBackButtonVisible="Collapsed"
                     IsSettingsVisible="False"

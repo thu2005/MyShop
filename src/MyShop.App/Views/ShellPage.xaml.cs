@@ -111,6 +111,25 @@ namespace MyShop.App.Views
             }
         }
 
+        public void SetSidebarSelectionWithoutNavigation(string tag)
+        {
+            // Temporarily remove event handler
+            NavView.SelectionChanged -= NavView_SelectionChanged;
+            
+            // Find and select the item
+            var item = NavView.MenuItems
+                .OfType<NavigationViewItem>()
+                .FirstOrDefault(i => i.Tag?.ToString() == tag);
+            
+            if (item != null)
+            {
+                NavView.SelectedItem = item;
+            }
+            
+            // Re-attach event handler
+            NavView.SelectionChanged += NavView_SelectionChanged;
+        }
+
         private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
         {
             if (args.IsSettingsSelected)

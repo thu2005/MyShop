@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using Microsoft.Extensions.DependencyInjection;
@@ -87,8 +88,54 @@ namespace MyShop.App.Views
 
         private void OnCloseClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
         {
-            // Navigate back to Products screen
-            Frame.GoBack();
+            // Check if we can go back
+            if (Frame.CanGoBack)
+            {
+                // Get the previous page type from BackStack
+                var previousPage = Frame.BackStack.LastOrDefault();
+                
+                // If coming from Dashboard, update sidebar to Dashboard
+                if (previousPage?.SourcePageType == typeof(Dashboard))
+                {
+                    var shellPage = FindShellPage();
+                    if (shellPage != null)
+                    {
+                        shellPage.SetSidebarSelectionWithoutNavigation("Dashboard");
+                    }
+                }
+                
+                Frame.GoBack();
+            }
+            else
+            {
+                // If no back stack, navigate to Products screen
+                Frame.Navigate(typeof(ProductsScreen), 0);
+            }
+        }
+
+        private ShellPage FindShellPage()
+        {
+            var frame = this.Frame;
+            while (frame != null)
+            {
+                if (frame.Content is ShellPage shellPage)
+                {
+                    return shellPage;
+                }
+                
+                var parent = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(frame);
+                frame = null;
+                while (parent != null)
+                {
+                    if (parent is Microsoft.UI.Xaml.Controls.Frame parentFrame)
+                    {
+                        frame = parentFrame;
+                        break;
+                    }
+                    parent = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(parent);
+                }
+            }
+            return null;
         }
 
         private async void OnDeleteClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)

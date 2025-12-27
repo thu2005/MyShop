@@ -111,7 +111,7 @@ public partial class DashboardViewModel : ObservableObject
 
             // Load low stock products
             System.Diagnostics.Debug.WriteLine("Loading low stock products...");
-            LowStockProducts = await _dashboardService.GetLowStockProductsAsync(10, cancellationToken);
+            LowStockProducts = await _dashboardService.GetLowStockProductsAsync(5, cancellationToken);
             System.Diagnostics.Debug.WriteLine($"Low stock products loaded: Count={LowStockProducts?.Count}");
         }
         catch (OperationCanceledException)
@@ -148,7 +148,7 @@ public partial class DashboardViewModel : ObservableObject
         
         System.Diagnostics.Debug.WriteLine($"Sales report loaded: TopProducts={report?.TopProducts?.Count}, RevenueByDate={report?.RevenueByDate?.Count}");
         
-        TopProducts = report.TopProducts;
+        TopProducts = report.TopProducts?.Take(5).ToList() ?? new List<TopProductDto>();
         RevenueData = report.RevenueByDate;
         
         // Update chart with new data
