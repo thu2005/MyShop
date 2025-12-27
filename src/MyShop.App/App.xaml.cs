@@ -64,14 +64,16 @@ namespace MyShop.App
             services.AddSingleton<IAuthorizationService, AuthorizationService>();
             services.AddSingleton<IEncryptionService, EncryptionService>();
             services.AddSingleton<IDashboardService, DashboardService>();
+            services.AddSingleton<IImageUploadService>(sp => new ImageUploadService("http://localhost:4000"));
 
             services.AddSingleton<IUserRepository, GraphQLUserRepository>();
             services.AddSingleton<IProductRepository, GraphQLProductRepository>();
-            // services.AddSingleton<ICategoryRepository, GraphQLCategoryRepository>();
+            services.AddSingleton<ICategoryRepository, GraphQLCategoryRepository>();
             services.AddSingleton<IReportRepository, GraphQLReportRepository>();
             services.AddSingleton<IOrderRepository, GraphQLOrderRepository>();
             services.AddSingleton<ICustomerRepository, GraphQLCustomerRepository>();
             services.AddSingleton<IDiscountRepository, GraphQLDiscountRepository>();
+            services.AddSingleton<ICustomerRepository, GraphQLCustomerRepository>();
 
             services.AddTransient<MainWindow>();
             services.AddTransient<LoginViewModel>();
@@ -79,9 +81,12 @@ namespace MyShop.App
             services.AddTransient<ShellViewModel>();
 
             services.AddTransient<ProductViewModel>();
+            services.AddTransient<ProductDetailViewModel>();
+            services.AddTransient<AddProductViewModel>();
             services.AddTransient<ReportsViewModel>();
             services.AddTransient<OrderViewModel>();
 
+            services.AddTransient<CustomersViewModel>();
         }
 
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)

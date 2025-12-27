@@ -11,6 +11,7 @@ import { AuthUtils } from './utils/auth';
 import { Context } from './types/context';
 import fs from 'fs';
 import path from 'path';
+import multer from 'multer';
 
 async function startServer() {
   // Create Express app
@@ -27,14 +28,64 @@ async function startServer() {
 
   // Create uploads directory if it doesn't exist
   const uploadDir = path.join(__dirname, '../uploads');
+  const productUploadDir = path.join(uploadDir, 'products');
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
+  }
+  if (!fs.existsSync(productUploadDir)) {
+    fs.mkdirSync(productUploadDir, { recursive: true });
   }
 
   // Serve uploaded files statically
   app.use('/uploads', express.static(uploadDir));
 
-  // Upload Endpoint
+  // Multer configuration for file uploads
+  const storage = multer.diskStorage({
+    destination: (_req, _file, cb) => {
+      cb(null, productUploadDir);
+    },
+    filename: (_req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const ext = path.extname(file.originalname);
+      cb(null, `product-${uniqueSuffix}${ext}`);
+    }
+  });
+
+  const upload = multer({
+    storage: storage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+    fileFilter: (_req, file, cb) => {
+      const allowedTypes = /jpeg|jpg|png|gif/;
+      const mimetype = allowedTypes.test(file.mimetype);
+      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+      
+      if (mimetype && extname) {
+        return cb(null, true);
+      }
+      cb(new Error('Only image files are allowed!'));
+    }
+  });
+
+  // Product Image Upload Endpoint (Multipart/Form-Data)
+  app.post('/api/upload/product-image', upload.single('file'), (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      // Construct public URL
+      const protocol = req.protocol;
+      const host = req.get('host');
+      const imageUrl = `${protocol}://${host}/uploads/products/${req.file.filename}`;
+
+      return res.json({ imageUrl });
+    } catch (error) {
+      console.error('Upload error:', error);
+      return res.status(500).json({ error: 'Upload failed' });
+    }
+  });
+
+  // Upload Endpoint (Base64 - Keep for backward compatibility)
   app.post('/api/upload', (req, res) => {
     try {
       const { image, fileName } = req.body;

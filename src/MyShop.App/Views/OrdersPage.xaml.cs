@@ -16,100 +16,204 @@ namespace MyShop.App.Views
             ViewModel = App.Current.GetService<OrderViewModel>();
         }
 
-        private async void OnSearchQuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
+        private async void OnSearchTextChanged(object sender, TextChangedEventArgs e)
         {
-            var query = args.QueryText;
-            if (!string.IsNullOrWhiteSpace(query))
+            if (ViewModel == null) return;
+            if (sender is TextBox textBox)
             {
-                await ViewModel.SearchOrdersAsync(query);
-            }
-            else
-            {
-                await ViewModel.LoadOrdersAsync();
-            }
-        }
-
-        private async void OnAddOrderClick(object sender, RoutedEventArgs e)
-        {
-            var dialog = new Dialogs.CreateOrderDialog(ViewModel);
-            dialog.XamlRoot = this.XamlRoot;
-
-            var result = await dialog.ShowAsync();
-            if (result == ContentDialogResult.Primary)
-            {
-                await ViewModel.LoadOrdersAsync();
-            }
-        }
-
-        private async void OnViewOrderClick(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button button && button.Tag is Order order)
-            {
-                // Load full order details including order items
-                var fullOrder = await ViewModel.GetOrderDetailsAsync(order.Id);
-                if (fullOrder != null)
+                var query = textBox.Text;
+                if (!string.IsNullOrWhiteSpace(query))
                 {
-                    var dialog = new Dialogs.OrderDetailDialog(fullOrder);
-                    dialog.XamlRoot = this.XamlRoot;
-                    await dialog.ShowAsync();
+                    await ViewModel.SearchOrdersAsync(query);
                 }
-            }
-        }
-
-        private async void OnEditOrderClick(object sender, RoutedEventArgs e)
-        {
-            if (sender is Button button && button.Tag is Order order)
-            {
-                var dialog = new Dialogs.EditOrderDialog(ViewModel, order);
-                dialog.XamlRoot = this.XamlRoot;
-
-                var result = await dialog.ShowAsync();
-                if (result == ContentDialogResult.Primary)
+                else
                 {
                     await ViewModel.LoadOrdersAsync();
                 }
             }
         }
 
+        private void OnStatusFilterChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ViewModel == null) return;
+            if (sender is ComboBox comboBox && comboBox.SelectedItem is ComboBoxItem selectedItem)
+            {
+                var statusTag = selectedItem.Tag as string;
+                if (statusTag == "All")
+                {
+                    ViewModel.SelectedStatus = null;
+                }
+                else if (Enum.TryParse<OrderStatus>(statusTag, out var status))
+                {
+                    ViewModel.SelectedStatus = status;
+                }
+            }
+        }
+
+        private void OnPriceFilterChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ViewModel == null) return;
+            if (sender is ComboBox comboBox && comboBox.SelectedItem is ComboBoxItem selectedItem)
+            {
+                var priceTag = selectedItem.Tag as string;
+                if (priceTag == null) return;
+
+                if (Enum.TryParse<PriceFilter>(priceTag, out var filter))
+                {
+                    ViewModel.SelectedPriceFilter = filter;
+                }
+            }
+        }
+
+        private void OnAddOrderClick(object sender, RoutedEventArgs e)
+        {
+            Frame.Navigate(typeof(CreateOrderPage), ViewModel);
+        }
+
+        private void OnViewOrderClick(object sender, RoutedEventArgs e)
+        {
+            // Handle both Button and MenuFlyoutItem triggers
+            Order order = null;
+
+            if (sender is Button button && button.Tag is Order o1)
+            {
+                order = o1;
+            }
+            else if (sender is MenuFlyoutItem item && item.Tag is Order o2)
+            {
+                order = o2;
+            }
+
+            if (order != null)
+            {
+                var navParams = new CreateOrderPageNavigationParams 
+                { 
+                    ViewModel = ViewModel,
+                    OrderIdToView = order.Id,
+                    IsReadOnly = true
+                };
+                Frame.Navigate(typeof(CreateOrderPage), navParams);
+            }
+        }
+
+        private async void OnEditOrderClick(object sender, RoutedEventArgs e)
+        {
+             // Handle both Button and MenuFlyoutItem triggers
+            Order order = null;
+
+            if (sender is Button button && button.Tag is Order o1)
+            {
+                order = o1;
+            }
+            else if (sender is MenuFlyoutItem item && item.Tag is Order o2)
+            {
+                order = o2;
+            }
+
+            if (order != null)
+            {
+                // Block editing completed or cancelled orders
+                if (order.Status == OrderStatus.COMPLETED || order.Status == OrderStatus.CANCELLED)
+                {
+                    var dialog = new ContentDialog
+                    {
+                        Title = "Cannot Edit Order",
+                        Content = $"Orders with status '{order.Status}' cannot be edited.",
+                        CloseButtonText = "OK",
+                        XamlRoot = this.XamlRoot
+                    };
+                    await dialog.ShowAsync();
+                    return;
+                }
+
+                var navParams = new CreateOrderPageNavigationParams 
+                { 
+                    ViewModel = ViewModel,
+                    OrderIdToView = order.Id,
+                    IsEditMode = true
+                };
+                Frame.Navigate(typeof(CreateOrderPage), navParams);
+            }
+        }
+
         private async void OnCancelOrderClick(object sender, RoutedEventArgs e)
         {
-            if (sender is Button button && button.Tag is Order order)
+            // Handle both Button and MenuFlyoutItem triggers
+            Order order = null;
+
+            if (sender is Button button && button.Tag is Order o1)
             {
-                var confirmDialog = new ContentDialog
+                order = o1;
+            }
+            else if (sender is MenuFlyoutItem item && item.Tag is Order o2)
+            {
+                order = o2;
+            }
+
+            if (order == null) return;
+
+            // If already cancelled, just inform and return (already deleted)
+            if (order.Status == OrderStatus.CANCELLED)
+            {
+                var infoDialog = new ContentDialog
                 {
-                    Title = "Cancel Order",
-                    Content = $"Are you sure you want to cancel order {order.OrderNumber}?",
-                    PrimaryButtonText = "Yes, Cancel",
-                    CloseButtonText = "No",
+                    Title = "Order Already Deleted",
+                    Content = "This order has already been deleted/cancelled.",
+                    CloseButtonText = "OK",
                     XamlRoot = this.XamlRoot
                 };
+                await infoDialog.ShowAsync();
+                return;
+            }
 
-                var result = await confirmDialog.ShowAsync();
-                if (result == ContentDialogResult.Primary)
+            // Block deleting completed orders
+            if (order.Status == OrderStatus.COMPLETED)
+            {
+                var completedDialog = new ContentDialog
                 {
-                    var success = await ViewModel.CancelOrderAsync(order.Id);
-                    if (success)
+                    Title = "Cannot Delete",
+                    Content = "Completed orders cannot be deleted.",
+                    CloseButtonText = "OK",
+                    XamlRoot = this.XamlRoot
+                };
+                await completedDialog.ShowAsync();
+                return;
+            }
+
+            var confirmDialog = new ContentDialog
+            {
+                Title = "Delete Order",
+                Content = $"Are you sure you want to delete order {order.OrderNumber}?\nThis action will cancel the order.",
+                PrimaryButtonText = "Yes, Delete",
+                CloseButtonText = "No",
+                XamlRoot = this.XamlRoot
+            };
+
+            var result = await confirmDialog.ShowAsync();
+            if (result == ContentDialogResult.Primary)
+            {
+                var success = await ViewModel.CancelOrderAsync(order.Id);
+                if (success)
+                {
+                    var successDialog = new ContentDialog
                     {
-                        var successDialog = new ContentDialog
-                        {
-                            Title = "Success",
-                            Content = "Order cancelled successfully!",
-                            CloseButtonText = "OK",
-                            XamlRoot = this.XamlRoot
-                        };
-                        await successDialog.ShowAsync();
-                    }
-                    else
+                        Title = "Success",
+                        Content = "Order deleted successfully!",
+                        CloseButtonText = "OK",
+                        XamlRoot = this.XamlRoot
+                    };
+                    await successDialog.ShowAsync();
+                }
+                else
+                {
+                    var errorDialog = new ContentDialog
                     {
-                        var errorDialog = new ContentDialog
-                        {
-                            Title = "Error",
-                            Content = ViewModel.ErrorMessage ?? "Failed to cancel order",
-                            CloseButtonText = "OK",
-                            XamlRoot = this.XamlRoot
-                        };
-                        await errorDialog.ShowAsync();
-                    }
+                        Title = "Error",
+                        Content = ViewModel.ErrorMessage ?? "Failed to delete order",
+                        CloseButtonText = "OK",
+                        XamlRoot = this.XamlRoot
+                    };
+                    await errorDialog.ShowAsync();
                 }
             }
         }
@@ -132,32 +236,6 @@ namespace MyShop.App.Views
         private void OnLastPageClick(object sender, RoutedEventArgs e)
         {
             ViewModel.GoToLastPage();
-        }
-
-        private void OnStatusFilterChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (sender is ComboBox comboBox && comboBox.SelectedItem is ComboBoxItem selectedItem)
-            {
-                var statusTag = selectedItem.Tag as string;
-
-                if (string.IsNullOrEmpty(statusTag))
-                {
-                    ViewModel.SelectedStatus = null;
-                }
-                else if (Enum.TryParse<OrderStatus>(statusTag, out var status))
-                {
-                    ViewModel.SelectedStatus = status;
-                }
-                // FilterOrdersAsync is automatically called by SelectedStatus setter
-            }
-        }
-
-        private async void OnClearFiltersClick(object sender, RoutedEventArgs e)
-        {
-            StatusFilterComboBox.SelectedIndex = -1;
-            StartDatePicker.Date = null;
-            EndDatePicker.Date = null;
-            await ViewModel.ClearFiltersAsync();
         }
 
         private async void OnStartDateChanged(CalendarDatePicker sender, CalendarDatePickerDateChangedEventArgs args)

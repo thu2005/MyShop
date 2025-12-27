@@ -20,18 +20,26 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Grid Grid.Row="0" Margin="0,0,0,24">
-            <StackPanel>
-                <TextBlock Text="Reports" FontSize="32" FontWeight="Bold" Foreground="#0C2B4E"/>
-                <TextBlock Text="Home > Reports" 
-                           FontSize="14" 
-                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                           Margin="0,4,0,0"/>
-            </StackPanel>
+        <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Reports" FontSize="32" FontWeight="Bold" Foreground="#0C2B4E"/>
+                    <TextBlock Text="Home > Reports" 
+                               FontSize="14" 
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               Margin="0,4,0,0"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top" Spacing="6">
+                    <FontIcon Glyph="&#xE787;" FontSize="18" Foreground="#0C2B4E"/>
+                    <TextBlock Text="{x:Bind ViewModel.CurrentDateString, Mode=OneWay}" FontSize="16" Foreground="#0C2B4E" FontWeight="SemiBold"/>
+                </StackPanel>
         </Grid>
 
         <!-- Filters -->
-        <Grid Grid.Row="1" Margin="0,0,0,24">
+        <Grid Grid.Row="1" Margin="0,24,0,24">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/> <!-- Period & Date Pickers -->
                 <ColumnDefinition Width="*"/>    <!-- Spacer -->
@@ -127,7 +135,7 @@
                     </Grid.RowDefinitions>
 
                     <Grid Grid.Row="0">
-                         <TextBlock Text="Total Orders" FontWeight="SemiBold"/>
+                         <TextBlock Text="Total Orders Completed" FontWeight="SemiBold"/>
                          <FontIcon Glyph="&#xE712;" HorizontalAlignment="Right" FontSize="12" Foreground="Gray"/>
                     </Grid>
 
@@ -225,8 +233,8 @@
                     <Grid Grid.Row="1" Margin="0,0,0,8">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto" MinWidth="60"/>
-                            <ColumnDefinition Width="Auto" MinWidth="80"/>
+                            <ColumnDefinition Width="Auto" MinWidth="40"/>
+                            <ColumnDefinition Width="Auto" MinWidth="100"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="Name" Foreground="Gray" FontSize="12"/>
                         <TextBlock Grid.Column="1" Text="Orders" Foreground="Gray" FontSize="12" HorizontalAlignment="Right"/>
@@ -236,11 +244,11 @@
                     <ListView Grid.Row="2" ItemsSource="{x:Bind ViewModel.TopCustomers, Mode=OneWay}" SelectionMode="None">
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <Grid Margin="0,8">
+                                <Grid Margin="-15,8,-10,8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto" MinWidth="60"/>
-                                        <ColumnDefinition Width="Auto" MinWidth="80"/>
+                                        <ColumnDefinition Width="Auto" MinWidth="40"/>
+                                        <ColumnDefinition Width="Auto" MinWidth="100"/>
                                     </Grid.ColumnDefinitions>
                                     
                                     <StackPanel Orientation="Horizontal" Spacing="8">

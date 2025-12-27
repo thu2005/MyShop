@@ -30,6 +30,10 @@ namespace MyShop.App.ViewModels
 
         private string _currentSearchTerm = string.Empty;
         private List<Product> _currentSearchResults = new List<Product>();
+        private decimal? _minPrice = null;
+        private decimal? _maxPrice = null;
+        private string _primarySort = null;
+        private string _secondarySort = null;
 
         public ProductViewModel(IProductRepository productRepository)
         {
@@ -96,31 +100,50 @@ namespace MyShop.App.ViewModels
                 ? _allProducts
                 : _currentSearchResults;
 
+            // Filter by category
             if (SelectedCategory != null && SelectedCategory.Id != 0)
             {
                 source = source.Where(p => p.CategoryId == SelectedCategory.Id);
             }
 
-            Products = new ObservableCollection<Product>(source.ToList());
+            // Filter by price range
+            if (_minPrice.HasValue)
+            {
+                source = source.Where(p => p.Price >= _minPrice.Value);
+            }
+            if (_maxPrice.HasValue)
+            {
+                source = source.Where(p => p.Price <= _maxPrice.Value);
+            }
+
+            // Apply sorting
+            var sorted = ApplySorting(source);
+
+            Products = new ObservableCollection<Product>(sorted.ToList());
         }
 
 
-        public async Task SearchProductsAsync(string keyword)
+        public Task SearchProductsAsync(string keyword)
         {
-            if (IsBusy) return;
-            try
+            _currentSearchTerm = keyword;
+            if (string.IsNullOrWhiteSpace(keyword))
             {
-                IsBusy = true;
-                _currentSearchTerm = keyword;
-                if (string.IsNullOrWhiteSpace(keyword))
-                    _currentSearchResults.Clear();
-                else
-                    _currentSearchResults = await _productRepository.SearchByNameAsync(keyword);
-
-                FilterProducts();
+                _currentSearchResults.Clear();
             }
-            catch (Exception ex) { /*...*/ }
-            finally { IsBusy = false; }
+            else
+            {
+                // Client-side filtering: search by Name, SKU, or Description
+                var lowerKeyword = keyword.ToLower();
+                _currentSearchResults = _allProducts
+                    .Where(p => 
+                        (p.Name?.ToLower().Contains(lowerKeyword) ?? false) ||
+                        (p.Sku?.ToLower().Contains(lowerKeyword) ?? false) ||
+                        (p.Description?.ToLower().Contains(lowerKeyword) ?? false))
+                    .ToList();
+            }
+
+            FilterProducts();
+            return Task.CompletedTask;
         }
 
         public async Task AddProductAsync(Product newProduct)
@@ -144,6 +167,69 @@ namespace MyShop.App.ViewModels
             var p = _allProducts.FirstOrDefault(x => x.Id == productId);
             if (p != null) _allProducts.Remove(p);
             FilterProducts();
+        }
+
+        public void SetPriceRange(decimal? minPrice, decimal? maxPrice)
+        {
+            _minPrice = minPrice;
+            _maxPrice = maxPrice;
+            FilterProducts();
+        }
+
+        public void SetSorting(string primarySort, string secondarySort)
+        {
+            _primarySort = primarySort;
+            _secondarySort = secondarySort;
+            FilterProducts();
+        }
+
+        private IEnumerable<Product> ApplySorting(IEnumerable<Product> source)
+        {
+            if (string.IsNullOrEmpty(_primarySort))
+                return source;
+
+            IOrderedEnumerable<Product> ordered = null;
+
+            // Apply primary sort
+            switch (_primarySort)
+            {
+                case "PriceAsc":
+                    ordered = source.OrderBy(p => p.Price);
+                    break;
+                case "PriceDesc":
+                    ordered = source.OrderByDescending(p => p.Price);
+                    break;
+                case "StockAsc":
+                    ordered = source.OrderBy(p => p.Stock);
+                    break;
+                case "StockDesc":
+                    ordered = source.OrderByDescending(p => p.Stock);
+                    break;
+                default:
+                    return source;
+            }
+
+            // Apply secondary sort (tiebreaker)
+            if (!string.IsNullOrEmpty(_secondarySort) && ordered != null)
+            {
+                switch (_secondarySort)
+                {
+                    case "PriceAsc":
+                        ordered = ordered.ThenBy(p => p.Price);
+                        break;
+                    case "PriceDesc":
+                        ordered = ordered.ThenByDescending(p => p.Price);
+                        break;
+                    case "StockAsc":
+                        ordered = ordered.ThenBy(p => p.Stock);
+                        break;
+                    case "StockDesc":
+                        ordered = ordered.ThenByDescending(p => p.Stock);
+                        break;
+                }
+            }
+
+            return ordered ?? source;
         }
     }
 }

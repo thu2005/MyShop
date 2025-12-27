@@ -22,10 +22,11 @@
         <converters:StringComparisonToForegroundConverter x:Key="StringComparisonToForegroundConverter"/>
         <converters:OrderStatusToBackgroundConverter x:Key="OrderStatusToBackgroundConverter"/>
         <converters:OrderStatusToForegroundConverter x:Key="OrderStatusToForegroundConverter"/>
+        <converters:StringToImageSourceConverter x:Key="StringToImageSourceConverter"/>
     </Page.Resources>
 
     <ScrollViewer>
-        <StackPanel Padding="32" Spacing="24">
+        <StackPanel Padding="24" Spacing="24">
 
             <!-- Header -->
             <Grid>
@@ -60,13 +61,13 @@
                                    IconGlyph="&#xE7F8;"/>
 
                 <controls:StatCard Grid.Column="1"
-                                   Title="Total Orders"
-                                   Value="{x:Bind ViewModel.Stats.TotalOrders, Mode=OneWay, Converter={StaticResource CurrencyConverter}}"
+                                   Title="Today Orders"
+                                   Value="{x:Bind ViewModel.Stats.TodayOrders, Mode=OneWay, Converter={StaticResource CurrencyConverter}}"
                                    IconGlyph="&#xE7BF;"/>
 
                 <controls:StatCard Grid.Column="2"
-                                   Title="Total Revenue"
-                                   Value="{x:Bind ViewModel.Stats.TotalRevenue, Mode=OneWay, Converter={StaticResource CurrencyConverter}}"
+                                   Title="Today Revenue"
+                                   Value="{x:Bind ViewModel.Stats.TodayRevenue, Mode=OneWay, Converter={StaticResource CurrencyConverter}}"
                                    IconGlyph="&#xE1D0;"/>
             </Grid>
 
@@ -132,13 +133,20 @@
                         <ListView ItemsSource="{x:Bind ViewModel.TopProducts, Mode=OneWay}" SelectionMode="None">
                             <ListView.ItemTemplate>
                                 <DataTemplate x:DataType="dto:TopProductDto">
-                                    <Grid Margin="0,8">
+                                    <Grid Margin="-8,8">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <Ellipse Grid.Column="0" Width="40" Height="40" Fill="#1D546C" Margin="0,0,12,0"/>
+                                        <Grid Grid.Column="0" Width="40" Height="40" Margin="0,0,12,0">
+                                            <Ellipse Fill="#1D546C"/>
+                                            <Ellipse>
+                                                <Ellipse.Fill>
+                                                    <ImageBrush ImageSource="{x:Bind Product.ImageUrl, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" Stretch="UniformToFill"/>
+                                                </Ellipse.Fill>
+                                            </Ellipse>
+                                        </Grid>
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                             <TextBlock Text="{x:Bind Product.Name}" FontWeight="SemiBold"/>
                                             <TextBlock Text="{x:Bind Product.Price, Converter={StaticResource CurrencyConverter}}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
@@ -168,56 +176,73 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- Recent Orders -->
-                <Border Grid.Column="0"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        CornerRadius="8"
-                        Padding="24">
-                    <StackPanel>
-                        <TextBlock Text="Recent Orders" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16"/>
-                        <ListView ItemsSource="{x:Bind ViewModel.RecentOrders, Mode=OneWay}" SelectionMode="None">
-                            <ListView.Header>
-                                <Grid Padding="0,8,0,8">
+                <Grid Grid.Column="0" Background="White" CornerRadius="8" Padding="0" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/> <!-- Title -->
+                        <RowDefinition Height="Auto"/> <!-- Header -->
+                        <RowDefinition Height="*"/>    <!-- Items -->
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Text="Recent Orders" FontSize="18" FontWeight="SemiBold" Margin="24,12"/>
+
+                    <!-- Table Header -->
+                    <Grid Grid.Row="1" Background="#F9FAFB" Padding="24,12" BorderBrush="#E0E0E0" BorderThickness="0,1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="1.5*"/>
+                            <ColumnDefinition Width="1.5*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Order ID" FontWeight="SemiBold" Foreground="#666666" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1" Text="Customer" FontWeight="SemiBold" Foreground="#666666" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="2" Text="Status" FontWeight="SemiBold" Foreground="#666666" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="3" Text="Amount" FontWeight="SemiBold" Foreground="#666666" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <!-- Items -->
+                    <ListView Grid.Row="2" ItemsSource="{x:Bind ViewModel.RecentOrders, Mode=OneWay}" SelectionMode="None">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                <Setter Property="Padding" Value="0"/>
+                                <Setter Property="Margin" Value="0"/>
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="dto:OrderDto">
+                                <Grid Padding="24,16" BorderBrush="#F0F0F0" BorderThickness="0,0,0,1">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="1*"/>
                                         <ColumnDefinition Width="2*"/>
                                         <ColumnDefinition Width="1.5*"/>
                                         <ColumnDefinition Width="1.5*"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Order ID" FontWeight="SemiBold" FontSize="12"/>
-                                    <TextBlock Grid.Column="1" Text="Customer" FontWeight="SemiBold" FontSize="12"/>
-                                    <TextBlock Grid.Column="2" Text="Status" FontWeight="SemiBold" FontSize="12"/>
-                                    <TextBlock Grid.Column="3" Text="Amount" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Right"/>
+                                    
+                                    <TextBlock Grid.Column="0" Text="{x:Bind Id}" VerticalAlignment="Center" FontWeight="Medium"/>
+                                    <TextBlock Grid.Column="1" Text="{x:Bind CustomerName}" VerticalAlignment="Center"/>
+                                    
+                                    <Border Grid.Column="2" 
+                                            Background="{x:Bind Status, Converter={StaticResource OrderStatusToBackgroundConverter}}" 
+                                            CornerRadius="4" 
+                                            Padding="8,4" 
+                                            HorizontalAlignment="Left"
+                                            VerticalAlignment="Center">
+                                        <TextBlock Text="{x:Bind Status}" 
+                                                   FontSize="12" 
+                                                   FontWeight="Medium"
+                                                   Foreground="{x:Bind Status, Converter={StaticResource OrderStatusToForegroundConverter}}"/>
+                                    </Border>
+                                    
+                                    <TextBlock Grid.Column="3" 
+                                               Text="{x:Bind Total, Converter={StaticResource CurrencyConverter}}" 
+                                               FontWeight="SemiBold" 
+                                               HorizontalAlignment="Right" 
+                                               VerticalAlignment="Center"/>
                                 </Grid>
-                            </ListView.Header>
-                            <ListView.ItemTemplate>
-                                <DataTemplate x:DataType="dto:OrderDto">
-                                    <Grid Padding="0">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="1*"/>
-                                            <ColumnDefinition Width="2*"/>
-                                            <ColumnDefinition Width="1.5*"/>
-                                            <ColumnDefinition Width="1.5*"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="{x:Bind Id}" VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="1" Text="{x:Bind CustomerName}" VerticalAlignment="Center"/>
-                                        <Border Grid.Column="2" 
-                                                Background="{x:Bind Status, Converter={StaticResource OrderStatusToBackgroundConverter}}" 
-                                                CornerRadius="4" 
-                                                Padding="8,4" 
-                                                HorizontalAlignment="Left">
-                                            <TextBlock Text="{x:Bind Status}" 
-                                                       FontSize="12" 
-                                                       Foreground="{x:Bind Status, Converter={StaticResource OrderStatusToForegroundConverter}}"/>
-                                        </Border>
-                                        <TextBlock Grid.Column="3" Text="{x:Bind Total, Converter={StaticResource CurrencyConverter}}" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center"/>
-                                    </Grid>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-                    </StackPanel>
-                </Border>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </Grid>
 
                 <!-- Low Stock Products -->
                 <Border Grid.Column="1"
@@ -231,13 +256,20 @@
                         <ListView ItemsSource="{x:Bind ViewModel.LowStockProducts, Mode=OneWay}" SelectionMode="None">
                             <ListView.ItemTemplate>
                                 <DataTemplate x:DataType="dto:LowStockProductDto">
-                                    <Grid Margin="0,8">
+                                    <Grid Margin="-8,8">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <Ellipse Grid.Column="0" Width="40" Height="40" Fill="#1D546C" Margin="0,0,12,0"/>
+                                        <Grid Grid.Column="0" Width="40" Height="40" Margin="0,0,12,0">
+                                            <Ellipse Fill="#1D546C"/>
+                                            <Ellipse>
+                                                <Ellipse.Fill>
+                                                    <ImageBrush ImageSource="{x:Bind ImageUrl, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" Stretch="UniformToFill"/>
+                                                </Ellipse.Fill>
+                                            </Ellipse>
+                                        </Grid>
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                                             <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold"/>
                                             <TextBlock Text="{x:Bind Price, Converter={StaticResource CurrencyConverter}}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>

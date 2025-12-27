@@ -9,6 +9,14 @@ using MyShop.Core.Models;
 
 namespace MyShop.App.ViewModels
 {
+    public enum PriceFilter
+    {
+        All,
+        Low,
+        Medium,
+        High
+    }
+
     public class OrderViewModel : ViewModelBase
     {
         private readonly IOrderRepository _orderRepository;
@@ -16,6 +24,7 @@ namespace MyShop.App.ViewModels
         private List<Order> _allOrders;
         private ObservableCollection<Order> _orders;
         private OrderStatus? _selectedStatus;
+        private PriceFilter _selectedPriceFilter = PriceFilter.All;
         private DateTime? _startDate;
         private DateTime? _endDate;
         private int _currentPage = 1;
@@ -45,6 +54,18 @@ namespace MyShop.App.ViewModels
             set
             {
                 if (SetProperty(ref _selectedStatus, value))
+                {
+                    _ = FilterOrdersAsync();
+                }
+            }
+        }
+
+        public PriceFilter SelectedPriceFilter
+        {
+            get => _selectedPriceFilter;
+            set
+            {
+                if (SetProperty(ref _selectedPriceFilter, value))
                 {
                     _ = FilterOrdersAsync();
                 }
@@ -109,7 +130,15 @@ namespace MyShop.App.ViewModels
                 _allOrders.Clear();
                 _allOrders.AddRange(orders.OrderByDescending(o => o.CreatedAt));
 
-                UpdatePagination();
+                // Apply current filters if any
+                if (SelectedStatus.HasValue || SelectedPriceFilter != PriceFilter.All || StartDate.HasValue || EndDate.HasValue)
+                {
+                    UpdatePagination();
+                }
+                else
+                {
+                    UpdatePagination();
+                }
             }
             catch (Exception ex)
             {
@@ -143,7 +172,7 @@ namespace MyShop.App.ViewModels
                 }
                 else if (StartDate.HasValue || EndDate.HasValue)
                 {
-                    // If only one date is selected, filter in-memory
+                    // If only one date is selected, filter in-memory from ALL (needs fetch)
                     var allOrders = await _orderRepository.GetAllAsync();
                     filteredOrders = allOrders.Where(o =>
                     {
@@ -163,6 +192,20 @@ namespace MyShop.App.ViewModels
                 if (SelectedStatus.HasValue)
                 {
                     filteredOrders = filteredOrders.Where(o => o.Status == SelectedStatus.Value).ToList();
+                }
+
+                // Filter by price
+                switch (SelectedPriceFilter)
+                {
+                    case PriceFilter.Low:
+                        filteredOrders = filteredOrders.Where(o => o.Total < 1000000).ToList();
+                        break;
+                    case PriceFilter.Medium:
+                        filteredOrders = filteredOrders.Where(o => o.Total >= 1000000 && o.Total <= 5000000).ToList();
+                        break;
+                    case PriceFilter.High:
+                        filteredOrders = filteredOrders.Where(o => o.Total > 5000000).ToList();
+                        break;
                 }
 
                 _allOrders.Clear();

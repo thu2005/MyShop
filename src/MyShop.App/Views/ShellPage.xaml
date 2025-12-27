@@ -51,6 +51,7 @@
             <NavigationViewItemSeparator/>
 
             <NavigationViewItem Content="ORDER LIST" Tag="Orders" Icon="List" FontWeight="SemiBold"/>
+            <NavigationViewItem Content="CUSTOMERS" Tag="Customers" Icon="People" FontWeight="SemiBold"/>
             <NavigationViewItem Content="REPORT" Tag="Reports" Icon="Document" FontWeight="SemiBold"/>
         </NavigationView.MenuItems>
 

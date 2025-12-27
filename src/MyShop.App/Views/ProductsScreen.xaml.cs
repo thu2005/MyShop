@@ -42,17 +42,9 @@ namespace MyShop.App.Views
             }
         }
 
-        private async void OnAddProductClick(object sender, RoutedEventArgs e)
+        private void OnAddProductClick(object sender, RoutedEventArgs e)
         {
-            var dialog = new AddProductDialog();
-            dialog.XamlRoot = this.XamlRoot;
-
-            await dialog.ShowAsync();
-
-            if (dialog.NewProduct != null)
-            {
-                await ViewModel.AddProductAsync(dialog.NewProduct);
-            }
+            Frame.Navigate(typeof(AddProductScreen));
         }
 
         private async void OnSearchQuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
@@ -62,9 +54,10 @@ namespace MyShop.App.Views
 
         private async void OnSearchTextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
         {
-            if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput && string.IsNullOrWhiteSpace(sender.Text))
+            // Trigger search on every text change for real-time filtering
+            if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput)
             {
-                await ViewModel.SearchProductsAsync(string.Empty);
+                await ViewModel.SearchProductsAsync(sender.Text);
             }
         }
 
@@ -108,6 +101,144 @@ namespace MyShop.App.Views
                 if (result == ContentDialogResult.Primary)
                 {
                     await ViewModel.DeleteProductAsync(productToDelete.Id);
+                }
+            }
+        }
+
+        private void OnProductCardClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is Product product)
+            {
+                Frame.Navigate(typeof(ProductDetailScreen), product);
+            }
+        }
+
+        private void OnPriceRangeChanged(object sender, TextChangedEventArgs e)
+        {
+            // Parse price values
+            decimal? minPrice = null;
+            decimal? maxPrice = null;
+
+            if (!string.IsNullOrWhiteSpace(FromPriceBox.Text))
+            {
+                if (decimal.TryParse(FromPriceBox.Text, out decimal min))
+                    minPrice = min;
+            }
+
+            if (!string.IsNullOrWhiteSpace(ToPriceBox.Text))
+            {
+                if (decimal.TryParse(ToPriceBox.Text, out decimal max))
+                    maxPrice = max;
+            }
+
+            ViewModel.SetPriceRange(minPrice, maxPrice);
+        }
+
+        private void OnPrimarySortChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (PrimarySortComboBox.SelectedItem is ComboBoxItem selectedItem)
+            {
+                var primaryTag = selectedItem.Tag?.ToString();
+                
+                // Enable secondary ComboBox and populate with remaining options
+                SecondarySortComboBox.IsEnabled = true;
+                SecondarySortComboBox.Items.Clear();
+                
+                // Add opposite options based on primary selection
+                if (primaryTag?.StartsWith("Price") == true)
+                {
+                    // Primary is Price, so secondary shows Stock options
+                    SecondarySortComboBox.Items.Add(new ComboBoxItem { Content = "Stock (Low to High)", Tag = "StockAsc" });
+                    SecondarySortComboBox.Items.Add(new ComboBoxItem { Content = "Stock (High to Low)", Tag = "StockDesc" });
+                }
+                else if (primaryTag?.StartsWith("Stock") == true)
+                {
+                    // Primary is Stock, so secondary shows Price options
+                    SecondarySortComboBox.Items.Add(new ComboBoxItem { Content = "Price (Low to High)", Tag = "PriceAsc" });
+                    SecondarySortComboBox.Items.Add(new ComboBoxItem { Content = "Price (High to Low)", Tag = "PriceDesc" });
+                }
+                
+                // Reset secondary selection
+                SecondarySortComboBox.SelectedIndex = -1;
+                
+                // Apply primary sort only
+                ViewModel.SetSorting(primaryTag, null);
+            }
+            else
+            {
+                // No selection, disable secondary
+                SecondarySortComboBox.IsEnabled = false;
+                SecondarySortComboBox.Items.Clear();
+                ViewModel.SetSorting(null, null);
+            }
+        }
+
+        private void OnSecondarySortChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var primaryTag = (PrimarySortComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+            var secondaryTag = (SecondarySortComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString();
+            
+            ViewModel.SetSorting(primaryTag, secondaryTag);
+        }
+
+        private async void OnAddCategoryClick(object sender, RoutedEventArgs e)
+        {
+            var dialog = new Dialogs.AddCategoryDialog();
+            dialog.XamlRoot = this.XamlRoot;
+
+            var result = await dialog.ShowAsync();
+
+            if (result == ContentDialogResult.Primary && dialog.NewCategory != null)
+            {
+                try
+                {
+                    // Get category repository
+                    var categoryRepo = App.Current.Services.GetService<MyShop.Core.Interfaces.Repositories.ICategoryRepository>();
+                    await categoryRepo.AddAsync(dialog.NewCategory);
+
+                    // Find the ShellPage in the navigation stack and reload its categories
+                    var frame = this.Frame;
+                    while (frame != null)
+                    {
+                        if (frame.Content is ShellPage shellPage)
+                        {
+                            await shellPage.ViewModel.LoadCategoriesAsync();
+                            break;
+                        }
+                        // Try to get parent frame
+                        var parent = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(frame);
+                        frame = null;
+                        while (parent != null)
+                        {
+                            if (parent is Microsoft.UI.Xaml.Controls.Frame parentFrame)
+                            {
+                                frame = parentFrame;
+                                break;
+                            }
+                            parent = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(parent);
+                        }
+                    }
+
+                    // // Show success message
+                    // var successDialog = new ContentDialog
+                    // {
+                    //     Title = "Success",
+                    //     Content = $"Category '{dialog.NewCategory.Name}' has been added successfully.",
+                    //     CloseButtonText = "OK",
+                    //     XamlRoot = this.XamlRoot
+                    // };
+                    // await successDialog.ShowAsync();
+                }
+                catch (Exception ex)
+                {
+                    var errorDialog = new ContentDialog
+                    {
+                        Title = "Error",
+                        Content = $"Failed to add category: {ex.Message}",
+                        CloseButtonText = "OK",
+                        XamlRoot = this.XamlRoot
+                    };
+                    await errorDialog.ShowAsync();
                 }
             }
         }
