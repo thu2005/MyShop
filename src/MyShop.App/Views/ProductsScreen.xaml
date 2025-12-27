@@ -33,7 +33,7 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Spacing="4">
-               <TextBlock Text="Products" FontSize="32" FontWeight="Bold" Foreground="#0C2B4E"/>
+               <TextBlock Text="Products" FontSize="24" FontWeight="Bold" Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
                <TextBlock Text="Home > Products" 
                                FontSize="14" 
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
