@@ -69,6 +69,33 @@ namespace MyShop.App.ViewModels
             }
         }
 
+        public async Task DeleteCategoryAsync(int categoryId)
+        {
+            // Delete all products in this category first
+            var products = await _productRepository.GetAllAsync();
+            var productsInCategory = products.Where(p => p.CategoryId == categoryId).ToList();
+            
+            foreach (var product in productsInCategory)
+            {
+                await _productRepository.DeleteAsync(product.Id);
+            }
+
+            // Then delete the category
+            await _categoryRepository.DeleteAsync(categoryId);
+            await LoadCategoriesAsync();
+        }
+
+        public async Task UpdateCategoryAsync(int categoryId, string newName)
+        {
+            var category = await _categoryRepository.GetByIdAsync(categoryId);
+            if (category != null)
+            {
+                category.Name = newName;
+                await _categoryRepository.UpdateAsync(category);
+                await LoadCategoriesAsync();
+            }
+        }
+
         public User? CurrentUser => _authService.CurrentUser;
         public UserRole UserRole => CurrentUser?.Role ?? UserRole.STAFF;
         public bool IsAdmin => _authorizationService.IsAuthorized(UserRole.ADMIN);
