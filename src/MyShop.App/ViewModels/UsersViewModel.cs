@@ -42,7 +42,6 @@ namespace MyShop.App.ViewModels
             {
                 var allUsers = await _userRepository.GetAllAsync();
                 
-                // STEP: Lọc chỉ lấy những người dùng có vai trò là STAFF
                 var staffUsers = allUsers.Where(u => u.Role == UserRole.STAFF).ToList();
                 
                 Users.Clear();
@@ -58,6 +57,26 @@ namespace MyShop.App.ViewModels
             finally
             {
                 IsLoading = false;
+            }
+        }
+
+        public async Task<bool> UpdateUserAsync(User user)
+        {
+            try
+            {
+                await _userRepository.UpdateAsync(user);
+                
+                var index = Users.IndexOf(Users.FirstOrDefault(u => u.Id == user.Id));
+                if (index != -1)
+                {
+                    Users[index] = user;
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error updating user: {ex.Message}");
+                return false;
             }
         }
 

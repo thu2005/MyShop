@@ -40,7 +40,6 @@ namespace MyShop.App.Views
             var passwordBox = new PasswordBox { Header = "Initial Password", Margin = new Thickness(0, 0, 0, 8) };
             var roleCombo = new ComboBox { Header = "Role", HorizontalAlignment = HorizontalAlignment.Stretch };
             roleCombo.Items.Add(UserRole.STAFF);
-            roleCombo.Items.Add(UserRole.MANAGER);
             roleCombo.Items.Add(UserRole.ADMIN);
             roleCombo.SelectedIndex = 0;
 
@@ -67,11 +66,53 @@ namespace MyShop.App.Views
             }
         }
 
-        private void EditUser_Click(object sender, RoutedEventArgs e)
+        private async void EditUser_Click(object sender, RoutedEventArgs e)
         {
+            var user = ((FrameworkElement)sender).Tag as User;
+            if (user == null) user = (sender as Button)?.DataContext as User;
+            if (user == null) return;
 
+            var dialog = new ContentDialog
+            {
+                Title = $"Edit User: {user.Username}",
+                PrimaryButtonText = "Save changes",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = this.XamlRoot
+            };
+
+            var emailBox = new TextBox { Header = "Email", Text = user.Email ?? "", Margin = new Thickness(0, 0, 0, 8) };
+            
+            var roleCombo = new ComboBox { Header = "Role", HorizontalAlignment = HorizontalAlignment.Stretch, Margin = new Thickness(0, 0, 0, 8) };
+            roleCombo.Items.Add(UserRole.STAFF);
+            roleCombo.Items.Add(UserRole.ADMIN);
+            roleCombo.SelectedItem = user.Role;
+
+            var activeToggle = new ToggleSwitch 
+            { 
+                Header = "Account Status", 
+                IsOn = user.IsActive,
+                OnContent = "Active",
+                OffContent = "Inactive"
+            };
+
+            var stack = new StackPanel();
+            stack.Children.Add(emailBox);
+            stack.Children.Add(roleCombo);
+            stack.Children.Add(activeToggle);
+            dialog.Content = stack;
+
+            var result = await dialog.ShowAsync();
+
+            if (result == ContentDialogResult.Primary)
+            {
+                user.Email = emailBox.Text;
+                user.Role = (UserRole)roleCombo.SelectedItem;
+                user.IsActive = activeToggle.IsOn;
+
+                await ViewModel.UpdateUserAsync(user);
+            }
         }
-
         private async void DeleteUser_Click(object sender, RoutedEventArgs e)
         {
             var user = ((FrameworkElement)sender).Tag as User;

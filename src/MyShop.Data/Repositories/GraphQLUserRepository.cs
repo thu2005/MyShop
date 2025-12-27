@@ -147,7 +147,7 @@ namespace MyShop.Data.Repositories
                 }
             };
 
-            await _graphQLService.Client.SendMutationAsync<object>(request);
+            await _graphQLService.Client.SendMutationAsync<UpdateUserResponse>(request);
         }
 
         public override async Task DeleteAsync(int id)
@@ -171,5 +171,6 @@ namespace MyShop.Data.Repositories
         private class UserListResponse { public List<User>? Users { get; set; } public int Total { get; set; } }
         private class UserByUsernameResponse { public User? UserByUsername { get; set; } }
         private class CreateUserResponse { public User? CreateUser { get; set; } }
+        private class UpdateUserResponse { public User? UpdateUser { get; set; } }
     }
 }
