@@ -3,6 +3,9 @@ import { AuthUtils } from './auth';
 
 const prisma = new PrismaClient();
 
+// Define local backend URL (ensure this matches .env PORT)
+const BASE_URL = process.env.BASE_URL || 'http://localhost:4000';
+
 async function seed() {
   try {
     console.log('Starting database seeding...');
@@ -280,6 +283,7 @@ async function seed() {
             minStock: 5,
             categoryId: category.id,
             description: item.description,
+            imageUrl: `${BASE_URL}/uploads/products/${item.sku}.jpg`,
           },
         });
         allCreatedProducts.push(product);
