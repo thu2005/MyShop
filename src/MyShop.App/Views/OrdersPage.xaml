@@ -131,8 +131,8 @@
             </Grid.ColumnDefinitions>
             
             <StackPanel>
-                <TextBlock Text="Orders List" FontSize="24" FontWeight="Bold" Foreground="#1A1A1A"/>
-                <TextBlock Text="Home > Orders List" FontSize="14" Foreground="#666666" Margin="0,4,0,0"/>
+                <TextBlock Text="Orders List" FontSize="24" FontWeight="Bold" Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                <TextBlock Text="Home > Orders List" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,4,0,0"/>
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">

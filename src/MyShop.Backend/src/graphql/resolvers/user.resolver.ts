@@ -50,6 +50,21 @@ export const userResolvers = {
 
       return user;
     },
+
+    userByUsername: async (_: any, { username }: any, context: Context) => {
+      requireAuth(context);
+
+      const user = await context.prisma.user.findFirst({
+        where: {
+          username: {
+            equals: username,
+            mode: 'insensitive'
+          }
+        },
+      });
+
+      return user;
+    },
   },
 
   Mutation: {
@@ -57,9 +72,14 @@ export const userResolvers = {
       requireAuth(context);
       requireRole(context, ['ADMIN']);
 
-      // Check if username exists
-      const existingUser = await context.prisma.user.findUnique({
-        where: { username: input.username },
+      // Check if username exists (case-insensitive)
+      const existingUser = await context.prisma.user.findFirst({
+        where: {
+          username: {
+            equals: input.username,
+            mode: 'insensitive'
+          }
+        },
       });
 
       if (existingUser) {

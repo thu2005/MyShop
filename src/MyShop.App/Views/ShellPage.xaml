@@ -54,6 +54,11 @@
             <NavigationViewItem Content="ORDER LIST" Tag="Orders" Icon="List" FontWeight="SemiBold"/>
             <NavigationViewItem Content="CUSTOMERS" Tag="Customers" Icon="People" FontWeight="SemiBold"/>
             <NavigationViewItem Content="REPORT" Tag="Reports" Icon="Document" FontWeight="SemiBold"/>
+            <NavigationViewItem Content="STAFF ACCOUNTS" 
+                                Tag="Users" 
+                                Icon="Admin" 
+                                FontWeight="SemiBold"
+                                Visibility="{x:Bind ViewModel.UserRole, Mode=OneWay, Converter={StaticResource RoleToVisibilityConverter}, ConverterParameter='ADMIN'}"/>
         </NavigationView.MenuItems>
 
         <NavigationView.Content>

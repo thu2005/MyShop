@@ -513,6 +513,7 @@ export const typeDefs = gql`
     # Users
     users(pagination: PaginationInput, sort: SortInput): UserList!
     user(id: Int!): User
+    userByUsername(username: String!): User
 
     # Categories
     categories(pagination: PaginationInput, sort: SortInput): CategoryList!

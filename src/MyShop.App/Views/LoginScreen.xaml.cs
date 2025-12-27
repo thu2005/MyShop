@@ -19,6 +19,14 @@
                 // Subscribe to events
                 ViewModel.LoginSuccessful += OnLoginSuccessful;
                 ViewModel.OpenConfigRequested += OnOpenConfigRequested;
+
+                this.Unloaded += LoginScreen_Unloaded;
+            }
+
+            private void LoginScreen_Unloaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+            {
+                ViewModel.LoginSuccessful -= OnLoginSuccessful;
+                ViewModel.OpenConfigRequested -= OnOpenConfigRequested;
             }
 
             private void OnLoginSuccessful(object? sender, EventArgs e)

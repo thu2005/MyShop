@@ -2,6 +2,7 @@ using MyShop.App.ViewModels.Base;
 using MyShop.Core.Interfaces.Services;
 using MyShop.Core.Interfaces.Repositories;
 using MyShop.Core.Models;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -25,13 +26,22 @@ namespace MyShop.App.ViewModels
             _authService = authService;
             _authorizationService = authorizationService;
             _productRepository = productRepository;
-            _categoryRepository = categoryRepository;
+            _categoryRepository = categoryRepository; 
 
             LogoutCommand = new RelayCommand(_ => ExecuteLogout());
             AdminPanelCommand = new RelayCommand(_ => ExecuteOpenAdminPanel());
 
-            // Load categories on startup
-            _ = LoadCategoriesAsync();
+            // Load categories on startup with proper error handling
+            Task.Run(async () => {
+                try 
+                {
+                    await LoadCategoriesAsync();
+                }
+                catch (System.Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Initial Category Load failed: {ex.Message}");
+                }
+            });
         }
 
         public ObservableCollection<CategoryStat> Categories { get; } = new();
@@ -40,16 +50,15 @@ namespace MyShop.App.ViewModels
         {
             try
             {
-                // Load real categories from database
                 var categories = await _categoryRepository.GetAllAsync();
                 var products = await _productRepository.GetAllAsync();
-
-                var stats = new ObservableCollection<CategoryStat>
+                
+                
+                var stats = new List<CategoryStat>
                 {
                     new CategoryStat { Id = 0, Name = "All Products", Count = products.Count }
                 };
 
-                // Add real categories with product counts
                 foreach (var category in categories)
                 {
                     stats.Add(new CategoryStat

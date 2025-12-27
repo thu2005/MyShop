@@ -21,6 +21,14 @@ namespace MyShop.App.Views
             NavView.Loaded += NavView_Loaded;
 
             ViewModel.Categories.CollectionChanged += Categories_CollectionChanged;
+
+            this.Unloaded += ShellPage_Unloaded;
+        }
+
+        private void ShellPage_Unloaded(object sender, RoutedEventArgs e)
+        {
+            ViewModel.LogoutRequested -= OnLogoutRequested;
+            ViewModel.Categories.CollectionChanged -= Categories_CollectionChanged;
         }
 
         private void Categories_CollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -182,6 +190,10 @@ namespace MyShop.App.Views
                             break;
                         case "Reports":
                                 pageType = typeof(ReportsPage);
+                                break;
+                            case "Users":
+                                // STEP 2: Điều hướng đến trang quản lý nhân viên
+                                pageType = typeof(UsersPage);
                                 break;
                         }
                     }

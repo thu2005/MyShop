@@ -35,7 +35,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Text="Dashboard" FontSize="32" FontWeight="Bold" Foreground="#0C2B4E"/>
+                    <TextBlock Text="Dashboard" FontSize="24" FontWeight="Bold" Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
                     <TextBlock Text="Home > Dashboard" 
                                FontSize="14" 
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
