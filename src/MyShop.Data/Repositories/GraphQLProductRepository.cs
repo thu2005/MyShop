@@ -53,7 +53,7 @@ namespace MyShop.Data.Repositories
             {
                 Query = @"
                     query GetProducts {
-                        products(pagination: { pageSize: 100 }) {
+                        products(pagination: { pageSize: 1000 }) {
                             products {
                                 id
                                 name
