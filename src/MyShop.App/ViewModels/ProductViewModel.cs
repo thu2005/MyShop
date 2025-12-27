@@ -22,6 +22,7 @@ namespace MyShop.App.ViewModels
     {
         private readonly IProductRepository _productRepository;
         private List<Product> _allProducts;
+        private List<Product> _filteredProducts; // Products after filtering, before pagination
         private ObservableCollection<Product> _products;
         private CategoryStat _selectedCategory;
 
@@ -35,11 +36,20 @@ namespace MyShop.App.ViewModels
         private string _primarySort = null;
         private string _secondarySort = null;
 
+        // Pagination properties
+        private int _currentPage = 1;
+        private int _totalPages = 1;
+        private int _totalProducts = 0;
+        private int _pageSize = 20;
+
+        public List<int> AvailablePageSizes { get; } = new List<int> { 10, 20, 50, 100 };
+
         public ProductViewModel(IProductRepository productRepository)
         {
             _productRepository = productRepository;
             _products = new ObservableCollection<Product>();
             _allProducts = new List<Product>();
+            _filteredProducts = new List<Product>();
             _categories = new ObservableCollection<CategoryStat>();
 
             _ = LoadProductsAsync();
@@ -62,6 +72,40 @@ namespace MyShop.App.ViewModels
                 }
             }
         }
+
+        public int CurrentPage
+        {
+            get => _currentPage;
+            set => SetProperty(ref _currentPage, value);
+        }
+
+        public int TotalPages
+        {
+            get => _totalPages;
+            set => SetProperty(ref _totalPages, value);
+        }
+
+        public int TotalProducts
+        {
+            get => _totalProducts;
+            set => SetProperty(ref _totalProducts, value);
+        }
+
+        public int PageSize
+        {
+            get => _pageSize;
+            set
+            {
+                if (SetProperty(ref _pageSize, value))
+                {
+                    CurrentPage = 1;
+                    UpdatePagination();
+                }
+            }
+        }
+
+        public bool HasPreviousPage => CurrentPage > 1;
+        public bool HasNextPage => CurrentPage < TotalPages;
 
         public async Task LoadProductsAsync()
         {
@@ -119,7 +163,62 @@ namespace MyShop.App.ViewModels
             // Apply sorting
             var sorted = ApplySorting(source);
 
-            Products = new ObservableCollection<Product>(sorted.ToList());
+            // Store filtered results before pagination
+            _filteredProducts.Clear();
+            _filteredProducts.AddRange(sorted.ToList());
+
+            // Reset to first page when filters change
+            CurrentPage = 1;
+            UpdatePagination();
+        }
+
+        private void UpdatePagination()
+        {
+            TotalProducts = _filteredProducts.Count;
+            TotalPages = (int)Math.Ceiling((double)TotalProducts / PageSize);
+
+            if (TotalPages == 0) TotalPages = 1;
+            if (CurrentPage > TotalPages) CurrentPage = TotalPages;
+
+            var pagedProducts = _filteredProducts
+                .Skip((CurrentPage - 1) * PageSize)
+                .Take(PageSize)
+                .ToList();
+
+            Products = new ObservableCollection<Product>(pagedProducts);
+
+            OnPropertyChanged(nameof(HasPreviousPage));
+            OnPropertyChanged(nameof(HasNextPage));
+        }
+
+        public void GoToNextPage()
+        {
+            if (HasNextPage)
+            {
+                CurrentPage++;
+                UpdatePagination();
+            }
+        }
+
+        public void GoToPreviousPage()
+        {
+            if (HasPreviousPage)
+            {
+                CurrentPage--;
+                UpdatePagination();
+            }
+        }
+
+        public void GoToFirstPage()
+        {
+            CurrentPage = 1;
+            UpdatePagination();
+        }
+
+        public void GoToLastPage()
+        {
+            CurrentPage = TotalPages;
+            UpdatePagination();
         }
 
 

@@ -194,14 +194,70 @@
         <ProgressRing Grid.Row="2" IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}" Width="50" Height="50" HorizontalAlignment="Center" VerticalAlignment="Center"/>
 
         <!-- Pagination Footer -->
-        <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Left" Margin="0,24,0,0">
-            <Button Content="1" Background="#0F3D5E" Foreground="White" Width="32" Height="32" Padding="0" CornerRadius="4"/>
-            <Button Content="2" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" Width="32" Height="32" Padding="0" CornerRadius="4"/>
-            <Button Content="3" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" Width="32" Height="32" Padding="0" CornerRadius="4"/>
-            <Button Content="4" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" Width="32" Height="32" Padding="0" CornerRadius="4"/>
-            <TextBlock Text="..." VerticalAlignment="Center" Foreground="#6B7280" Margin="4,0"/>
-            <Button Content="10" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" Width="32" Height="32" Padding="0" CornerRadius="4"/>
-            <Button Content="NEXT >" Background="White" BorderBrush="#E5E7EB" BorderThickness="1" Padding="12,0" Height="32" CornerRadius="4"/>
-        </StackPanel>
+        <Grid Grid.Row="3" Margin="0,16,0,0" Padding="16"
+              Background="{ThemeResource LayerFillColorDefaultBrush}"
+              CornerRadius="8"
+              BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+              BorderThickness="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0" VerticalAlignment="Center">
+                <Run Text="Showing"/>
+                <Run Text="{x:Bind ViewModel.Products.Count, Mode=OneWay}" FontWeight="Bold"/>
+                <Run Text="of"/>
+                <Run Text="{x:Bind ViewModel.TotalProducts, Mode=OneWay}" FontWeight="Bold"/>
+                <Run Text="products"/>
+            </TextBlock>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                <Button Click="OnFirstPageClick"
+                        IsEnabled="{x:Bind ViewModel.HasPreviousPage, Mode=OneWay}"
+                        ToolTipService.ToolTip="First Page">
+                    <FontIcon Glyph="&#xE892;" FontSize="12"/>
+                </Button>
+                <Button Click="OnPreviousPageClick"
+                        IsEnabled="{x:Bind ViewModel.HasPreviousPage, Mode=OneWay}"
+                        ToolTipService.ToolTip="Previous Page">
+                    <FontIcon Glyph="&#xE76B;" FontSize="12"/>
+                </Button>
+                <TextBlock VerticalAlignment="Center" Margin="8,0">
+                    <Run Text="Page"/>
+                    <Run Text="{x:Bind ViewModel.CurrentPage, Mode=OneWay}" FontWeight="Bold"/>
+                    <Run Text="of"/>
+                    <Run Text="{x:Bind ViewModel.TotalPages, Mode=OneWay}" FontWeight="Bold"/>
+                </TextBlock>
+                <Button Click="OnNextPageClick"
+                        IsEnabled="{x:Bind ViewModel.HasNextPage, Mode=OneWay}"
+                        ToolTipService.ToolTip="Next Page">
+                    <FontIcon Glyph="&#xE76C;" FontSize="12"/>
+                </Button>
+                <Button Click="OnLastPageClick"
+                        IsEnabled="{x:Bind ViewModel.HasNextPage, Mode=OneWay}"
+                        ToolTipService.ToolTip="Last Page">
+                    <FontIcon Glyph="&#xE893;" FontSize="12"/>
+                </Button>
+                
+                <!-- Page Size Selector -->
+                <Border BorderBrush="#E0E0E0" BorderThickness="1,0,0,0" Margin="12,0,0,0" Padding="12,0,0,0"/>
+                <TextBlock Text="Show:" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#666666"/>
+                <ComboBox SelectedItem="{x:Bind ViewModel.PageSize, Mode=TwoWay}"
+                          ItemsSource="{x:Bind ViewModel.AvailablePageSizes}"
+                          MinWidth="80"
+                          VerticalAlignment="Center">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="x:Int32">
+                            <TextBlock>
+                                <Run Text="{x:Bind}"/>
+                                <Run Text=" / page"/>
+                            </TextBlock>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </StackPanel>
+        </Grid>
     </Grid>
 </Page>
