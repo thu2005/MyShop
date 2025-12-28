@@ -46,6 +46,10 @@ namespace MyShop.App.ViewModels
         [ObservableProperty]
         private bool _isBusy;
 
+        // Commands
+        public IAsyncRelayCommand LoadReportCommand { get; }
+        public IAsyncRelayCommand ExportToPdfCommand { get; }
+
         // Role-based properties
         public User? CurrentUser => _authService.CurrentUser;
         public UserRole UserRole => CurrentUser?.Role ?? UserRole.STAFF;
@@ -62,6 +66,7 @@ namespace MyShop.App.ViewModels
             _authorizationService = authorizationService;
             
             LoadReportCommand = new AsyncRelayCommand(LoadReportAsync);
+            ExportToPdfCommand = new AsyncRelayCommand(ExportToPdfAsync);
             
             // Initialize default dates
             _endDate = DateTimeOffset.Now;
@@ -200,7 +205,7 @@ namespace MyShop.App.ViewModels
         public SolidColorBrush OrdersChangeColor => new SolidColorBrush(OrdersChange >= 0 ? Colors.Green : Colors.Red);
         public SolidColorBrush RevenueChangeColor => new SolidColorBrush(RevenueChange >= 0 ? Colors.Green : Colors.Red);
 
-        public IAsyncRelayCommand LoadReportCommand { get; }
+
 
         private void OnPeriodChanged()
         {
@@ -276,26 +281,21 @@ namespace MyShop.App.ViewModels
                 // 4. Load All Staff Performance
                 try
                 {
-                    System.Diagnostics.Debug.WriteLine($"[ReportsViewModel] Loading staff performance from {start} to {end}");
                     var staff = await _reportRepository.GetAllStaffPerformanceAsync(start, end);
-                    System.Diagnostics.Debug.WriteLine($"[ReportsViewModel] Loaded {staff.Count} staff members");
                     
                     _allStaff.Clear();
                     foreach (var s in staff)
                     {
-                        System.Diagnostics.Debug.WriteLine($"[ReportsViewModel] Staff: {s.Username}, Orders: {s.TotalOrders}, Revenue: {s.TotalRevenue}");
                         _allStaff.Add(s);
                     }
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[ReportsViewModel] Error loading staff: {ex.Message}");
-                    System.Diagnostics.Debug.WriteLine($"[ReportsViewModel] Stack trace: {ex.StackTrace}");
                 }
 
                 // 5. Load Revenue/Profit Timeline Chart (Column Chart)
                 var timelineGrouping = TimelineGrouping.DAY;
-                if (_selectedPeriod == PeriodType.MONTHLY || _selectedPeriod == PeriodType.YEARLY) timelineGrouping = TimelineGrouping.MONTH;
+                if (_selectedPeriod == PeriodType.YEARLY) timelineGrouping = TimelineGrouping.MONTH;
                 
                 var timeline = await _reportRepository.GetRevenueAndProfitTimelineAsync(start, end, timelineGrouping);
                 SetupRevenueProfitChart(timeline);
@@ -315,26 +315,8 @@ namespace MyShop.App.ViewModels
         {
             var quantityValues = products.Select(p => (double)p.QuantitySold).ToArray();
             
-            // Show only first word + "..." for labels
-            var productNames = products.Select(p =>
-            {
-                var name = p.ProductName;
-                var firstWord = name.Split(' ').FirstOrDefault() ?? name;
-                
-                // If there are more words, add ellipsis
-                if (name.Contains(' '))
-                {
-                    return firstWord + "...";
-                }
-                
-                // If single word is too long, truncate it
-                if (firstWord.Length > 12)
-                {
-                    return firstWord.Substring(0, 10) + "...";
-                }
-                
-                return firstWord;
-            }).ToArray();
+            // Use FULL labels for the tooltip
+            var productNames = products.Select(p => p.ProductName).ToArray();
 
             ProductsSeries = new ISeries[]
             {
@@ -363,7 +345,21 @@ namespace MyShop.App.ViewModels
                 new Axis
                 {
                     Labels = productNames,
-                    LabelsRotation = 0,
+                    // Use Labeler to truncate text on the Axis only
+                    Labeler = value => 
+                    {
+                        int index = (int)value;
+                        if (index >= 0 && index < productNames.Length)
+                        {
+                            var name = productNames[index];
+                            var firstWord = name.Split(' ').FirstOrDefault() ?? name;
+                            if (name.Contains(' ')) return firstWord + "...";
+                            if (firstWord.Length > 10) return firstWord.Substring(0, 8) + "...";
+                            return firstWord;
+                        }
+                        return "";
+                    },
+                    LabelsRotation = -15,
                     LabelsPaint = new SolidColorPaint(SKColors.Gray),
                     TextSize = 10,
                     MinStep = 1,
@@ -382,6 +378,7 @@ namespace MyShop.App.ViewModels
             int productCount = products.Count;
             ProductsChartMinWidth = Math.Max(600, productCount * 80);
         }
+
 
         private void SetupRevenueProfitChart(List<RevenueProfit> timeline)
         {

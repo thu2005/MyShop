@@ -76,7 +76,7 @@ export const dashboardResolvers = {
             gte: fromDate,
             lte: toDate,
           },
-          status: { in: ['COMPLETED', 'PROCESSING'] },
+          status: 'COMPLETED',
         },
         include: {
           orderItems: {
@@ -128,9 +128,23 @@ export const dashboardResolvers = {
 
       // Calculate revenue by date
       const revenueByDateMap = new Map<string, { revenue: Prisma.Decimal; orders: number }>();
+      
+      // Determine grouping based on date range
+      const daysDiff = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24));
+      const groupByMonth = daysDiff > 31; // If range > 1 month, group by month
 
       for (const order of orders) {
-        const dateKey = order.createdAt.toISOString().split('T')[0];
+        let dateKey: string;
+        const orderDate = new Date(order.createdAt);
+        
+        if (groupByMonth) {
+          // Group by month (YYYY-MM format)
+          dateKey = `${orderDate.getFullYear()}-${String(orderDate.getMonth() + 1).padStart(2, '0')}`;
+        } else {
+          // Group by day (YYYY-MM-DD format)
+          dateKey = orderDate.toISOString().split('T')[0];
+        }
+        
         const existing = revenueByDateMap.get(dateKey);
         if (existing) {
           existing.revenue = existing.revenue.add(order.total);

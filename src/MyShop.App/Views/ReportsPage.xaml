@@ -76,7 +76,8 @@
             </StackPanel>
 
             <!-- Export Button with Dashboard blue style -->
-            <Button Grid.Column="2" VerticalAlignment="Center" Background="#003F62" Foreground="White" Padding="16,8">
+            <Button Grid.Column="2" VerticalAlignment="Center" Background="#003F62" Foreground="White" Padding="16,8"
+                    Command="{x:Bind ViewModel.ExportToPdfCommand}">
                 <Button.Resources>
                     <ResourceDictionary>
                         <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#00324E"/>

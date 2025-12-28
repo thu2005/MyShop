@@ -5,9 +5,11 @@ using MyShop.Core.Interfaces.Repositories;
 using MyShop.Core.Services;
 using MyShop.Data.Repositories;
 using MyShop.App.ViewModels;
+using MyShop.App.Services;
 using System;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
+using OfficeOpenXml;
 
 namespace MyShop.App
 {
@@ -16,6 +18,11 @@ namespace MyShop.App
         public new static App Current => (App)Application.Current;
         public IServiceProvider Services { get; }
         public static Window MainWindowInstance { get; private set; }
+
+        static App()
+        {
+            OfficeOpenXml.ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+        }
 
         public App()
         {
@@ -75,6 +82,10 @@ namespace MyShop.App
             services.AddSingleton<IDiscountRepository, GraphQLDiscountRepository>();
             services.AddSingleton<ICustomerRepository, GraphQLCustomerRepository>();
 
+
+            services.AddSingleton<IProductImportService, ProductImportService>();
+            services.AddSingleton<IDraftService, DraftService>();
+
             services.AddTransient<MainWindow>();
             services.AddTransient<LoginViewModel>();
             services.AddTransient<ConfigViewModel>();
@@ -84,6 +95,7 @@ namespace MyShop.App
             services.AddTransient<ProductViewModel>();
             services.AddTransient<ProductDetailViewModel>();
             services.AddTransient<AddProductViewModel>();
+            services.AddTransient<ImportProductsViewModel>();
             services.AddTransient<ReportsViewModel>();
             services.AddTransient<OrderViewModel>();
 
