@@ -204,7 +204,11 @@
                     </Grid>
 
                     <!-- Items -->
-                    <ListView Grid.Row="2" ItemsSource="{x:Bind ViewModel.RecentOrders, Mode=OneWay}" SelectionMode="None">
+                    <ListView Grid.Row="2" 
+                              ItemsSource="{x:Bind ViewModel.RecentOrders, Mode=OneWay}" 
+                              SelectionMode="None"
+                              IsItemClickEnabled="True"
+                              ItemClick="OnRecentOrderClick">
                         <ListView.ItemContainerStyle>
                             <Style TargetType="ListViewItem">
                                 <Setter Property="HorizontalContentAlignment" Value="Stretch"/>

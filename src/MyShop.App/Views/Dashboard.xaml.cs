@@ -2,6 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using MyShop.App.ViewModels;
+using System;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -81,6 +82,39 @@ public sealed partial class Dashboard : Page
         if (e.ClickedItem is MyShop.Core.Models.DTOs.LowStockProductDto lowStockProduct)
         {
             await NavigateToProductDetail(lowStockProduct.Id);
+        }
+    }
+
+    private async void OnRecentOrderClick(object sender, ItemClickEventArgs e)
+    {
+        if (e.ClickedItem is MyShop.Core.Models.DTOs.OrderDto orderDto)
+        {
+            try
+            {
+                // Get order repository
+                var orderRepo = App.Current.Services.GetRequiredService<MyShop.Core.Interfaces.Repositories.IOrderRepository>();
+                
+                var order = await orderRepo.GetByIdAsync(orderDto.Id);
+                
+                if (order == null)
+                {
+                    return;
+                }
+
+                var orderViewModel = App.Current.Services.GetRequiredService<OrderViewModel>();
+                var navParams = new CreateOrderPageNavigationParams 
+                { 
+                    ViewModel = orderViewModel,
+                    OrderIdToView = order.Id,
+                    IsReadOnly = true
+                };
+                
+                Frame.Navigate(typeof(CreateOrderPage), navParams);
+            }
+            catch (System.Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to navigate to order detail: {ex.Message}");
+            }
         }
     }
 
