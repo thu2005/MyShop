@@ -46,6 +46,10 @@ namespace MyShop.App.ViewModels
         [ObservableProperty]
         private bool _isBusy;
 
+        // Commands
+        public IAsyncRelayCommand LoadReportCommand { get; }
+        public IAsyncRelayCommand ExportToPdfCommand { get; }
+
         // Role-based properties
         public User? CurrentUser => _authService.CurrentUser;
         public UserRole UserRole => CurrentUser?.Role ?? UserRole.STAFF;
@@ -62,6 +66,7 @@ namespace MyShop.App.ViewModels
             _authorizationService = authorizationService;
             
             LoadReportCommand = new AsyncRelayCommand(LoadReportAsync);
+            ExportToPdfCommand = new AsyncRelayCommand(ExportToPdfAsync);
             
             // Initialize default dates
             _endDate = DateTimeOffset.Now;
@@ -200,7 +205,7 @@ namespace MyShop.App.ViewModels
         public SolidColorBrush OrdersChangeColor => new SolidColorBrush(OrdersChange >= 0 ? Colors.Green : Colors.Red);
         public SolidColorBrush RevenueChangeColor => new SolidColorBrush(RevenueChange >= 0 ? Colors.Green : Colors.Red);
 
-        public IAsyncRelayCommand LoadReportCommand { get; }
+
 
         private void OnPeriodChanged()
         {
@@ -290,7 +295,7 @@ namespace MyShop.App.ViewModels
 
                 // 5. Load Revenue/Profit Timeline Chart (Column Chart)
                 var timelineGrouping = TimelineGrouping.DAY;
-                if (_selectedPeriod == PeriodType.MONTHLY || _selectedPeriod == PeriodType.YEARLY) timelineGrouping = TimelineGrouping.MONTH;
+                if (_selectedPeriod == PeriodType.YEARLY) timelineGrouping = TimelineGrouping.MONTH;
                 
                 var timeline = await _reportRepository.GetRevenueAndProfitTimelineAsync(start, end, timelineGrouping);
                 SetupRevenueProfitChart(timeline);
