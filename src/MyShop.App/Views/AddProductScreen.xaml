@@ -28,6 +28,66 @@
                 </TextBlock>
             </StackPanel>
 
+            <!-- Draft Restore Banner -->
+            <Border x:Name="DraftBanner"
+                    x:FieldModifier="public"
+                    Background="#FEF3C7"
+                    BorderBrush="#F59E0B"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="16"
+                    Visibility="Collapsed">
+                <Grid ColumnSpacing="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <FontIcon Grid.Column="0" 
+                             Glyph="&#xE7BA;" 
+                             FontSize="20"
+                             Foreground="#F59E0B"
+                             VerticalAlignment="Center"/>
+                    
+                    <TextBlock x:Name="DraftMessage"
+                              x:FieldModifier="public"
+                              Grid.Column="1"
+                              Text="You have unsaved changes"
+                              VerticalAlignment="Center"
+                              Foreground="#92400E"
+                              FontSize="14"/>
+                    
+                    <Button Grid.Column="2"
+                            Content="Restore Draft"
+                            Background="#F59E0B"
+                            Foreground="White"
+                            Padding="16,8"
+                            CornerRadius="6"
+                            BorderThickness="0"
+                            Click="OnRestoreDraftClick"/>
+                    
+                    <Button Grid.Column="3"
+                            Content="Discard"
+                            Background="Transparent"
+                            Foreground="#92400E"
+                            Padding="16,8"
+                            BorderThickness="1"
+                            BorderBrush="#F59E0B"
+                            CornerRadius="6"
+                            Click="OnDiscardDraftClick"/>
+                </Grid>
+            </Border>
+
+            <!-- Auto-save Indicator -->
+            <TextBlock x:Name="AutoSaveIndicator"
+                       x:FieldModifier="public"
+                       Foreground="#6B7280"
+                       FontSize="12"
+                       Visibility="Collapsed"
+                       HorizontalAlignment="Right"/>
+
             <!-- Main Content -->
             <Grid ColumnSpacing="32">
                 <Grid.ColumnDefinitions>

@@ -84,6 +84,7 @@ namespace MyShop.App
 
 
             services.AddSingleton<IProductImportService, ProductImportService>();
+            services.AddSingleton<IDraftService, DraftService>();
 
             services.AddTransient<MainWindow>();
             services.AddTransient<LoginViewModel>();
