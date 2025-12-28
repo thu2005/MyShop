@@ -17,6 +17,9 @@ namespace MyShop.App.Views
         {
             this.InitializeComponent();
             ViewModel = App.Current.Services.GetService<ProductViewModel>();
+            
+            // Disable page cache to ensure fresh data on navigation
+            this.NavigationCacheMode = NavigationCacheMode.Disabled;
         }
 
         // NEW: Handle incoming navigation parameter (CategoryId)
@@ -229,6 +232,52 @@ namespace MyShop.App.Views
             var secondaryTag = (SecondarySortComboBox.SelectedItem as ComboBoxItem)?.Tag?.ToString();
             
             ViewModel.SetSorting(primaryTag, secondaryTag);
+        }
+
+        private async void OnImportClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine("Import button clicked");
+                
+                // Create file picker
+                var picker = new Windows.Storage.Pickers.FileOpenPicker();
+                picker.FileTypeFilter.Add(".xlsx");
+                picker.FileTypeFilter.Add(".xls");
+                
+                // Initialize with window handle
+                var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindowInstance);
+                WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+
+                System.Diagnostics.Debug.WriteLine("File picker initialized");
+
+                // Pick file
+                var file = await picker.PickSingleFileAsync();
+                if (file == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("No file selected");
+                    return;
+                }
+
+                System.Diagnostics.Debug.WriteLine($"File selected: {file.Path}");
+
+                // Navigate to import screen with file path
+                Frame.Navigate(typeof(ImportProductsScreen), file.Path);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Import error: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+                
+                var errorDialog = new ContentDialog
+                {
+                    Title = "Import Error",
+                    Content = $"Failed to open import screen:\n\n{ex.Message}\n\nCheck Debug Output for details.",
+                    CloseButtonText = "OK",
+                    XamlRoot = this.XamlRoot
+                };
+                await errorDialog.ShowAsync();
+            }
         }
 
         private async void OnAddCategoryClick(object sender, RoutedEventArgs e)
