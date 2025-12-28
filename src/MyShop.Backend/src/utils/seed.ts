@@ -369,6 +369,25 @@ async function seed() {
         });
       }
       console.log(`Created ${numberOfOrdersToSeed} orders`);
+      
+      // Update product popularity from the orders we just created
+      console.log('Syncing product popularity...');
+      await prisma.product.updateMany({ data: { popularity: 0 } });
+      
+      const stats = await prisma.orderItem.groupBy({
+        by: ['productId'],
+        _sum: { quantity: true },
+        where: { order: { status: 'COMPLETED' } }
+      });
+      
+      await Promise.all(stats.map(stat => 
+        prisma.product.update({
+          where: { id: stat.productId },
+          data: { popularity: stat._sum.quantity || 0 }
+        })
+      ));
+      
+      console.log(`Updated popularity for ${stats.length} products`);
     }
 
     // 7. License
