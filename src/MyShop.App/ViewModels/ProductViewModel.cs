@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MyShop.App.ViewModels.Base;
 using MyShop.Core.Interfaces.Repositories;
+using MyShop.Core.Interfaces.Services;
 using MyShop.Core.Models;
 
 namespace MyShop.App.ViewModels
@@ -21,6 +22,9 @@ namespace MyShop.App.ViewModels
     public class ProductViewModel : ViewModelBase
     {
         private readonly IProductRepository _productRepository;
+        private readonly IAuthService _authService;
+        private readonly IAuthorizationService _authorizationService;
+        
         private List<Product> _allProducts;
         private List<Product> _filteredProducts; // Products after filtering, before pagination
         private ObservableCollection<Product> _products;
@@ -44,9 +48,19 @@ namespace MyShop.App.ViewModels
 
         public List<int> AvailablePageSizes { get; } = new List<int> { 10, 20, 50, 100 };
 
-        public ProductViewModel(IProductRepository productRepository)
+        // Role-based properties
+        public User? CurrentUser => _authService.CurrentUser;
+        public UserRole UserRole => CurrentUser?.Role ?? UserRole.STAFF;
+        public bool IsAdmin => _authorizationService.IsAuthorized(UserRole.ADMIN);
+
+        public ProductViewModel(
+            IProductRepository productRepository,
+            IAuthService authService,
+            IAuthorizationService authorizationService)
         {
             _productRepository = productRepository;
+            _authService = authService;
+            _authorizationService = authorizationService;
             _products = new ObservableCollection<Product>();
             _allProducts = new List<Product>();
             _filteredProducts = new List<Product>();

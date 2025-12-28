@@ -61,7 +61,7 @@ namespace MyShop.App.Views
                 Grid.SetColumn(textBlock, 0);
                 grid.Children.Add(textBlock);
 
-                // Three dots menu button
+                // Three dots menu button (Admin only)
                 var menuButton = new Button
                 {
                     Content = new FontIcon { Glyph = "\uE712", FontSize = 12 }, // Three dots icon
@@ -69,7 +69,8 @@ namespace MyShop.App.Views
                     BorderThickness = new Thickness(0),
                     Padding = new Thickness(4),
                     VerticalAlignment = VerticalAlignment.Center,
-                    Tag = cat.Id
+                    Tag = cat.Id,
+                    Visibility = ViewModel.IsAdmin ? Visibility.Visible : Visibility.Collapsed
                 };
 
                 // Create MenuFlyout
