@@ -3,6 +3,183 @@ import { AuthUtils } from './auth';
 
 const prisma = new PrismaClient();
 
+// ==============================================================================
+// 1. IMAGE MAPPING (SKU -> URL)
+// ==============================================================================
+const productImages: Record<string, string> = {
+  // --- iPhone 15 Series ---
+  'IPH-15PM-256': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone-15-pro-max_3.png',
+  'IPH-15PM-512': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone-15-pro-max_5.png',
+  'IPH-15PM-1TB': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone-15-pro-max_2__5_2_1_1_1_1_2_1_1.jpg',
+  'IPH-15P-128': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone-15-plus_1_.png',
+  'IPH-15P-256': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone-15-pro-max_2__5_2_1_1_1_1_2_1_1.jpg',
+  'IPH-15PL-128': 'https://cdn2.fptshop.com.vn/unsafe/828x0/filters:format(webp):quality(75)/2023_9_13_638302007249847040_iPhone_15_Plus_Blue_Pure_Back_iPhone_15_Plus_Blue_Pure_Front_2up_Screen__USEN.jpg',
+  'IPH-15PL-256': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:0/q:100/plain/https://cellphones.com.vn/media/wysiwyg/Phone/Apple/iphone_15/dien-thoai-iphone-15-plus-256gb-3.jpg',
+  'IPH-15-128': 'https://cdn2.cellphones.com.vn/x/media/catalog/product/v/n/vn_iphone_15_yellow_pdp_image_position-1a_yellow_color_1_4_1_1.jpg',
+  'IPH-15-256': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:0/q:100/plain/https://cellphones.com.vn/media/wysiwyg/Phone/Apple/iphone_15/dien-thoai-iphone-15-256gb-8.jpg',
+
+  // --- iPhone 14 Series ---
+  'IPH-14PM-128': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/t/_/t_m_18_1_3_2.png',
+  'IPH-14P-128': 'https://cdn2.cellphones.com.vn/x/media/catalog/product/v/_/v_ng_12_1_2_1.png',
+  'IPH-14PL-128': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/p/h/photo_2022-09-28_21-58-51_4_1_2_2.jpg',
+  'IPH-14-128': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/p/h/photo_2022-09-28_21-58-56_11_1.jpg',
+
+  // --- iPhone 13 & Older ---
+  'IPH-13-128': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone-13_2_2.jpg',
+  'IPH-13M-128': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/1/4/14_1_9_2_6.jpg',
+  'IPH-12-64': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone-12.png',
+  'IPH-SE3-64': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/1/_/1_359_1.png',
+  'IPH-SE3-128': 'https://cdn2.fptshop.com.vn/unsafe/828x0/filters:format(webp):quality(75)/2022_4_15_637856361035158510_iPhone%20SE%20(8).jpg',
+  'IPH-11-64': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone-11.png',
+
+  // --- Used / Refurbished ---
+  'IPH-12P-REF': 'https://cdn2.cellphones.com.vn/x/media/catalog/product/d/o/download_4_2_2.png',
+  'IPH-12PM-REF': 'https://cdn2.cellphones.com.vn/x/media/catalog/product/d/o/download_2__1_27.png',
+  'IPH-XSM-USED': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone_xs_max_512gb_1_1.jpg',
+  'IPH-XR-USED': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone_xr_64gb_1.png',
+  'IPH-8P-USED': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone8-plus-silver-select-2018_6_3.png',
+
+  // --- iPhone 16 Series ---
+  'IPH-16PM-256': 'https://cdn2.cellphones.com.vn/x/media/catalog/product/p/h/photo_2024-10-02_13-59-00_1.jpg',
+  'IPH-16P-128': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone-16-pro_1.png',
+  'IPH-16PL-128': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone-16-plus-1.png',
+  'IPH-16-128': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone-16-1.png',
+  'IPH-16E-128': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/iphone-16e-128gb.png',
+
+  // --- iPads ---
+  'IPD-PRO12-M2-128': 'https://cdn2.cellphones.com.vn/x/media/catalog/product/i/p/ipad-pro-13-select-wifi-spacegray-202210-02_3_3_1_1_1_4.jpg',
+  'IPD-PRO12-M2-256': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/ipad-pro-13-select-202210_3_1.png',
+  'IPD-PRO12-M2-512': 'https://cdn.tgdd.vn/Products/Images/522/295464/ipad-pro-m2-12.5-wifi-xam-thumb-600x600.jpg',
+  'IPD-PRO11-M2-128': 'https://cdn2.cellphones.com.vn/x/media/catalog/product/i/p/ipad-pro-13-select-wifi-silver-202210-01_4.jpg',
+  'IPD-PRO11-M2-256': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/ipad-pro-13-select-202210_1_1_1.png',
+  'IPD-AIR5-64': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/ipad-air-5.png',
+  'IPD-AIR5-256': 'https://cdn.tgdd.vn/Products/Images/522/274154/ipad-air-5-wifi-blue-thumb-1-600x600.jpg',
+  'IPD-MINI6-64': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/t/_/t_i_xu_ng_2__1_8_1_1.png',
+  'IPD-MINI6-256': 'https://cdn2.cellphones.com.vn/x/media/catalog/product/i/p/ipad-mini-6-5_1_1_1_1.jpg',
+  'IPD-10-64': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/ipad-10-9-inch-2022.png',
+  'IPD-10-256': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/ipad-2022-hero-blue-wifi-select_1.png',
+  'IPD-9-64': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/2/c/2c_v.png',
+  'IPD-9-256': 'https://bizweb.dktcdn.net/thumb/1024x1024/100/401/951/products/dacdiemnoibatad7358efe2ed47aa9-6fd11bbc-2a77-4216-b94b-08369a6a8e34.png?v=1749147182043',
+  'IPD-PRO12-M1-REF': 'https://cdn2.cellphones.com.vn/x/media/catalog/product/i/p/ipad-pro-12-9-2021_1_1_2_1_1_2.jpg',
+  'IPD-PRO11-M1-REF': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:358:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/ipad-pro-11-2021-2_1_1_1_1_1_1_1_1_1_1_1_1_1_1.jpg',
+  'IPD-AIR4-REF': 'https://ttcenter.com.vn/uploads/product/zsr37jz9-364-ipad-air-4-10-9-inch-wifi-64gb-like-new.jpg',
+  'IPD-MINI5-USED': 'https://cdn2.cellphones.com.vn/x/media/catalog/product/i/p/ipad-mini-select-wifi-silver-201903_7_1.png',
+  'IPD-PRO12-2020': 'https://cdn2.cellphones.com.vn/x/media/catalog/product/a/p/apple-ipad-pro-11-2020-wifi-256-gb-2_2_1_1.jpg',
+  'IPD-PRO11-2020': 'https://cdn2.cellphones.com.vn/x/media/catalog/product/i/p/ipad_pro_11_2020_bac_3_1_2.jpg',
+  'IPD-8-USED': 'https://cdn2.cellphones.com.vn/x/media/catalog/product/1/9/19268_ipadgen8sliver_ok_3.jpg',
+  'IPD-AIR3-USED': 'https://hoangtrungmobile.vn/wp-content/uploads/2021/03/ipad-air-3-bac.jpg',
+  'IPD-PRO105-USED': 'https://didongthongminh.vn/images/products/2025/09/19/original/2(4).jpg',
+  'IPD-PRO97-USED': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/i/p/ipad-pro-9in-gold_3_1_2_1.jpg',
+
+  // --- Laptops ---
+  'MAC-AIR-M3-13': 'https://cdn2.cellphones.com.vn/x/media/catalog/product/m/b/mba13-m3-midnight-gallery1-202402_3_1_2_1.jpg',
+  'MAC-AIR-M3-15': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:0/q:100/plain/https://cellphones.com.vn/media/wysiwyg/laptop/macbook/Air/M3-2024/macbook-air-m3-15-inch-2024-1_1.jpg',
+  'MAC-PRO-14-M3': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:0/q:100/plain/https://cellphones.com.vn/media/wysiwyg/laptop/macbook/macbook-pro-7.jpg',
+  'MAC-PRO-16-M3P': 'https://bizweb.dktcdn.net/100/318/659/products/7-5581399e-3267-456a-8d4f-9259ac8f5dc0.jpg?v=1699430082770',
+  'MAC-AIR-M2-13': 'https://cdn2.fptshop.com.vn/unsafe/macbook_air_13_m2_midnight_1_35053fbcf9.png',
+  'DELL-XPS-13P': 'https://cellphones.com.vn/sforum/wp-content/uploads/2022/01/tren-tay-Dell-XPS-13-Plus-13.jpg',
+  'DELL-XPS-15': 'https://media.wired.com/photos/6169f03b58660fcbc5f4ec3b/master/w_1600%2Cc_limit/Gear-Dell-XPS-15-OLED-1.jpg',
+  'LEN-X1-G11': 'https://cdn-media.sforum.vn/storage/app/media/wp-content/uploads/2023/11/10-6.jpg',
+  'HP-SPEC-14': 'https://cdn2.cellphones.com.vn/x/media/catalog/product/l/a/laptop-hp-spectre-x360-14-ea0023xd-cu-dep-3_1.jpg',
+  'ASUS-ZEN-14': 'https://nguyencongpc.vn/media/product/20151-asus-zenbook-duo-14-ux482eg-ka166t-6.jpg',
+  'RAZ-BLD-14': 'https://laptops.vn/wp-content/uploads/2024/06/razer-blade-14-2024-1710487813_1711595620-1.jpg',
+  'MS-SURF-L5': 'https://vhost53003.vhostcdn.com/wp-content/uploads/2022/10/microsoft-surface-laptop-5-2.jpg',
+  'LG-GRAM-17': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/t/e/text_ng_n_55__2_11.png',
+  'SAM-BOOK3-PRO': 'https://cdn2.cellphones.com.vn/x/media/catalog/product/3/6/360pro_1.png',
+  'ACER-SWF-5': 'https://cellphones.com.vn/sforum/wp-content/uploads/2020/06/Acer-Swift-5-SF514-55-Standard_01.png',
+  'MSI-ST-16': 'https://product.hstatic.net/200000722513/product/057vn_9630c86ceec944c49425ef01bb5c879d_master.png',
+  'LEN-YOGA-9I': 'https://cdn-media.sforum.vn/storage/app/media/chidung/yoga-9i/danh-gia-yoga-9i-2024-14.jpg',
+  'ALN-X14': 'https://www.laptopvip.vn/images/ab__webp/detailed/32/notebook-alienware-x14-r2-gray-gallery-6-www.laptopvip.vn-1686985486.webp',
+  'MAC-PRO13-M2-REF': 'https://product.hstatic.net/200000768357/product/gray_fab6e9b0c7374bfd86b9189632447680.png',
+  'DELL-INS-15': 'https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/330075/dell-inspiron-15-3520-i5-n3520-i5u085w11slu-1-638627942653445825-750x500.jpg',
+  'HP-PAV-15': 'https://www.laptopvip.vn/images/companies/1/JVS/HP/HP-Pavilion-15T/71lc66S1jqL._AC_SL1500_.jpg?1666681642506',
+  'ASUS-VIVO-15': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/t/e/text_ng_n_1__5_16_1.png',
+  'LEN-IDEA-3': 'https://p3-ofp.static.pub/fes/cms/2022/12/28/cbsimp9kdhc8w1tw2t7pytz6exsvvv545729.jpg',
+  'MAC-PRO-14-M4': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:0/q:100/plain/https://cellphones.com.vn/media/wysiwyg/laptop/macbook/macbook-pro-7.jpg',
+  'DELL-XPS-14-9440': 'https://hungphatlaptop.com/wp-content/uploads/2024/01/DELL-XPS-14-9440-2024-Platinum-H1-1.jpeg',
+  'HP-OMNI-FLIP': 'https://cdn2.fptshop.com.vn/unsafe/800x0/hp_omnibook_ultra_flip_14_fh0040tu_b13vhpa_6_2a358fe388.jpg',
+  'ASUS-ROG-G14-24': 'https://dlcdnwebimgs.asus.com/gain/E90DE227-7002-48C1-A940-B6E952D0BCCC',
+  'MS-SURF-L7': 'https://surfaceviet.vn/wp-content/uploads/2024/05/Surface-Laptop-7-Black-15-inch.jpg',
+
+  // --- Tablets ---
+  'SAM-S9-ULT': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/t/a/tab-s9-ultra-kem-2_1_1.png',
+  'SAM-S9-PLS': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/e/p/eprice_1_b7620c148ab010a64546e96a356978b2_2_1.jpg',
+  'SAM-S9': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/s/s/ss-tab-s9_1.png',
+  'SAM-S9-FE': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/t/a/tab-s9-fe-xam_2_1_1.png',
+  'GOO-PIX-TAB': 'https://cdn2.cellphones.com.vn/x/media/catalog/product/g/o/google_pixel_tablet.jpg',
+  'ONE-PAD': 'https://cdn.viettablet.com/images/thumbnails/480/516/detailed/56/oneplus-pad-chinh-hang.jpg',
+  'LEN-P12-PRO': 'https://p4-ofp.static.pub/fes/cms/2023/03/28/7dch8vg9lz0tzeg74u3x9paoln4o8z319478.png',
+  'XIA-PAD-6': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/m/i/mi-pad-6-cps-doc-quyen-xanh_3_1_1.jpg',
+  'AMZ-FIRE-11': 'https://product.hstatic.net/200000730863/product/51gj5oqxbnl._ac_sl1000__f75a5ec479ef4fc1ac2f78b17c6da98d_master.jpg',
+  'SAM-A9-PLS': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/s/a/samsung-galaxy-tab-a9_11__1.png',
+  'LEN-M10-PLS': 'https://p2-ofp.static.pub/fes/cms/2023/03/29/8rz4mn5wzzx3s29zfcffctkb2xcwjj602719.png',
+  'SAM-S8-ULT-REF': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/h/t/https___bucketeer_e05bbc84_baa3_437e_9518_adb32be77984.s3.amazonaws.com_public_images_b08df22d_4b5e_46a8_87c5_fc303e133f8a_1500x1500_1_1_1_1.jpg',
+  'SAM-S8-PLS-REF': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/s/e/series_tab_s8001_1_2.jpg',
+  'MS-SURF-P9': 'https://surfacecity.vn/wp-content/uploads/microsoft-surface-pro-9-5g.jpg',
+  'MS-SURF-G3': 'https://cdn2.cellphones.com.vn/x/media/catalog/product/5/6/5650372_surface_go_3_under_embargo_until_22.jpg',
+  'CHU-HIPAD': 'https://www.chuwi.com/public/upload/image/20221229/52bc2a3d58a50a2bb14171419cc30094.png',
+  'TEC-T50': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/m/a/may-tinh-bang-teclast-t50-plus_1_.png',
+  'NOK-T21': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/n/o/nokia-t21_12_.png',
+  'REA-PAD-2': 'https://cdn2.cellphones.com.vn/x/media/catalog/product/r/e/realme-pad-2.png',
+  'OPP-PAD-A': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/o/p/oppo-pad-air-128gb.jpg',
+  'VIV-PAD-2': 'https://cdn2.cellphones.com.vn/x/media/catalog/product/v/i/vivo-pad-2_2_.jpg',
+  'HUA-MATE-13': 'https://cellphones.com.vn/sforum/wp-content/uploads/2023/10/Huawei-Matepad-Pro-13.9-3.jpg',
+  'HON-PAD-9': 'https://cdn2.cellphones.com.vn/x/media/catalog/product/m/a/may-tinh-bang-honor-pad-9-pro_3_.png',
+
+  // --- PCs ---
+  'MAC-MINI-M2': 'https://mac24h.vn/images/companies/1/12inch%20rose/Macbook%2012%20inch%20gold/macminipost.png?1598064081104',
+  'MAC-MINI-M2P': 'https://cdn2.cellphones.com.vn/200x/media/catalog/product/m/a/macbook_33_.png',
+  'MAC-STUDIO-M2': 'https://product.hstatic.net/200000348419/product/mac_studio_m2_max_2023_chinh_hang_21aed22940d54b5f8c6bc1e92f721ab1_large.png',
+  'MAC-STUDIO-ULT': 'https://macstores.vn/wp-content/uploads/2023/06/mac-studio-m2-4.jpg',
+  'IMAC-24-M3': 'https://shopdunk.com/images/thumbs/0022756_imac-m3-2023-24-inch-8-core-gpu8gb256gb.jpeg',
+  'DELL-XPS-DT': 'https://www.laptopvip.vn/images/ab__webp/detailed/10/dell-xps-27.webp',
+  'ALN-AUR-R16': 'https://images-na.ssl-images-amazon.com/images/I/71C+ewM2JjL.jpg',
+  'HP-OMEN-45': 'https://kaas.hpcloud.hp.com/PROD/v2/renderbinary/7477130/5038347/con-win-dt-p-omen-45l-gt22-1009nf-product-specifications/articuno-desktop',
+  'LEN-LEG-T7': 'https://p2-ofp.static.pub//fes/cms/2024/11/27/em8bpvjffmescc7mck5snjp1g73otp127407.png',
+  'COR-VEN-I7': 'https://res.cloudinary.com/corsair-pwa/image/upload/v1684950787/products/Vengeance-PC/CS-9050047-NA/Gallery/common/Vengeance__i7400_01.webp',
+  'MSI-AEGIS': 'https://asset.msi.com/resize/image/global/product/product_1669160633809914962a2cb40d02df74877b17555b.png62405b38c58fe0f07fcef2367d8a9ba1/1024.png',
+  'SKY-AZU-GM': 'https://m.media-amazon.com/images/I/71gtoidr0kL._AC_UF894,1000_QL80_.jpg',
+  'CYB-GAM-SUP': 'https://m.media-amazon.com/images/I/818SNa1ruZL.jpg',
+  'IBP-SLA-MSH': 'https://m.media-amazon.com/images/I/81xlNPKMrQL._AC_UF1000,1000_QL80_.jpg',
+  'INT-NUC-13': 'https://bizweb.dktcdn.net/thumb/1024x1024/100/329/122/products/may-tinh-mini-pc-intel-nuc-13-extreme-kit-i7-13700k-rnuc13rngi70000-6.jpg?v=1680947667597',
+  'HP-ENVY-DT': 'https://images-na.ssl-images-amazon.com/images/I/71fOGgAce-L.jpg',
+  'DELL-INS-DT': 'https://cdn1615.cdn4s4.io.vn/media/products/may-tinh-de-ban/dell/inspiron/3020mt/inspiron-3020-desktop.webp',
+  'ACER-PRE-7K': 'https://cdn.assets.prezly.com/346d8126-820e-4ee0-8b60-a0077acee526/PREDATOR-ORION-7000-PO7-660-02.jpg',
+  'NZXT-PL3': 'https://nzxt.com/cdn/shop/files/Player-Three-Prime-ASUS-WW-10.14.25-HERO-WHITE-BADGE_cf7be002-234d-43e0-a2b8-c78f0a7b1844.png?v=1764659862',
+  'MAIN-MG1': 'https://cdn.mos.cms.futurecdn.net/HF5NFDnzAF8NDE8znsB5JJ.jpg',
+  'ORG-NEURON': 'https://www.originpc.com/blog/wp-content/uploads/2019/12/neuron-hero-red.jpg',
+  'ASUS-ROG-DT': 'https://dlcdnwebimgs.asus.com/gain/95E413EB-A725-4131-82B8-FF76A880EE0D',
+
+  // --- TVs ---
+  'LG-C3-55': 'https://cdn2.cellphones.com.vn/insecure/rs:fill:0:358/q:90/plain/https://cellphones.com.vn/media/catalog/product/7/1/71557.png',
+  'LG-C3-65': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQWKs4_XrvUIeDRFuognIRCTV-7JIUCPgwRWw&s',
+  'LG-G3-65': 'https://cdn.tgdd.vn/Products/Images/1942/306581/smart-tivi-oled-lg-4k-65-inch-65g3psa-1-700x467.jpg',
+  'SAM-S90C-55': 'https://images.samsung.com/is/image/samsung/p6pim/ph/qa55s90cagxxp/gallery/ph-oled-s90c-qa55s90cagxxp-536185455',
+  'SAM-S90C-65': 'https://images.samsung.com/is/image/samsung/p6pim/ae/qa65s90cauxzn/gallery/ae-oled-tv-qa65s90cauxzn-front-black-titanium-536504295',
+  'SAM-QN90C-65': 'https://images.samsung.com/is/image/samsung/p6pim/ae/qa65s90cauxzn/gallery/ae-oled-tv-qa65s90cauxzn-front-black-titanium-536504295',
+  'SONY-A80L-55': 'https://bizweb.dktcdn.net/thumb/1024x1024/100/425/687/products/1-a6f4dd7b-9abb-4656-bf44-d498e101dca2.jpg?v=1764054897643',
+  'SONY-A95L-65': 'https://logico.com.vn/images/products/2023/03/23/original/a95l-2_1679544846.png',
+  'TCL-QM8-65': 'https://i.rtings.com/assets/products/ygyrdRw8/tcl-qm8-qm850g-qled/design-medium.jpg?format=auto',
+  'HIS-U8K-65': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQv6ocmGcD3vR2p-W45Dt85ucV7DBxbalIrJw&s',
+  'VIZ-PQ-65': 'https://www.vizio.com/content/dam/vizio/us/en/images/product/2020/tvs/p-series/p65q9-h1/gallery/2020_P-Series_P65Q9-H1_Front_OS_Newsweek-Best-Holiday-Gifts-2020.jpg/_jcr_content/renditions/cq5dam.web.640.480.png',
+  'ROKU-PLS-55': 'https://image.roku.com/w/rapid/images/meta-image/51c68c6e-4f37-4204-8bfb-6c9357793922.jpg',
+  'AMZ-OMNI-65': 'https://m.media-amazon.com/images/I/61wsF9lZJmL._AC_UF1000,1000_QL80_.jpg',
+  'LG-B3-55': 'https://www.lg.com/content/dam/channel/wcms/th/oled-tv/2023/b3-pdp-update/gallery/55-b3-a/TV-OLED-55-B3-A-Gallery-01.jpg/jcr:content/renditions/thum-1600x1062.jpeg',
+  'SAM-FRAME-55': 'https://cdnv2.tgdd.vn/mwg-static/dmx/Products/Images/1942/322680/tivi-qled-khung-tranh-samsung-4k-55-inch-qa55ls03d-1-638691037685437659-700x467.jpg',
+  'SONY-X90L-65': 'https://sony.scene7.com/is/image/sonyglobalsolutions/TVFY23_X90L_65_12_Beauty_I_M-1?$productIntroPlatemobile$&fmt=png-alpha',
+  'TCL-6S-55': 'https://m.media-amazon.com/images/I/91ESqVq-i3L.jpg',
+  'HIS-U7K-55': 'https://cdn.nguyenkimmall.com/images/detailed/898/10056785-google-tivi-mini-uled-hisense-4k-55inch-55u7k-1_o1mh-t9.jpg',
+  'SAM-CU7-43': 'https://images.samsung.com/is/image/samsung/p6pim/africa_en/ua43cu7000uxly/gallery/africa-en-crystal-uhd-cu7000-ua43cu7000uxly-536771150?$Q90_1248_936_F_PNG$',
+  'LG-UR9-50': 'https://m.media-amazon.com/images/I/91MAjR2HydL._AC_UF894,1000_QL80_.jpg',
+  'SONY-X80K-43': 'https://cdn.tgdd.vn/Products/Images/1942/274763/android-sony-4k-43-inch-kd-43x80k-180322-024040-550x340.png',
+  'INS-F30-50': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcROQ3i7h3R7eF4Sa0DPzsRNbrnLnJ0CMH0mCQ&s',
+  'TOSH-C35-43': 'https://cdn.tgdd.vn/Products/Images/1942/297318/google-tivi-toshiba-4k-43-inch-43c350lp-10-550x340.jpg',
+  'LG-C4-55': 'https://thegioithietbiso.com/data/product/rvo1714620647.jpg',
+  'SAM-S95D-65': 'https://images.samsung.com/is/image/samsung/p6pim/vn/qa65s95dakxxv/gallery/vn-oled-s95d-qa65s95dakxxv-thumb-540978937',
+  'SONY-B9-65': 'https://sony.scene7.com/is/image/sonyglobalsolutions/TVFY24_UP_1_FrontWithStand_M?$productIntroPlatemobile$&fmt=png-alpha',
+  'TCL-QM851-75': 'https://sm.pcmag.com/t/pcmag_au/review/t/tcl-qm8-cl/tcl-qm8-class-75-inch-tv-75qm851g_m1j9.1920.jpg'
+};
+
 async function seed() {
   try {
     console.log('Starting database seeding...');
@@ -82,6 +259,7 @@ async function seed() {
     // 4. Products
     console.log('Seeding products...');
     
+    // NOTE: Specific imageUrl is handled by the map at the top.
     const iPhones = [
       { name: 'iPhone 15 Pro Max 256GB', price: 1199, cost: 900, sku: 'IPH-15PM-256', description: 'Titanium design, A17 Pro chip, 48MP Main camera.' },
       { name: 'iPhone 15 Pro Max 512GB', price: 1399, cost: 1000, sku: 'IPH-15PM-512', description: 'Titanium design, A17 Pro chip, massive 512GB storage.' },
@@ -112,7 +290,6 @@ async function seed() {
       { name: 'iPhone 16 Plus 128GB', price: 899, cost: 700, sku: 'IPH-16PL-128', description: '6.7-inch display, A18 chip, Camera Control, Apple Intelligence ready.' },
       { name: 'iPhone 16 128GB', price: 799, cost: 620, sku: 'IPH-16-128', description: '6.1-inch display, A18 chip, Action button, dual-camera system.' },
       { name: 'iPhone 16e 128GB', price: 599, cost: 450, sku: 'IPH-16E-128', description: '2025 budget model, A18 chip, single "2-in-1" camera, Apple Intelligence support.' }
-   
     ];
 
     const iPads = [
@@ -269,6 +446,14 @@ async function seed() {
       if (!category) continue;
 
       for (const item of group.items) {
+        // ==============================================================================
+        // LOGIC: Check 'productImages' map first.
+        // If not found, use placeholder.
+        // ==============================================================================
+        const finalImageUrl = productImages[item.sku]
+          ? productImages[item.sku]
+          : `https://placehold.co/600x400/333333/ffffff/png?text=${encodeURIComponent(item.name)}\n(${item.sku})`;
+
         const product = await prisma.product.create({
           data: {
             name: item.name,
@@ -280,6 +465,7 @@ async function seed() {
             minStock: 5,
             categoryId: category.id,
             description: item.description,
+            imageUrl: finalImageUrl,
           },
         });
         allCreatedProducts.push(product);
@@ -287,7 +473,7 @@ async function seed() {
     }
     console.log(`Created ${allCreatedProducts.length} total products`);
 
-    // 5. Customers (UPDATED: Western/International Names)
+    // 5. Customers
     console.log('Seeding customers...');
     const customerData = [
       { name: 'John Smith', email: 'john.smith@example.com', phone: '0901234567', address: '123 Main St, New York, NY', isMember: true, memberSince: new Date('2024-01-01') },
@@ -303,63 +489,42 @@ async function seed() {
       { name: 'James Anderson', email: 'james.a@example.com', phone: '0911234567', address: '852 Willow Way, Phoenix, AZ', isMember: false },
       { name: 'Linda Taylor', email: 'linda.t@example.com', phone: '0912345678', address: '963 Aspen Pl, Portland, OR', isMember: false },
     ];
-
     const customers: Customer[] = [];
     for (const cus of customerData) {
-      const c = await prisma.customer.create({ data: cus });
-      customers.push(c);
+      customers.push(await prisma.customer.create({ data: cus }));
     }
-    console.log(`Created ${customers.length} customers`);
 
-    // 6. Orders (UPDATED Loop to 100 for more records)
+    // 6. Orders
     console.log('Seeding orders...');
     if (allCreatedProducts.length > 0 && customers.length > 0) {
       const getRandomProduct = () => allCreatedProducts[Math.floor(Math.random() * allCreatedProducts.length)];
       const getRandomCustomer = () => customers[Math.floor(Math.random() * customers.length)];
       const getRandomUser = () => users[Math.floor(Math.random() * users.length)];
-      
-      const getRandomDate = (start: Date, end: Date) => {
-        return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
-      };
+      const getRandomDate = (start: Date, end: Date) => new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
 
       const statuses = ['COMPLETED', 'COMPLETED', 'COMPLETED', 'PROCESSING', 'PENDING', 'CANCELLED'];
-      const numberOfOrdersToSeed = 100; // Increased to 100
+      const numberOfOrdersToSeed = 100;
 
       for (let i = 1; i <= numberOfOrdersToSeed; i++) {
         const orderDate = getRandomDate(new Date('2024-01-01'), new Date());
         const orderNum = `ORD-2024-${i.toString().padStart(3, '0')}`;
         const status = statuses[Math.floor(Math.random() * statuses.length)];
-        
-        const numItems = Math.floor(Math.random() * 4) + 1; 
+        const numItems = Math.floor(Math.random() * 4) + 1;
         const items = [];
-        
-        for(let j = 0; j < numItems; j++) {
-            const prod = getRandomProduct();
-            items.push({ 
-                productId: prod.id, 
-                quantity: Math.floor(Math.random() * 2) + 1, 
-                unitPrice: prod.price 
-            });
+        for (let j = 0; j < numItems; j++) {
+          const prod = getRandomProduct();
+          items.push({ productId: prod.id, quantity: Math.floor(Math.random() * 2) + 1, unitPrice: prod.price });
         }
-
         const subtotal = items.reduce((sum, item) => sum + Number(item.unitPrice) * item.quantity, 0);
-        
+
         await prisma.order.create({
           data: {
-            orderNumber: orderNum,
-            customerId: getRandomCustomer().id,
-            userId: getRandomUser().id,
-            status: status as any,
-            subtotal: new Prisma.Decimal(subtotal),
-            discountAmount: new Prisma.Decimal(0),
-            taxAmount: new Prisma.Decimal(0),
-            total: new Prisma.Decimal(subtotal),
-            createdAt: orderDate,
+            orderNumber: orderNum, customerId: getRandomCustomer().id, userId: getRandomUser().id, status: status as any,
+            subtotal: new Prisma.Decimal(subtotal), discountAmount: new Prisma.Decimal(0), taxAmount: new Prisma.Decimal(0),
+            total: new Prisma.Decimal(subtotal), createdAt: orderDate,
             orderItems: {
               create: items.map(i => ({
-                productId: i.productId,
-                quantity: i.quantity,
-                unitPrice: i.unitPrice,
+                productId: i.productId, quantity: i.quantity, unitPrice: i.unitPrice,
                 subtotal: new Prisma.Decimal(Number(i.unitPrice) * i.quantity),
                 discountAmount: new Prisma.Decimal(0),
                 total: new Prisma.Decimal(Number(i.unitPrice) * i.quantity),
@@ -369,35 +534,14 @@ async function seed() {
         });
       }
       console.log(`Created ${numberOfOrdersToSeed} orders`);
-      
-      // Update product popularity from the orders we just created
-      console.log('Syncing product popularity...');
-      await prisma.product.updateMany({ data: { popularity: 0 } });
-      
-      const stats = await prisma.orderItem.groupBy({
-        by: ['productId'],
-        _sum: { quantity: true },
-        where: { order: { status: 'COMPLETED' } }
-      });
-      
-      await Promise.all(stats.map(stat => 
-        prisma.product.update({
-          where: { id: stat.productId },
-          data: { popularity: stat._sum.quantity || 0 }
-        })
-      ));
-      
-      console.log(`Updated popularity for ${stats.length} products`);
     }
 
     // 7. License
     console.log('Seeding license keys...');
     await prisma.appLicense.create({
       data: {
-        licenseKey: 'MYSHOP-TRIAL-0001',
-        activatedAt: new Date(),
-        expiresAt: new Date(new Date().getTime() + 15 * 24 * 60 * 60 * 1000),
-        isActive: true,
+        licenseKey: 'MYSHOP-TRIAL-0001', activatedAt: new Date(),
+        expiresAt: new Date(new Date().getTime() + 15 * 24 * 60 * 60 * 1000), isActive: true,
       },
     });
 
@@ -410,4 +554,4 @@ async function seed() {
   }
 }
 
-seed();
+seed(); 
