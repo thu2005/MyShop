@@ -171,6 +171,19 @@ namespace MyShop.App.Views
             ViewModel.SetPriceRange(minPrice, maxPrice);
         }
 
+        private void OnClearFiltersClick(object sender, RoutedEventArgs e)
+        {
+            // Clear UI controls
+            SearchBox.Text = string.Empty;
+            FromPriceBox.Text = string.Empty;
+            ToPriceBox.Text = string.Empty;
+            PrimarySortComboBox.SelectedIndex = -1;
+            SecondarySortComboBox.SelectedIndex = -1;
+            
+            // Clear ViewModel filters
+            ViewModel.ClearFilters();
+        }
+
         private void OnPrimarySortChanged(object sender, SelectionChangedEventArgs e)
         {
             if (PrimarySortComboBox.SelectedItem is ComboBoxItem selectedItem)
@@ -277,6 +290,26 @@ namespace MyShop.App.Views
                     dialog.Hide();
                 }
             }
+        }
+
+        private void OnPreviousPageClick(object sender, RoutedEventArgs e)
+        {
+            ViewModel.GoToPreviousPage();
+        }
+
+        private void OnNextPageClick(object sender, RoutedEventArgs e)
+        {
+            ViewModel.GoToNextPage();
+        }
+
+        private void OnFirstPageClick(object sender, RoutedEventArgs e)
+        {
+            ViewModel.GoToFirstPage();
+        }
+
+        private void OnLastPageClick(object sender, RoutedEventArgs e)
+        {
+            ViewModel.GoToLastPage();
         }
     }
 }

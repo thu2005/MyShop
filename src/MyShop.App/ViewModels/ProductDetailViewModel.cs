@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MyShop.Core.Interfaces.Repositories;
+using MyShop.Core.Interfaces.Services;
 using MyShop.Core.Models;
 using MyShop.Core.Services;
 using System;
@@ -68,11 +69,26 @@ namespace MyShop.App.ViewModels
         [ObservableProperty]
         private string _editPriceText = "0";
 
-        public ProductDetailViewModel(IProductRepository productRepository, ICategoryRepository categoryRepository, IImageUploadService imageUploadService)
+        private readonly IAuthService _authService;
+        private readonly IAuthorizationService _authorizationService;
+
+        // Role-based properties
+        public User? CurrentUser => _authService.CurrentUser;
+        public UserRole UserRole => CurrentUser?.Role ?? UserRole.STAFF;
+        public bool IsAdmin => _authorizationService.IsAuthorized(UserRole.ADMIN);
+
+        public ProductDetailViewModel(
+            IProductRepository productRepository, 
+            ICategoryRepository categoryRepository, 
+            IImageUploadService imageUploadService,
+            IAuthService authService,
+            IAuthorizationService authorizationService)
         {
             _productRepository = productRepository;
             _categoryRepository = categoryRepository;
             _imageUploadService = imageUploadService;
+            _authService = authService;
+            _authorizationService = authorizationService;
             _productImages = new ObservableCollection<string>();
             _categories = new ObservableCollection<Category>();
         }

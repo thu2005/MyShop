@@ -176,9 +176,9 @@
                 </ComboBox>
                 <ComboBox PlaceholderText="Price" SelectionChanged="OnPriceFilterChanged" Width="160" SelectedIndex="0">
                     <ComboBoxItem Content="All" Tag="All"/>
-                    <ComboBoxItem Content="Under 1 million" Tag="Low"/>
-                    <ComboBoxItem Content="1 million - 5 million" Tag="Medium"/>
-                    <ComboBoxItem Content="Above 5 million" Tag="High"/>
+                    <ComboBoxItem Content="Under $100" Tag="Low"/>
+                    <ComboBoxItem Content="$100 - $500" Tag="Medium"/>
+                    <ComboBoxItem Content="Above $500" Tag="High"/>
                 </ComboBox>
             </StackPanel>
 
@@ -351,6 +351,23 @@
                         ToolTipService.ToolTip="Last Page">
                     <FontIcon Glyph="&#xE893;" FontSize="12"/>
                 </Button>
+                
+                <!-- Page Size Selector -->
+                <Border BorderBrush="#E0E0E0" BorderThickness="1,0,0,0" Margin="12,0,0,0" Padding="12,0,0,0"/>
+                <TextBlock Text="Show:" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#666666"/>
+                <ComboBox SelectedItem="{x:Bind ViewModel.PageSize, Mode=TwoWay}"
+                          ItemsSource="{x:Bind ViewModel.AvailablePageSizes}"
+                          MinWidth="80"
+                          VerticalAlignment="Center">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="x:Int32">
+                            <TextBlock>
+                                <Run Text="{x:Bind}"/>
+                                <Run Text=" / page"/>
+                            </TextBlock>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
             </StackPanel>
         </Grid>
 

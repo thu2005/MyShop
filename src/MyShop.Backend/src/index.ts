@@ -146,6 +146,40 @@ async function startServer() {
   // Start Apollo Server
   await server.start();
 
+  // Auto-sync product popularity from order history (fix seed data)
+  console.log('Syncing product popularity...');
+  try {
+    // Reset all popularity to 0
+    await prisma.product.updateMany({
+      data: { popularity: 0 }
+    });
+
+    // Calculate stats from OrderItems (excluding CANCELLED orders)
+    const stats = await prisma.orderItem.groupBy({
+      by: ['productId'],
+      _sum: {
+        quantity: true
+      },
+      where: {
+        order: {
+          status: 'COMPLETED'
+        }
+      }
+    });
+
+    // Update individual products
+    await Promise.all(stats.map(stat => 
+      prisma.product.update({
+        where: { id: stat.productId },
+        data: { popularity: stat._sum.quantity || 0 }
+      })
+    ));
+
+    console.log(`Synced popularity for ${stats.length} products`);
+  } catch (error) {
+    console.error('Failed to sync popularity:', error);
+  }
+
   // Apply Apollo middleware to Express
   app.use(
     '/graphql',

@@ -1,4 +1,5 @@
 <Page
+    x:Name="PageRoot"
     x:Class="MyShop.App.Views.ProductDetailScreen"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -156,17 +157,19 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <!-- Edit/Update Button -->
+                        <!-- Edit/Update Button (Admin Only) -->
                         <Button x:Name="EditUpdateButton" Grid.Column="0" HorizontalAlignment="Stretch" Background="#0F3D5E" Foreground="White" 
                                 CornerRadius="6" Padding="0,12" BorderThickness="0"
-                                Click="OnEditUpdateClick">
+                                Click="OnEditUpdateClick"
+                                Visibility="{Binding ElementName=PageRoot, Path=ViewModel.IsAdmin, Mode=OneWay}">
                             <TextBlock x:Name="EditUpdateText" FontWeight="SemiBold"/>
                         </Button>
 
-                        <!-- Delete Button -->
+                        <!-- Delete Button (Admin Only) -->
                         <Button Grid.Column="1" HorizontalAlignment="Stretch" Background="#EF4444" Foreground="White" 
                                 CornerRadius="6" Padding="0,12" BorderThickness="0"
-                                Click="OnDeleteClick">
+                                Click="OnDeleteClick"
+                                Visibility="{Binding ElementName=PageRoot, Path=ViewModel.IsAdmin, Mode=OneWay}">
                             <TextBlock Text="DELETE" FontWeight="SemiBold"/>
                         </Button>
 

@@ -30,7 +30,9 @@ namespace MyShop.App.ViewModels
         private int _currentPage = 1;
         private int _totalPages = 1;
         private int _totalOrders = 0;
-        private const int PAGE_SIZE = 20;
+        private int _pageSize = 20;
+
+        public List<int> AvailablePageSizes { get; } = new List<int> { 10, 20, 50, 100 };
 
         public OrderViewModel(IOrderRepository orderRepository, IProductRepository productRepository)
         {
@@ -112,6 +114,19 @@ namespace MyShop.App.ViewModels
         {
             get => _totalOrders;
             set => SetProperty(ref _totalOrders, value);
+        }
+
+        public int PageSize
+        {
+            get => _pageSize;
+            set
+            {
+                if (SetProperty(ref _pageSize, value))
+                {
+                    CurrentPage = 1;
+                    UpdatePagination();
+                }
+            }
         }
 
         public bool HasPreviousPage => CurrentPage > 1;
@@ -198,13 +213,13 @@ namespace MyShop.App.ViewModels
                 switch (SelectedPriceFilter)
                 {
                     case PriceFilter.Low:
-                        filteredOrders = filteredOrders.Where(o => o.Total < 1000000).ToList();
+                        filteredOrders = filteredOrders.Where(o => o.Total < 100).ToList();
                         break;
                     case PriceFilter.Medium:
-                        filteredOrders = filteredOrders.Where(o => o.Total >= 1000000 && o.Total <= 5000000).ToList();
+                        filteredOrders = filteredOrders.Where(o => o.Total >= 100 && o.Total <= 500).ToList();
                         break;
                     case PriceFilter.High:
-                        filteredOrders = filteredOrders.Where(o => o.Total > 5000000).ToList();
+                        filteredOrders = filteredOrders.Where(o => o.Total > 500).ToList();
                         break;
                 }
 
@@ -270,14 +285,14 @@ namespace MyShop.App.ViewModels
         private void UpdatePagination()
         {
             TotalOrders = _allOrders.Count;
-            TotalPages = (int)Math.Ceiling((double)TotalOrders / PAGE_SIZE);
+            TotalPages = (int)Math.Ceiling((double)TotalOrders / PageSize);
 
             if (TotalPages == 0) TotalPages = 1;
             if (CurrentPage > TotalPages) CurrentPage = TotalPages;
 
             var pagedOrders = _allOrders
-                .Skip((CurrentPage - 1) * PAGE_SIZE)
-                .Take(PAGE_SIZE)
+                .Skip((CurrentPage - 1) * PageSize)
+                .Take(PageSize)
                 .ToList();
 
             Orders = new ObservableCollection<Order>(pagedOrders);

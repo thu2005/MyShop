@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MyShop.App.ViewModels.Base;
 using MyShop.Core.Interfaces.Repositories;
+using MyShop.Core.Interfaces.Services;
 using MyShop.Core.Models;
 
 namespace MyShop.App.ViewModels
@@ -21,7 +22,11 @@ namespace MyShop.App.ViewModels
     public class ProductViewModel : ViewModelBase
     {
         private readonly IProductRepository _productRepository;
+        private readonly IAuthService _authService;
+        private readonly IAuthorizationService _authorizationService;
+        
         private List<Product> _allProducts;
+        private List<Product> _filteredProducts; // Products after filtering, before pagination
         private ObservableCollection<Product> _products;
         private CategoryStat _selectedCategory;
 
@@ -35,11 +40,30 @@ namespace MyShop.App.ViewModels
         private string _primarySort = null;
         private string _secondarySort = null;
 
-        public ProductViewModel(IProductRepository productRepository)
+        // Pagination properties
+        private int _currentPage = 1;
+        private int _totalPages = 1;
+        private int _totalProducts = 0;
+        private int _pageSize = 20;
+
+        public List<int> AvailablePageSizes { get; } = new List<int> { 10, 20, 50, 100 };
+
+        // Role-based properties
+        public User? CurrentUser => _authService.CurrentUser;
+        public UserRole UserRole => CurrentUser?.Role ?? UserRole.STAFF;
+        public bool IsAdmin => _authorizationService.IsAuthorized(UserRole.ADMIN);
+
+        public ProductViewModel(
+            IProductRepository productRepository,
+            IAuthService authService,
+            IAuthorizationService authorizationService)
         {
             _productRepository = productRepository;
+            _authService = authService;
+            _authorizationService = authorizationService;
             _products = new ObservableCollection<Product>();
             _allProducts = new List<Product>();
+            _filteredProducts = new List<Product>();
             _categories = new ObservableCollection<CategoryStat>();
 
             _ = LoadProductsAsync();
@@ -62,6 +86,40 @@ namespace MyShop.App.ViewModels
                 }
             }
         }
+
+        public int CurrentPage
+        {
+            get => _currentPage;
+            set => SetProperty(ref _currentPage, value);
+        }
+
+        public int TotalPages
+        {
+            get => _totalPages;
+            set => SetProperty(ref _totalPages, value);
+        }
+
+        public int TotalProducts
+        {
+            get => _totalProducts;
+            set => SetProperty(ref _totalProducts, value);
+        }
+
+        public int PageSize
+        {
+            get => _pageSize;
+            set
+            {
+                if (SetProperty(ref _pageSize, value))
+                {
+                    CurrentPage = 1;
+                    UpdatePagination();
+                }
+            }
+        }
+
+        public bool HasPreviousPage => CurrentPage > 1;
+        public bool HasNextPage => CurrentPage < TotalPages;
 
         public async Task LoadProductsAsync()
         {
@@ -94,6 +152,86 @@ namespace MyShop.App.ViewModels
             SelectedCategory = new CategoryStat { Id = categoryId };
         }
 
+        public async void ClearFilters()
+        {
+            // Reset all filter states
+            _currentSearchTerm = string.Empty;
+            _currentSearchResults.Clear();
+            _minPrice = null;
+            _maxPrice = null;
+            _primarySort = null;
+            _secondarySort = null;
+            SelectedCategory = null;
+
+            // Reload all products
+            await LoadProductsAsync();
+        }
+
+        public async Task FilterProductsAsync()
+        {
+            if (IsBusy) return;
+
+            try
+            {
+                IsBusy = true;
+                ErrorMessage = null;
+
+                List<Product> filteredProducts;
+
+                // Priority 1: Filter by search term using API if exists
+                if (!string.IsNullOrWhiteSpace(_currentSearchTerm))
+                {
+                    filteredProducts = await _productRepository.SearchByNameAsync(_currentSearchTerm);
+                }
+                // Priority 2: Filter by category using API if selected
+                else if (SelectedCategory != null && SelectedCategory.Id != 0)
+                {
+                    filteredProducts = await _productRepository.GetByCategoryAsync(SelectedCategory.Id);
+                }
+                else
+                {
+                    // No filter selected, get all
+                    filteredProducts = await _productRepository.GetAllAsync();
+                }
+
+                // Then apply additional client-side filters on the API results
+                
+                // Filter by category if search was used (client-side)
+                if (!string.IsNullOrWhiteSpace(_currentSearchTerm) && SelectedCategory != null && SelectedCategory.Id != 0)
+                {
+                    filteredProducts = filteredProducts.Where(p => p.CategoryId == SelectedCategory.Id).ToList();
+                }
+
+                // Filter by custom price range if set (client-side)
+                if (_minPrice.HasValue)
+                {
+                    filteredProducts = filteredProducts.Where(p => p.Price >= _minPrice.Value).ToList();
+                }
+                if (_maxPrice.HasValue)
+                {
+                    filteredProducts = filteredProducts.Where(p => p.Price <= _maxPrice.Value).ToList();
+                }
+
+                // Apply sorting
+                var sorted = ApplySorting(filteredProducts);
+
+                _filteredProducts.Clear();
+                _filteredProducts.AddRange(sorted.ToList());
+
+                CurrentPage = 1;
+                UpdatePagination();
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = $"Failed to filter products: {ex.Message}";
+                System.Diagnostics.Debug.WriteLine($"Error filtering products: {ex.Message}");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
         private void FilterProducts()
         {
             IEnumerable<Product> source = string.IsNullOrWhiteSpace(_currentSearchTerm)
@@ -119,7 +257,62 @@ namespace MyShop.App.ViewModels
             // Apply sorting
             var sorted = ApplySorting(source);
 
-            Products = new ObservableCollection<Product>(sorted.ToList());
+            // Store filtered results before pagination
+            _filteredProducts.Clear();
+            _filteredProducts.AddRange(sorted.ToList());
+
+            // Reset to first page when filters change
+            CurrentPage = 1;
+            UpdatePagination();
+        }
+
+        private void UpdatePagination()
+        {
+            TotalProducts = _filteredProducts.Count;
+            TotalPages = (int)Math.Ceiling((double)TotalProducts / PageSize);
+
+            if (TotalPages == 0) TotalPages = 1;
+            if (CurrentPage > TotalPages) CurrentPage = TotalPages;
+
+            var pagedProducts = _filteredProducts
+                .Skip((CurrentPage - 1) * PageSize)
+                .Take(PageSize)
+                .ToList();
+
+            Products = new ObservableCollection<Product>(pagedProducts);
+
+            OnPropertyChanged(nameof(HasPreviousPage));
+            OnPropertyChanged(nameof(HasNextPage));
+        }
+
+        public void GoToNextPage()
+        {
+            if (HasNextPage)
+            {
+                CurrentPage++;
+                UpdatePagination();
+            }
+        }
+
+        public void GoToPreviousPage()
+        {
+            if (HasPreviousPage)
+            {
+                CurrentPage--;
+                UpdatePagination();
+            }
+        }
+
+        public void GoToFirstPage()
+        {
+            CurrentPage = 1;
+            UpdatePagination();
+        }
+
+        public void GoToLastPage()
+        {
+            CurrentPage = TotalPages;
+            UpdatePagination();
         }
 
 
