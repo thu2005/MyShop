@@ -148,7 +148,7 @@
 
                     <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="12" Margin="0,12">
                          <Border Background="#1D546C" CornerRadius="4" Width="40" Height="40">
-                             <FontIcon Glyph="&#xE7BF;" Foreground="White"/> <!-- Shopping Cart Icon -->
+                             <FontIcon Glyph="&#xE7BF;" Foreground="White"/>
                          </Border>
                         <TextBlock Text="{x:Bind ViewModel.TotalOrders, Mode=OneWay}" FontSize="24" FontWeight="Bold" VerticalAlignment="Center"/>
                     </StackPanel>
@@ -179,7 +179,7 @@
 
                     <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="12" Margin="0,12">
                          <Border Background="#1D546C" CornerRadius="4" Width="40" Height="40">
-                             <FontIcon Glyph="&#xE1D0;" Foreground="White"/> <!-- Currency/Coin Icon -->
+                             <FontIcon Glyph="&#xE1D0;" Foreground="White"/> 
                          </Border>
                         <TextBlock Text="{x:Bind ViewModel.TotalRevenue, Mode=OneWay}" FontSize="24" FontWeight="Bold" VerticalAlignment="Center"/>
                     </StackPanel>

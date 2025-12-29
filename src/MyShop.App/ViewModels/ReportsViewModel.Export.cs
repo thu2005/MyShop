@@ -104,7 +104,7 @@ namespace MyShop.App.ViewModels
             sb.AppendLine(".subtitle { color: #666; margin-bottom: 30px; font-size: 14px; }");
             sb.AppendLine("h2 { color: #003F62; margin: 40px 0 20px 0; padding-bottom: 10px; border-bottom: 2px solid #003F62; font-size: 20px; }");
             sb.AppendLine(".summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 30px 0; }");
-            sb.AppendLine(".card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }");
+            sb.AppendLine(".card { background: linear-gradient(135deg, #003F62 0%, #003F62 100%); color: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }");
             sb.AppendLine(".card h3 { margin: 0 0 10px 0; font-size: 14px; opacity: 0.9; font-weight: normal; }");
             sb.AppendLine(".card .value { font-size: 32px; font-weight: bold; margin: 0; }");
             sb.AppendLine("table { width: 100%; border-collapse: collapse; margin: 20px 0; }");
