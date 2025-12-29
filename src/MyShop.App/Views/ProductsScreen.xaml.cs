@@ -330,8 +330,8 @@ namespace MyShop.App.Views
                 {
                     // Show error in dialog
                     dialog.ErrorText.Text = ex.Message.Contains("already exists")
-                        ? "⚠️ Category name already exists. Please choose a different name."
-                        : $"⚠️ Error: {ex.Message}";
+                        ? "Category name already exists. Please choose a different name."
+                        : $"Error: {ex.Message}";
                     dialog.ErrorText.Visibility = Visibility.Visible;
 
                     // Reset for retry

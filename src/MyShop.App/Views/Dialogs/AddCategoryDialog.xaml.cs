@@ -25,7 +25,7 @@ namespace MyShop.App.Views.Dialogs
             // Validate required field
             if (string.IsNullOrWhiteSpace(NameBox.Text))
             {
-                ErrorText.Text = "⚠️ Category name cannot be empty.";
+                ErrorText.Text = "Category name cannot be empty.";
                 ErrorText.Visibility = Visibility.Visible;
                 NameBox.BorderBrush = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red);
                 args.Cancel = true;
