@@ -298,6 +298,7 @@ namespace MyShop.Data.Repositories
                     input = new
                     {
                         customerId = entity.CustomerId,
+                        status = entity.Status.ToString(), // Add status
                         items = entity.OrderItems?.Select(item => new
                         {
                             productId = item.ProductId,
