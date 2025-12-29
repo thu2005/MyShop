@@ -48,11 +48,12 @@ namespace MyShop.Core.Services
 
             try
             {
-                System.Diagnostics.Debug.WriteLine($"Attempting login for user: {username} at {_graphQLService.Client.Options.EndPoint}");
-                
+                System.Diagnostics.Debug.WriteLine($"Attempting login for user: {username}");
+
                 using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(15));
+
                 var responseTask = _graphQLService.Client.SendMutationAsync<LoginResponse>(request, cts.Token);
-                
+
                 var response = await responseTask;
 
                 System.Diagnostics.Debug.WriteLine("Login response received.");
@@ -70,17 +71,16 @@ namespace MyShop.Core.Services
                 {
                     var token = response.Data.Login.Token;
                     var user = response.Data.Login.User;
-                    
+
                     if (user != null)
                     {
-                        // Save session 
                         _sessionManager.SaveSession(token, user, rememberMe);
-                        
+
                         System.Diagnostics.Debug.WriteLine("Login successful and session saved.");
                         return user;
                     }
                 }
-                
+
                 System.Diagnostics.Debug.WriteLine("Login failed: Data is null.");
             }
             catch (OperationCanceledException)

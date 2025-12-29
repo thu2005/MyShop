@@ -206,7 +206,6 @@ namespace MyShop.Data.Repositories
             return response.Data.CreateProduct;
         }
 
-        // Update, Delete, Count methods remain the same (ensure Update includes ImageUrl if you plan to edit images later)
         public override async Task UpdateAsync(Product entity)
         {
             var request = new GraphQLRequest
@@ -230,7 +229,7 @@ namespace MyShop.Data.Repositories
                         costPrice = entity.CostPrice,
                         stock = entity.Stock,
                         categoryId = entity.CategoryId,
-                        imageUrl = entity.ImageUrl // Include this if updating image is allowed
+                        imageUrl = entity.ImageUrl
                     }
                 }
             };
@@ -259,10 +258,10 @@ namespace MyShop.Data.Repositories
             return response.Data?.Products?.Total ?? 0;
         }
 
-        private class ProductResponse { public Product? Product { get; set; } }
-        private class ProductsResponse { public ProductsQueryResult? Products { get; set; } }
-        private class ProductsQueryResult { public List<Product>? Products { get; set; } public int Total { get; set; } }
-        private class LowStockResponse { public List<Product>? LowStockProducts { get; set; } }
-        private class CreateProductResponse { public Product? CreateProduct { get; set; } }
+        public class ProductResponse { public Product? Product { get; set; } }
+        public class ProductsResponse { public ProductsQueryResult? Products { get; set; } }
+        public class ProductsQueryResult { public List<Product>? Products { get; set; } public int Total { get; set; } }
+        public class LowStockResponse { public List<Product>? LowStockProducts { get; set; } }
+        public class CreateProductResponse { public Product? CreateProduct { get; set; } }
     }
 }

@@ -1,3 +1,4 @@
+using GraphQL.Client.Abstractions;
 using GraphQL.Client.Http;
 using GraphQL.Client.Serializer.SystemTextJson;
 using System;
@@ -21,7 +22,9 @@ namespace MyShop.Core.Services
             }, new SystemTextJsonSerializer());
         }
 
-        public GraphQLHttpClient Client => _client;
+        public GraphQLHttpClient ConcreteClient => _client;
+
+        public virtual IGraphQLClient Client => _client;
 
         public async Task<T> QueryAsync<T>(string query, object? variables = null, CancellationToken cancellationToken = default)
         {
