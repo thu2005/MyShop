@@ -17,7 +17,7 @@ namespace MyShop.App.ViewModels
         High
     }
 
-    public class OrderViewModel : ViewModelBase
+    public partial class OrderViewModel : ViewModelBase
     {
         private readonly IOrderRepository _orderRepository;
         private readonly IProductRepository _productRepository;

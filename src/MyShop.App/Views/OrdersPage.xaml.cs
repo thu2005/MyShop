@@ -286,5 +286,10 @@ namespace MyShop.App.Views
 
             ViewModel.EndDate = args.NewDate?.DateTime;
         }
+
+        private async void OnExportClick(object sender, RoutedEventArgs e)
+        {
+            await ViewModel.ExportOrdersAsync();
+        }
     }
 }
