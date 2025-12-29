@@ -1,11 +1,14 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using MyShop.App.ViewModels;
+using MyShop.App.Services;
+using MyShop.App.Models;
 using MyShop.Core.Interfaces.Repositories;
 using MyShop.Core.Interfaces.Services;
 using MyShop.Core.Models;
@@ -23,10 +26,14 @@ namespace MyShop.App.Views
 
     public sealed partial class CreateOrderPage : Page
     {
+        private const string DRAFT_KEY = "CreateOrder_Draft";
+        private const int AUTO_SAVE_DELAY_MS = 2000;
+        
         private OrderViewModel _viewModel;
         private readonly ICustomerRepository _customerRepository;
         private readonly IDiscountRepository _discountRepository;
         private readonly ISessionManager _sessionManager;
+        private readonly IDraftService _draftService;
         private readonly ObservableCollection<OrderItem> _orderItems;
         private ObservableCollection<Product> _availableProducts;
         private ObservableCollection<Customer> _customers;
@@ -37,6 +44,9 @@ namespace MyShop.App.Views
         private int? _editingOrderId;
         private DateTime _originalCreatedAt;
         private string _originalOrderNumber;
+        
+        private CancellationTokenSource _autoSaveCts;
+        private bool _isLoadingDraft = false;
 
         public CreateOrderPage()
         {
@@ -44,16 +54,24 @@ namespace MyShop.App.Views
             _customerRepository = App.Current.GetService<ICustomerRepository>();
             _discountRepository = App.Current.GetService<IDiscountRepository>();
             _sessionManager = App.Current.GetService<ISessionManager>();
+            _draftService = App.Current.GetService<IDraftService>();
             _orderItems = new ObservableCollection<OrderItem>();
             _availableProducts = new ObservableCollection<Product>();
             _customers = new ObservableCollection<Customer>();
             _discounts = new ObservableCollection<Discount>();
 
             OrderItemsList.ItemsSource = _orderItems;
-            _orderItems.CollectionChanged += (s, e) => UpdateTotals();
+            _orderItems.CollectionChanged += (s, e) =>
+            {
+                UpdateTotals();
+                if (!_isLoadingDraft) OnFieldChanged(s, e);
+            };
             
             // Hide commission for Admin
             SetCommissionVisibility();
+            
+            // Attach auto-save events
+            AttachAutosaveEvents();
         }
 
         protected override async void OnNavigatedTo(NavigationEventArgs e)
@@ -92,6 +110,11 @@ namespace MyShop.App.Views
                    PageTitleText.Text = "Edit Order";
                    SaveButton.Content = new TextBlock { Text = "Update Order", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold };
                }
+            }
+            else
+            {
+                // Load draft only when creating new order (not editing)
+                await LoadDraft();
             }
             
             if (isReadOnly)
@@ -260,6 +283,7 @@ namespace MyShop.App.Views
                 }
                 
                 UpdateTotals();
+                if (!_isLoadingDraft) OnFieldChanged(sender, args);
             }
         }
 
@@ -543,6 +567,7 @@ namespace MyShop.App.Views
 
                 if (createdOrder != null)
                 {
+                    ClearDraft(); // Clear draft after successful save
                     Frame.GoBack();
                 }
                 else
@@ -677,5 +702,161 @@ namespace MyShop.App.Views
             CommissionLabel.Visibility = isStaff ? Visibility.Visible : Visibility.Collapsed;
             CommissionPanel.Visibility = isStaff ? Visibility.Visible : Visibility.Collapsed;
         }
+
+        #region Auto-Save Draft
+
+        private void AttachAutosaveEvents()
+        {
+            NotesTextBox.TextChanged += OnFieldChanged;
+            StatusComboBox.SelectionChanged += (s, e) => OnFieldChanged(s, null);
+        }
+
+        private void OnFieldChanged(object sender, object e)
+        {
+            if (_editingOrderId.HasValue || _isLoadingDraft) return;
+            
+            // Cancel previous auto-save
+            _autoSaveCts?.Cancel();
+            _autoSaveCts = new CancellationTokenSource();
+
+            // Debounced auto-save
+            _ = AutoSaveDraftAsync(_autoSaveCts.Token);
+        }
+
+        private async Task AutoSaveDraftAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                await Task.Delay(AUTO_SAVE_DELAY_MS, cancellationToken);
+
+                var draft = new OrderDraft
+                {
+                    CustomerId = _selectedCustomer?.Id,
+                    CustomerName = _selectedCustomer?.Name,
+                    DiscountId = _selectedDiscount?.Id,
+                    DiscountCode = _selectedDiscount?.Code,
+                    Notes = NotesTextBox.Text,
+                    Status = (StatusComboBox.SelectedItem as ComboBoxItem)?.Tag as string,
+                    Items = _orderItems.Select(item => new OrderItemDraft
+                    {
+                        ProductId = item.ProductId,
+                        ProductName = item.Product?.Name ?? "",
+                        ProductSku = item.Product?.Sku ?? "",
+                        Quantity = item.Quantity,
+                        UnitPrice = item.UnitPrice,
+                        Total = item.Total
+                    }).ToList(),
+                    SavedAt = DateTime.Now
+                };
+
+                _draftService.SaveDraft(DRAFT_KEY, draft);
+                System.Diagnostics.Debug.WriteLine($"💾 Draft saved at {DateTime.Now:HH:mm:ss}");
+            }
+            catch (TaskCanceledException)
+            {
+                // Ignore cancellation
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to save draft: {ex.Message}");
+            }
+        }
+
+        private async Task LoadDraft()
+        {
+            try
+            {
+                if (_editingOrderId.HasValue) return; // Don't load draft when editing
+                if (!_draftService.HasDraft(DRAFT_KEY)) return;
+
+                var draft = _draftService.GetDraft<OrderDraft>(DRAFT_KEY);
+                if (draft == null) return;
+
+                _isLoadingDraft = true;
+
+                // Restore customer
+                if (draft.CustomerId.HasValue)
+                {
+                    var customer = _customers.FirstOrDefault(c => c.Id == draft.CustomerId.Value);
+                    if (customer != null)
+                    {
+                        _selectedCustomer = customer;
+                        CustomerSuggestBox.Text = customer.Name;
+                        ClearCustomerButton.Visibility = Visibility.Visible;
+                    }
+                }
+
+                // Restore discount
+                if (draft.DiscountId.HasValue)
+                {
+                    var discount = _discounts.FirstOrDefault(d => d.Id == draft.DiscountId.Value);
+                    if (discount != null)
+                    {
+                        _selectedDiscount = discount;
+                        SelectDiscountButton.Content = $"{discount.Code} - {discount.Name}";
+                        RemoveDiscountButton.Visibility = Visibility.Visible;
+                    }
+                }
+
+                // Restore notes
+                NotesTextBox.Text = draft.Notes ?? string.Empty;
+
+                // Restore status
+                if (!string.IsNullOrEmpty(draft.Status))
+                {
+                    foreach (ComboBoxItem item in StatusComboBox.Items)
+                    {
+                        if (item.Tag as string == draft.Status)
+                        {
+                            StatusComboBox.SelectedItem = item;
+                            break;
+                        }
+                    }
+                }
+
+                // Restore order items
+                _orderItems.Clear();
+                foreach (var draftItem in draft.Items)
+                {
+                    var product = _availableProducts.FirstOrDefault(p => p.Id == draftItem.ProductId);
+                    if (product != null)
+                    {
+                        _orderItems.Add(new OrderItem
+                        {
+                            ProductId = draftItem.ProductId,
+                            Product = product,
+                            Quantity = draftItem.Quantity,
+                            UnitPrice = draftItem.UnitPrice,
+                            Subtotal = draftItem.Quantity * draftItem.UnitPrice,
+                            Total = draftItem.Total
+                        });
+                    }
+                }
+
+                _isLoadingDraft = false;
+
+                System.Diagnostics.Debug.WriteLine($"✅ Draft restored from {draft.SavedAt:g}");
+            }
+            catch (Exception ex)
+            {
+                _isLoadingDraft = false;
+                System.Diagnostics.Debug.WriteLine($"Failed to load draft: {ex.Message}");
+            }
+        }
+
+        private void ClearDraft()
+        {
+            try
+            {
+                _draftService.ClearDraft(DRAFT_KEY);
+                System.Diagnostics.Debug.WriteLine("🗑️ Draft cleared");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to clear draft: {ex.Message}");
+            }
+        }
+
+        #endregion
     }
 }
