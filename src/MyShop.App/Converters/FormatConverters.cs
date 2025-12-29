@@ -4,7 +4,7 @@ using Microsoft.UI.Xaml.Data;
 namespace MyShop.App.Converters;
 
 /// <summary>
-/// Converts decimal currency value to formatted string
+/// Converts decimal currency value to formatted string (USD)
 /// </summary>
 public class CurrencyConverter : IValueConverter
 {
@@ -12,17 +12,17 @@ public class CurrencyConverter : IValueConverter
     {
         if (value is decimal decimalValue)
         {
-            return decimalValue.ToString("N0");
+            return $"${decimalValue:N2}";
         }
         if (value is double doubleValue)
         {
-            return doubleValue.ToString("N0");
+            return $"${doubleValue:N2}";
         }
         if (value is int intValue)
         {
-            return intValue.ToString("N0");
+            return $"${intValue:N2}";
         }
-        return "0";
+        return "$0.00";
     }
 
     public object? ConvertBack(object value, Type targetType, object parameter, string language)

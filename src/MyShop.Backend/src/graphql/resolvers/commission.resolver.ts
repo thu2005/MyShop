@@ -162,8 +162,8 @@ export const commissionResolvers = {
                 0
             );
 
-            // Commission rate: 5% for orders >= 1M, 3% otherwise
-            const commissionRate = orderTotal >= 1000000 ? 0.05 : 0.03;
+            // Commission rate: 5% for orders >= $1000, 3% otherwise
+            const commissionRate = orderTotal >= 1000 ? 0.05 : 0.03;
             const commissionAmount = orderTotal * commissionRate;
 
             // Create commission record

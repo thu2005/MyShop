@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using MyShop.App.ViewModels;
 using MyShop.Core.Interfaces.Repositories;
+using MyShop.Core.Interfaces.Services;
 using MyShop.Core.Models;
 using MyShop.Core.Models.DTOs;
 
@@ -25,6 +26,7 @@ namespace MyShop.App.Views
         private OrderViewModel _viewModel;
         private readonly ICustomerRepository _customerRepository;
         private readonly IDiscountRepository _discountRepository;
+        private readonly ISessionManager _sessionManager;
         private readonly ObservableCollection<OrderItem> _orderItems;
         private ObservableCollection<Product> _availableProducts;
         private ObservableCollection<Customer> _customers;
@@ -41,6 +43,7 @@ namespace MyShop.App.Views
             this.InitializeComponent();
             _customerRepository = App.Current.GetService<ICustomerRepository>();
             _discountRepository = App.Current.GetService<IDiscountRepository>();
+            _sessionManager = App.Current.GetService<ISessionManager>();
             _orderItems = new ObservableCollection<OrderItem>();
             _availableProducts = new ObservableCollection<Product>();
             _customers = new ObservableCollection<Customer>();
@@ -48,6 +51,9 @@ namespace MyShop.App.Views
 
             OrderItemsList.ItemsSource = _orderItems;
             _orderItems.CollectionChanged += (s, e) => UpdateTotals();
+            
+            // Hide commission for Admin
+            SetCommissionVisibility();
         }
 
         protected override async void OnNavigatedTo(NavigationEventArgs e)
@@ -249,7 +255,7 @@ namespace MyShop.App.Views
                     var totalTextBlock = grid.Children.OfType<TextBlock>().FirstOrDefault(t => Grid.GetColumn(t) == 4);
                     if (totalTextBlock != null)
                     {
-                        totalTextBlock.Text = $"{item.Total:N0} ₫";
+                        totalTextBlock.Text = $"${item.Total:N2}";
                     }
                 }
                 
@@ -346,9 +352,18 @@ namespace MyShop.App.Views
             decimal total = subtotal - discountAmount;
             if (total < 0) total = 0;
 
-            SubtotalText.Text = $"{subtotal:N0} ₫";
-            DiscountAmountText.Text = $"-{discountAmount:N0} ₫";
-            TotalAmountText.Text = $"{total:N0} ₫";
+            // Calculate commission based on total (USD)
+            // 5% for orders >= $1000, 3% otherwise
+            decimal commissionRate = total >= 1000 ? 0.05m : 0.03m;
+            decimal commissionAmount = total * commissionRate;
+
+            SubtotalText.Text = $"${subtotal:N2}";
+            DiscountAmountText.Text = $"-${discountAmount:N2}";
+            TotalAmountText.Text = $"${total:N2}";
+            
+            // Update commission display
+            CommissionRateText.Text = $"({commissionRate * 100:N0}%)";
+            CommissionAmountText.Text = $"${commissionAmount:N2}";
         }
 
         private void OnClearCustomerClick(object sender, RoutedEventArgs e)
@@ -652,6 +667,14 @@ namespace MyShop.App.Views
 
             // Switch Item Template to ReadOnly
             OrderItemsList.ItemTemplate = this.Resources["ReadOnlyOrderItemTemplate"] as DataTemplate;
+        }
+
+        private void SetCommissionVisibility()
+        {
+            // Hide commission for Admin, show only for Staff
+            var isStaff = _sessionManager.CurrentUser?.Role == UserRole.STAFF;
+            CommissionLabel.Visibility = isStaff ? Visibility.Visible : Visibility.Collapsed;
+            CommissionPanel.Visibility = isStaff ? Visibility.Visible : Visibility.Collapsed;
         }
     }
 }
