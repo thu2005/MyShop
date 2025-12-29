@@ -1,7 +1,11 @@
 using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using MyShop.App.Models;
+using MyShop.App.Services;
 using MyShop.App.ViewModels;
 
 namespace MyShop.App.Views
@@ -9,11 +13,15 @@ namespace MyShop.App.Views
     public sealed partial class CustomersPage : Page
     {
         public CustomersViewModel ViewModel { get; }
+        private readonly IDraftService _draftService;
+        private const string CUSTOMER_DRAFT_KEY = "CreateCustomer_Draft";
+        private CancellationTokenSource _customerAutoSaveCts;
 
         public CustomersPage()
         {
             this.InitializeComponent();
             ViewModel = App.Current.GetService<CustomersViewModel>();
+            _draftService = App.Current.GetService<IDraftService>();
         }
 
         private async void NewCustomerButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
@@ -50,6 +58,20 @@ namespace MyShop.App.Views
             memberSwitch.Resources["ToggleSwitchFillOnPointerOver"] = new Microsoft.UI.Xaml.Media.SolidColorBrush(colorHover);
             memberSwitch.Resources["ToggleSwitchFillOnPressed"] = new Microsoft.UI.Xaml.Media.SolidColorBrush(colorPressed);
 
+            // Load Draft
+            if (_draftService.HasDraft(CUSTOMER_DRAFT_KEY))
+            {
+                var draft = _draftService.GetDraft<CustomerDraft>(CUSTOMER_DRAFT_KEY);
+                if (draft != null)
+                {
+                    nameBox.Text = draft.Name ?? "";
+                    phoneBox.Text = draft.Phone ?? "";
+                    emailBox.Text = draft.Email ?? "";
+                    addressBox.Text = draft.Address ?? "";
+                    memberSwitch.IsOn = draft.IsMember;
+                }
+            }
+
             stackPanel.Children.Add(nameBox);
             stackPanel.Children.Add(phoneBox);
             stackPanel.Children.Add(emailBox);
@@ -57,6 +79,44 @@ namespace MyShop.App.Views
             stackPanel.Children.Add(memberSwitch);
 
             dialog.Content = stackPanel;
+
+            // Auto-Save Logic
+            async void OnFieldChanged(object s, object args)
+            {
+                _customerAutoSaveCts?.Cancel();
+                _customerAutoSaveCts = new CancellationTokenSource();
+                var token = _customerAutoSaveCts.Token;
+
+                try
+                {
+                    await Task.Delay(2000, token);
+                    if (token.IsCancellationRequested) return;
+
+                    var draft = new CustomerDraft
+                    {
+                        Name = nameBox.Text,
+                        Phone = phoneBox.Text,
+                        Email = emailBox.Text,
+                        Address = addressBox.Text,
+                        IsMember = memberSwitch.IsOn,
+                        SavedAt = DateTime.Now
+                    };
+
+                    _draftService.SaveDraft(CUSTOMER_DRAFT_KEY, draft);
+                    System.Diagnostics.Debug.WriteLine($"💾 Customer Draft saved at {DateTime.Now:HH:mm:ss}");
+                }
+                catch (TaskCanceledException) { }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to save customer draft: {ex.Message}");
+                }
+            }
+
+            nameBox.TextChanged += OnFieldChanged;
+            phoneBox.TextChanged += OnFieldChanged;
+            emailBox.TextChanged += OnFieldChanged;
+            addressBox.TextChanged += OnFieldChanged;
+            memberSwitch.Toggled += OnFieldChanged;
 
             var result = await dialog.ShowAsync();
 
@@ -67,8 +127,14 @@ namespace MyShop.App.Views
                     Name = nameBox.Text,
                     Phone = phoneBox.Text,
                     Email = emailBox.Text,
-                    IsMember = memberSwitch.IsOn
+                    IsMember = memberSwitch.IsOn,
+                    Address = addressBox.Text,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
                 };
+
+                // Clear draft on success
+                _draftService.ClearDraft(CUSTOMER_DRAFT_KEY);
 
                 ViewModel.AddCustomerCommand.Execute(newCustomer);
             }
