@@ -505,6 +505,48 @@ export const orderResolvers = {
           }
         }
 
+        // Restore stock when order is cancelled
+        if (input.status === 'CANCELLED' && existingOrder.status !== 'CANCELLED') {
+          // Restore product stock
+          for (const item of existingOrder.orderItems) {
+            await tx.product.update({
+              where: { id: item.productId },
+              data: {
+                stock: {
+                  increment: item.quantity,
+                },
+                popularity: {
+                  decrement: item.quantity,
+                },
+              },
+            });
+          }
+
+          // Restore discount usage count
+          if (existingOrder.discountId) {
+            await tx.discount.update({
+              where: { id: existingOrder.discountId },
+              data: {
+                usageCount: {
+                  decrement: 1,
+                },
+              },
+            });
+          }
+
+          // Update customer total spent
+          if (existingOrder.customerId) {
+            await tx.customer.update({
+              where: { id: existingOrder.customerId },
+              data: {
+                totalSpent: {
+                  decrement: existingOrder.total,
+                },
+              },
+            });
+          }
+        }
+
         return updatedOrder;
       });
 
