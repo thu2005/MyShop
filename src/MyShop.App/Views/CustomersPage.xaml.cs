@@ -296,5 +296,25 @@ namespace MyShop.App.Views
                 ViewModel.SelectedFilter = filterValue;
             }
         }
+
+        private void OnFirstPageClick(object sender, RoutedEventArgs e)
+        {
+            ViewModel.GoToFirstPage();
+        }
+
+        private void OnPreviousPageClick(object sender, RoutedEventArgs e)
+        {
+            ViewModel.GoToPreviousPage();
+        }
+
+        private void OnNextPageClick(object sender, RoutedEventArgs e)
+        {
+            ViewModel.GoToNextPage();
+        }
+
+        private void OnLastPageClick(object sender, RoutedEventArgs e)
+        {
+            ViewModel.GoToLastPage();
+        }
     }
 }
