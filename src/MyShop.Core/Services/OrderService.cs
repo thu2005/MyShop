@@ -1,6 +1,5 @@
 ﻿using MyShop.Core.Interfaces.Repositories;
 using MyShop.Core.Models;
-// using MyShop.Core.Models.DTOs; // REMOVED
 using System;
 using System.Collections.Generic;
 using System.Linq;
