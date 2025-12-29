@@ -263,43 +263,10 @@ namespace MyShop.App.Views
 
         private async System.Threading.Tasks.Task ShowTrialExpiredDialog(string featureName)
         {
-            var dialog = new ContentDialog
+            var shell = ShellPage.Instance;
+            if (shell != null)
             {
-                Title = "Trial Expired",
-                Content = $"Your 15-day trial period has expired. The feature '{featureName}' is restricted to the full version.\n\nPlease activate your license to continue using all management features.",
-                PrimaryButtonText = "Activate Now",
-                CloseButtonText = "Maybe Later",
-                DefaultButton = ContentDialogButton.Primary,
-                XamlRoot = this.XamlRoot
-            };
-
-            var result = await dialog.ShowAsync();
-
-            if (result == ContentDialogResult.Primary)
-            {
-                // This assumes ShellPage.ShowActivationDialog is static or accessible.
-                // Since it's not, we'll just navigate to help or show a contact message.
-                // Better approach: Find ShellPage and call it.
-                var frame = this.Frame;
-                while (frame != null)
-                {
-                    if (frame.Content is ShellPage shellPage)
-                    {
-                        await shellPage.ShowActivationDialog();
-                        break;
-                    }
-                    var parent = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(frame);
-                    frame = null;
-                    while (parent != null)
-                    {
-                        if (parent is Microsoft.UI.Xaml.Controls.Frame parentFrame)
-                        {
-                            frame = parentFrame;
-                            break;
-                        }
-                        parent = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(parent);
-                    }
-                }
+                await shell.ShowTrialExpiredDialog(featureName);
             }
         }
     }

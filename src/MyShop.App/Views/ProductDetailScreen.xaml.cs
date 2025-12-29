@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Navigation;
 using Microsoft.Extensions.DependencyInjection;
 using MyShop.App.ViewModels;
 using MyShop.Core.Models;
+using MyShop.Core.Interfaces.Services;
 
 namespace MyShop.App.Views
 {
@@ -82,7 +83,24 @@ namespace MyShop.App.Views
             }
             else
             {
+                // Check license before allowing product editing
+                var licenseService = App.Current.Services.GetRequiredService<ILicenseService>();
+                if (!licenseService.IsFeatureAllowed("EditProduct"))
+                {
+                    await ShowTrialExpiredDialog("Edit Product");
+                    return;
+                }
+
                 ViewModel.EnterEditModeCommand.Execute(null);
+            }
+        }
+
+        private async System.Threading.Tasks.Task ShowTrialExpiredDialog(string featureName)
+        {
+            var shell = ShellPage.Instance;
+            if (shell != null)
+            {
+                await shell.ShowTrialExpiredDialog(featureName);
             }
         }
 
@@ -141,6 +159,14 @@ namespace MyShop.App.Views
         private async void OnDeleteClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
         {
             if (ViewModel.CurrentProduct == null) return;
+
+            // Check license before allowing product deletion
+            var licenseService = App.Current.Services.GetRequiredService<ILicenseService>();
+            if (!licenseService.IsFeatureAllowed("DeleteProduct"))
+            {
+                await ShowTrialExpiredDialog("Delete Product");
+                return;
+            }
 
             var dialog = new ContentDialog
             {

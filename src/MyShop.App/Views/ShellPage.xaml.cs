@@ -11,12 +11,14 @@ namespace MyShop.App.Views
 {
     public sealed partial class ShellPage : Page
     {
+        public static ShellPage Instance { get; private set; }
         public ShellViewModel ViewModel { get; }
         private readonly IOnboardingService _onboardingService;
 
         public ShellPage()
         {
             this.InitializeComponent();
+            Instance = this;
             _onboardingService = App.Current.Services.GetRequiredService<IOnboardingService>();
             ViewModel = App.Current.Services.GetRequiredService<ShellViewModel>();
             ViewModel.LogoutRequested += OnLogoutRequested;
@@ -131,6 +133,9 @@ namespace MyShop.App.Views
             CheckLicenseStatus();
 
             CheckOnboardingAsync();
+
+            // Hide debug menu items in Release builds
+            HideDebugMenuItems();
         }
 
         private async void CheckLicenseStatus()
@@ -220,6 +225,26 @@ namespace MyShop.App.Views
             else if (result == ContentDialogResult.Primary)
             {
                 // Show license activation dialog
+                await ShowActivationDialog();
+            }
+        }
+
+        public async System.Threading.Tasks.Task ShowTrialExpiredDialog(string featureName)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = "Trial Expired",
+                Content = $"Your 15-day trial period has expired. The feature '{featureName}' is restricted to the full version.\n\nPlease activate your license to continue using all management features.",
+                PrimaryButtonText = "Activate Now",
+                CloseButtonText = "Maybe Later",
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = this.XamlRoot
+            };
+
+            var result = await dialog.ShowAsync();
+
+            if (result == ContentDialogResult.Primary)
+            {
                 await ShowActivationDialog();
             }
         }
@@ -626,6 +651,39 @@ namespace MyShop.App.Views
                 XamlRoot = this.XamlRoot
             };
             await dialog.ShowAsync();
+#endif
+        }
+
+        private async void OnDebugResetLicenseClick(object sender, RoutedEventArgs e)
+        {
+#if DEBUG
+            // Reset license completely
+            ViewModel.DebugResetTrial();
+            ViewModel.InitializeLicense();
+
+            var dialog = new ContentDialog
+            {
+                Title = "License Reset",
+                Content = "License data has been cleared. App will restart trial period.\n\nYou can now test the expired state by double-tapping the trial banner.",
+                CloseButtonText = "OK",
+                XamlRoot = this.XamlRoot
+            };
+            await dialog.ShowAsync();
+
+            // Re-check license status
+            CheckLicenseStatus();
+#else
+            await System.Threading.Tasks.Task.CompletedTask;
+#endif
+        }
+
+        private void HideDebugMenuItems()
+        {
+#if !DEBUG
+            if (DebugResetLicenseMenuItem != null)
+            {
+                DebugResetLicenseMenuItem.Visibility = Visibility.Collapsed;
+            }
 #endif
         }
     }

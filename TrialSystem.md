@@ -73,7 +73,7 @@ A valid license key follows the format `PREFIX-XXXX` where:
 ### Generation Steps
 To generate a key for a customer:
 1. Ask the customer to provide their **Machine ID** (found in the "Activate MyShop License" dialog).
-2. Use the **Standalone Key Generator** tool (source code provided in the project handover).
+2. Use the **Standalone Key Generator** tool (in tools/keygen).
 3. Enter the Machine ID and choose a Prefix.
 4. Send the resulting key to the customer.
 

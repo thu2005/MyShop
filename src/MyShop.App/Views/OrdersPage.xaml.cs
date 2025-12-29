@@ -82,14 +82,11 @@ namespace MyShop.App.Views
 
         private async System.Threading.Tasks.Task ShowTrialExpiredDialog(string featureName)
         {
-            var dialog = new ContentDialog
+            var shell = ShellPage.Instance;
+            if (shell != null)
             {
-                Title = "Trial Expired",
-                Content = $"The '{featureName}' feature is not available in expired trial mode.\n\nPlease activate your license to unlock all features.",
-                CloseButtonText = "OK",
-                XamlRoot = this.XamlRoot
-            };
-            await dialog.ShowAsync();
+                await shell.ShowTrialExpiredDialog(featureName);
+            }
         }
 
         private void OnViewOrderClick(object sender, RoutedEventArgs e)

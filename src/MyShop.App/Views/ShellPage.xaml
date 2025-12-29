@@ -125,6 +125,7 @@
                                                     Command="{x:Bind ViewModel.AdminPanelCommand}"
                                                     Visibility="{x:Bind ViewModel.UserRole, Mode=OneWay, Converter={StaticResource RoleToVisibilityConverter}, ConverterParameter='ADMIN'}"/>
                                     <MenuFlyoutSeparator />
+                                    <MenuFlyoutItem x:Name="DebugResetLicenseMenuItem" Text="🔧 Reset License (Debug)" Click="OnDebugResetLicenseClick"/>
                                     <MenuFlyoutItem Text="Logout" Icon="Cancel" Command="{x:Bind ViewModel.LogoutCommand}"/>
                                 </MenuFlyout>
                             </Button.Flyout>

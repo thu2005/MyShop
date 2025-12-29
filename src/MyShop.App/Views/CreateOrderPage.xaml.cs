@@ -5,8 +5,10 @@ using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
+using Microsoft.Extensions.DependencyInjection;
 using MyShop.App.ViewModels;
 using MyShop.Core.Interfaces.Repositories;
+using MyShop.Core.Interfaces.Services;
 using MyShop.Core.Models;
 using MyShop.Core.Models.DTOs;
 
@@ -132,6 +134,17 @@ namespace MyShop.App.Views
 
         private async void OnAddProductClick(object sender, RoutedEventArgs e)
         {
+            // Check license before allowing order modification (adding products)
+            var licenseService = App.Current.Services.GetRequiredService<ILicenseService>();
+            bool isNew = !_editingOrderId.HasValue;
+            string feature = isNew ? "CreateOrder" : "EditOrder";
+
+            if (!licenseService.IsFeatureAllowed(feature))
+            {
+                await ShowTrialExpiredDialog(isNew ? "Create Order" : "Edit Order");
+                return;
+            }
+
             var dialog = new ContentDialog
             {
                 XamlRoot = this.XamlRoot,
@@ -389,6 +402,17 @@ namespace MyShop.App.Views
 
         private async void OnAddCustomerClick(object sender, RoutedEventArgs e)
         {
+            // Check license before allowing order modification (adding/changing customer)
+            var licenseService = App.Current.Services.GetRequiredService<ILicenseService>();
+            bool isNew = !_editingOrderId.HasValue;
+            string feature = isNew ? "CreateOrder" : "EditOrder";
+
+            if (!licenseService.IsFeatureAllowed(feature))
+            {
+                await ShowTrialExpiredDialog(isNew ? "Create Order" : "Edit Order");
+                return;
+            }
+
              var dialog = new ContentDialog
             {
                 XamlRoot = this.XamlRoot,
@@ -467,6 +491,17 @@ namespace MyShop.App.Views
 
         private async void OnSaveOrderClick(object sender, RoutedEventArgs e)
         {
+            // Check license before saving order
+            var licenseService = App.Current.Services.GetRequiredService<ILicenseService>();
+            bool isNew = !_editingOrderId.HasValue;
+            string feature = isNew ? "CreateOrder" : "EditOrder";
+
+            if (!licenseService.IsFeatureAllowed(feature))
+            {
+                await ShowTrialExpiredDialog(isNew ? "Create Order" : "Edit Order");
+                return;
+            }
+
             if (_orderItems.Count == 0)
             {
                 var errorDialog = new ContentDialog
@@ -652,6 +687,14 @@ namespace MyShop.App.Views
 
             // Switch Item Template to ReadOnly
             OrderItemsList.ItemTemplate = this.Resources["ReadOnlyOrderItemTemplate"] as DataTemplate;
+        }
+        private async Task ShowTrialExpiredDialog(string featureName)
+        {
+            var shell = ShellPage.Instance;
+            if (shell != null)
+            {
+                await shell.ShowTrialExpiredDialog(featureName);
+            }
         }
     }
 }
