@@ -61,6 +61,7 @@ namespace MyShop.App
             // Infrastructure
             services.AddSingleton<IConfigService, ConfigService>();
             services.AddSingleton<ISessionManager, SessionManager>();
+            services.AddSingleton<IOnboardingService, OnboardingService>();
 
             var configService = new ConfigService();
             var graphQLService = new GraphQLService(configService.GetServerUrl());

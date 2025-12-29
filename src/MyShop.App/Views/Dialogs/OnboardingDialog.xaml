@@ -1,0 +1,101 @@
+<ContentDialog
+    x:Class="MyShop.App.Views.Dialogs.OnboardingDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="Welcome to MyShop"
+    PrimaryButtonText="Skip"
+    SecondaryButtonText="Next"
+    DefaultButton="Secondary"
+    RequestedTheme="Light">
+
+    <Grid Width="500" Height="450">
+        <FlipView x:Name="OnboardingFlipView" SelectionChanged="OnboardingFlipView_SelectionChanged">
+            <!-- Slide 1: Welcome (All) -->
+            <FlipViewItem Tag="ALL">
+                <StackPanel Spacing="20" VerticalAlignment="Center">
+                    <FontIcon Glyph="&#xE735;" FontSize="60" Foreground="Gold"/>
+                    <TextBlock Text="Welcome to MyShop!" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#0C2B4E"/>
+                    <TextBlock Text="Your all-in-one solution for managing products, orders, and customers efficiently." 
+                               TextWrapping="Wrap" TextAlignment="Center" FontSize="16" Opacity="0.8" Foreground="Black"/>
+                </StackPanel>
+            </FlipViewItem>
+
+            <!-- Slide 2a: Products (Admin Only) -->
+            <FlipViewItem Tag="ADMIN">
+                <StackPanel Spacing="20" VerticalAlignment="Center">
+                    <FontIcon Glyph="&#xE7BF;" FontSize="60" Foreground="#0C2B4E"/>
+                    <TextBlock Text="Manage Products" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#0C2B4E"/>
+                    <TextBlock Text="Easily add, edit, and categorize your products. Keep track of stock and pricing in real-time." 
+                               TextWrapping="Wrap" TextAlignment="Center" FontSize="16" Opacity="0.8" Foreground="Black"/>
+                </StackPanel>
+            </FlipViewItem>
+
+            <!-- Slide 2b: Products (Staff Only) -->
+            <FlipViewItem Tag="STAFF">
+                <StackPanel Spacing="20" VerticalAlignment="Center">
+                    <FontIcon Glyph="&#xE7BF;" FontSize="60" Foreground="#0C2B4E"/>
+                    <TextBlock Text="View Products" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#0C2B4E"/>
+                    <TextBlock Text="Browse and search the product catalog. View stock levels, pricing, and details to assist customers." 
+                               TextWrapping="Wrap" TextAlignment="Center" FontSize="16" Opacity="0.8" Foreground="Black"/>
+                </StackPanel>
+            </FlipViewItem>
+
+            <!-- Slide 3: Orders (All) -->
+            <FlipViewItem Tag="ALL">
+                <StackPanel Spacing="20" VerticalAlignment="Center">
+                    <FontIcon Glyph="&#xE8A1;" FontSize="60" Foreground="#0C2B4E"/>
+                    <TextBlock Text="Streamline Orders" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#0C2B4E"/>
+                    <TextBlock Text="Process customer orders quickly. View order history and track fulfillment status with ease." 
+                               TextWrapping="Wrap" TextAlignment="Center" FontSize="16" Opacity="0.8" Foreground="Black"/>
+                </StackPanel>
+            </FlipViewItem>
+
+            <!-- Slide 4: Customers (All) -->
+            <FlipViewItem Tag="ALL">
+                <StackPanel Spacing="20" VerticalAlignment="Center">
+                    <FontIcon Glyph="&#xE716;" FontSize="60" Foreground="#0C2B4E"/>
+                    <TextBlock Text="Customer Management" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#0C2B4E"/>
+                    <TextBlock Text="Build lasting relationships by keeping track of customer profiles, purchase history and loyalty." 
+                               TextWrapping="Wrap" TextAlignment="Center" FontSize="16" Opacity="0.8" Foreground="Black"/>
+                </StackPanel>
+            </FlipViewItem>
+
+            <!-- Slide 5: Reports (Admin Only) -->
+            <FlipViewItem Tag="ADMIN">
+                <StackPanel Spacing="20" VerticalAlignment="Center">
+                    <FontIcon Glyph="&#xE9D2;" FontSize="60" Foreground="#0C2B4E"/>
+                    <TextBlock Text="Advanced Analytics" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#0C2B4E"/>
+                    <TextBlock Text="As an Admin, get deep insights into sales performance, revenue trends, and growth metrics." 
+                               TextWrapping="Wrap" TextAlignment="Center" FontSize="16" Opacity="0.8" Foreground="Black"/>
+                </StackPanel>
+            </FlipViewItem>
+
+            <!-- Slide 6: Users (Admin Only) -->
+            <FlipViewItem Tag="ADMIN">
+                <StackPanel Spacing="20" VerticalAlignment="Center">
+                    <FontIcon Glyph="&#xE7EE;" FontSize="60" Foreground="#0C2B4E"/>
+                    <TextBlock Text="Team &amp; Permissions" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#0C2B4E"/>
+                    <TextBlock Text="Manage your staff accounts and control access levels to keep your store operations secure." 
+                               TextWrapping="Wrap" TextAlignment="Center" FontSize="16" Opacity="0.8" Foreground="Black"/>
+                </StackPanel>
+            </FlipViewItem>
+        </FlipView>
+
+        <!-- Step Indicator -->
+        <ItemsControl x:Name="DotsIndicator" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,20">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal" Spacing="8"/>
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Ellipse Width="8" Height="8" Fill="#0C2B4E" Opacity="{Binding}"/>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </Grid>
+</ContentDialog>

@@ -40,6 +40,10 @@
             </Grid>
         </NavigationView.PaneHeader>
 
+        <NavigationView.FooterMenuItems>
+            <NavigationViewItem Content="HELP" Tag="Help" Icon="Help" FontWeight="SemiBold" SelectsOnInvoked="False"/>
+        </NavigationView.FooterMenuItems>
+
         <NavigationView.MenuItems>
             <NavigationViewItem Content="DASHBOARD" Tag="Dashboard" Icon="ViewAll" FontWeight="SemiBold"/>
 
