@@ -15,10 +15,6 @@
         <converters:OrderStatusToForegroundConverter x:Key="StatusToForegroundConverter"/>
         <converters:OrderStatusToBackgroundConverter x:Key="StatusToBackgroundConverter"/>
         <converters:OrderStatusToTextConverter x:Key="StatusToTextConverter"/>
-        <converters:DiscountTypeToTextConverter x:Key="DiscountTypeToTextConverter"/>
-        <converters:DiscountValueDisplayConverter x:Key="DiscountValueDisplayConverter"/>
-        <converters:DiscountDisplayConverter x:Key="DiscountDisplayConverter"/>
-        <converters:DiscountTypeDisplayConverter x:Key="DiscountTypeDisplayConverter"/>
 
         <Style x:Key="SectionHeaderStyle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="16"/>
