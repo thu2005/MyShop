@@ -123,7 +123,165 @@ namespace MyShop.App.Views
                 RefreshCategoryMenuItems();
             }
 
+            // Initialize license on first run and record app usage
+            ViewModel.InitializeLicense();
+
+            // Check license status and show appropriate dialog
+            CheckLicenseStatus();
+
             CheckOnboardingAsync();
+        }
+
+        private async void CheckLicenseStatus()
+        {
+            var status = ViewModel.GetLicenseStatus();
+
+            switch (status)
+            {
+                case Core.Models.LicenseStatus.ClockTampered:
+                    await ShowLicenseErrorDialog(
+                        "Clock Tampering Detected",
+                        "The system clock appears to have been rolled back. Please restore the correct system time to continue using the application.",
+                        true);
+                    break;
+
+                case Core.Models.LicenseStatus.MachineMismatch:
+                    await ShowLicenseErrorDialog(
+                        "License Error",
+                        "This license is not valid for this machine. The application may have been copied from another computer.",
+                        true);
+                    break;
+
+                case Core.Models.LicenseStatus.Invalid:
+                    await ShowLicenseErrorDialog(
+                        "License Error",
+                        "The license data is corrupted or invalid. Please contact support.",
+                        true);
+                    break;
+
+                case Core.Models.LicenseStatus.TrialExpired:
+                    await ShowLicenseErrorDialog(
+                        "Trial Expired",
+                        "Your 15-day trial has expired. Some features like 'Create Order' and 'Add Product' are now disabled.\n\nPlease purchase a license to continue using all features.",
+                        false);
+                    break;
+            }
+        }
+
+        private async System.Threading.Tasks.Task ShowLicenseErrorDialog(string title, string message, bool isCritical)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = title,
+                Content = message,
+                CloseButtonText = isCritical ? "Exit" : "Continue (Limited)",
+                DefaultButton = ContentDialogButton.Close,
+                XamlRoot = this.XamlRoot
+            };
+
+            if (isCritical)
+            {
+                dialog.PrimaryButtonText = "Retry";
+#if DEBUG
+                dialog.SecondaryButtonText = "Reset License (Debug)";
+#endif
+            }
+            else
+            {
+                dialog.PrimaryButtonText = "Enter License Key";
+            }
+
+            var result = await dialog.ShowAsync();
+
+            if (isCritical)
+            {
+                if (result == ContentDialogResult.Primary)
+                {
+                    // Reload license and recheck
+                    ViewModel.InitializeLicense();
+                    CheckLicenseStatus();
+                }
+                else if (result == ContentDialogResult.Secondary)
+                {
+#if DEBUG
+                    // Force reset and re-initialize
+                    ViewModel.DebugResetTrial();
+                    ViewModel.InitializeLicense();
+                    CheckLicenseStatus();
+#endif
+                }
+                else
+                {
+                    // Exit application
+                    Application.Current.Exit();
+                }
+            }
+            else if (result == ContentDialogResult.Primary)
+            {
+                // Show license activation dialog
+                await ShowActivationDialog();
+            }
+        }
+
+        private async System.Threading.Tasks.Task ShowActivationDialog()
+        {
+            var inputBox = new TextBox
+            {
+                PlaceholderText = "XXXX-XXXX-XXXX-XXXX",
+                MaxLength = 19,
+                Margin = new Thickness(0, 8, 0, 0)
+            };
+
+            var dialog = new ContentDialog
+            {
+                Title = "Activate License",
+                Content = new StackPanel
+                {
+                    Children =
+                    {
+                        new TextBlock { Text = "Enter your license key:" },
+                        inputBox
+                    }
+                },
+                PrimaryButtonText = "Activate",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = this.XamlRoot
+            };
+
+            var result = await dialog.ShowAsync();
+
+            if (result == ContentDialogResult.Primary)
+            {
+                // Attempt activation (placeholder for actual implementation)
+                var licenseService = App.Current.Services.GetRequiredService<ILicenseService>();
+                bool activated = licenseService.ActivateLicense(inputBox.Text.Trim());
+
+                if (activated)
+                {
+                    ViewModel.InitializeLicense(); // Refresh license properties
+
+                    var successDialog = new ContentDialog
+                    {
+                        Title = "Success",
+                        Content = "License activated successfully! All features are now unlocked.",
+                        CloseButtonText = "OK",
+                        XamlRoot = this.XamlRoot
+                    };
+                    await successDialog.ShowAsync();
+                }
+                else
+                {
+                    var errorDialog = new ContentDialog
+                    {
+                        Title = "Activation Failed",
+                        Content = "The license key is invalid. Please check and try again.",
+                        CloseButtonText = "OK",
+                        XamlRoot = this.XamlRoot
+                    };
+                    await errorDialog.ShowAsync();
+                }
+            }
         }
 
         private async void CheckOnboardingAsync()
@@ -145,6 +303,13 @@ namespace MyShop.App.Views
 
             onboardingDialog.SecondaryButtonClick += (s, args) =>
             {
+                // Skip button (now on the left/primary)
+                _onboardingService.MarkOnboardingAsCompleted(username);
+            };
+
+            onboardingDialog.CloseButtonClick += (s, args) =>
+            {
+                // Next button (now on the right/close)
                 var flipView = onboardingDialog.FindName("OnboardingFlipView") as FlipView;
                 if (flipView != null)
                 {
@@ -160,11 +325,6 @@ namespace MyShop.App.Views
                         _onboardingService.MarkOnboardingAsCompleted(username);
                     }
                 }
-            };
-
-            onboardingDialog.PrimaryButtonClick += (s, args) =>
-            {
-                _onboardingService.MarkOnboardingAsCompleted(username);
             };
 
             await onboardingDialog.ShowAsync();
@@ -418,19 +578,36 @@ namespace MyShop.App.Views
             {
                 Title = "Log out",
                 Content = "Are you sure you want to log out?",
-                PrimaryButtonText = "Log out",
-                CloseButtonText = "Cancel",
+                PrimaryButtonText = "Cancel",
+                CloseButtonText = "Log out",
+                CloseButtonStyle = (Style)Application.Current.Resources["AccentButtonStyle"],
                 DefaultButton = ContentDialogButton.Close,
                 XamlRoot = this.XamlRoot
             };
 
             var result = await logoutDialog.ShowAsync();
 
-            if (result == ContentDialogResult.Primary)
+            if (result == ContentDialogResult.None)
             {
                 Frame.Navigate(typeof(LoginScreen));
                 Frame.BackStack.Clear();
             }
+        }
+
+        private async void DebugBanner_DoubleTapped(object sender, Microsoft.UI.Xaml.Input.DoubleTappedRoutedEventArgs e)
+        {
+#if DEBUG
+            ViewModel.DebugForceExpire();
+
+            var dialog = new ContentDialog
+            {
+                Title = "Debug Mode",
+                Content = "Trial has been forced to EXPIRED state for testing.",
+                CloseButtonText = "OK",
+                XamlRoot = this.XamlRoot
+            };
+            await dialog.ShowAsync();
+#endif
         }
     }
 }

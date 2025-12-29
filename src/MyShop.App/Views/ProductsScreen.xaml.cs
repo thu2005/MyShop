@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Navigation; // Added for NavigationEventArgs
 using MyShop.App.ViewModels;
 using MyShop.App.Views.Dialogs;
+using MyShop.Core.Interfaces.Services;
 using MyShop.Core.Models;
 using System;
 
@@ -45,9 +46,29 @@ namespace MyShop.App.Views
             }
         }
 
-        private void OnAddProductClick(object sender, RoutedEventArgs e)
+        private async void OnAddProductClick(object sender, RoutedEventArgs e)
         {
+            // Check license before allowing product creation
+            var licenseService = App.Current.Services.GetRequiredService<ILicenseService>();
+            if (!licenseService.IsFeatureAllowed("AddProduct"))
+            {
+                await ShowTrialExpiredDialog("Add Product");
+                return;
+            }
+            
             Frame.Navigate(typeof(AddProductScreen));
+        }
+
+        private async System.Threading.Tasks.Task ShowTrialExpiredDialog(string featureName)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = "Trial Expired",
+                Content = $"The '{featureName}' feature is not available in expired trial mode.\n\nPlease activate your license to unlock all features.",
+                CloseButtonText = "OK",
+                XamlRoot = this.XamlRoot
+            };
+            await dialog.ShowAsync();
         }
 
         private async void OnSearchQuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)

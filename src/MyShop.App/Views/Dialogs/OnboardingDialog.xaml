@@ -7,8 +7,9 @@
     mc:Ignorable="d"
     Title="Welcome to MyShop"
     PrimaryButtonText="Skip"
-    SecondaryButtonText="Next"
-    DefaultButton="Secondary"
+    CloseButtonText="Next"
+    CloseButtonStyle="{StaticResource AccentButtonStyle}"
+    DefaultButton="Close"
     RequestedTheme="Light">
 
     <Grid Width="500" Height="450">

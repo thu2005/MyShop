@@ -16,17 +16,20 @@ namespace MyShop.App.ViewModels
         private readonly IAuthorizationService _authorizationService;
         private readonly IProductRepository _productRepository;
         private readonly ICategoryRepository _categoryRepository;
+        private readonly ILicenseService _licenseService;
 
         public ShellViewModel(
             IAuthService authService,
             IAuthorizationService authorizationService,
             IProductRepository productRepository,
-            ICategoryRepository categoryRepository)
+            ICategoryRepository categoryRepository,
+            ILicenseService licenseService)
         {
             _authService = authService;
             _authorizationService = authorizationService;
             _productRepository = productRepository;
-            _categoryRepository = categoryRepository; 
+            _categoryRepository = categoryRepository;
+            _licenseService = licenseService;
 
             LogoutCommand = new RelayCommand(_ => ExecuteLogout());
             AdminPanelCommand = new RelayCommand(_ => ExecuteOpenAdminPanel());
@@ -124,5 +127,47 @@ namespace MyShop.App.ViewModels
         {
             System.Diagnostics.Debug.WriteLine("Admin Panel opened.");
         }
+
+        // License/Trial Properties
+        public bool IsTrialActive => _licenseService.GetLicenseStatus() == Core.Models.LicenseStatus.TrialActive;
+        public bool IsLicenseActivated => _licenseService.GetLicenseStatus() == Core.Models.LicenseStatus.Activated;
+        public bool IsTrialExpired => _licenseService.GetLicenseStatus() == Core.Models.LicenseStatus.TrialExpired;
+        public bool ShowTrialBanner => !IsLicenseActivated;
+        public int TrialDaysRemaining => _licenseService.GetRemainingTrialDays();
+        public string LicenseStatusMessage => _licenseService.GetStatusMessage();
+        
+        public bool CanCreateOrder => _licenseService.IsFeatureAllowed("CreateOrder");
+        public bool CanAddProduct => _licenseService.IsFeatureAllowed("AddProduct");
+        public bool CanEditProduct => _licenseService.IsFeatureAllowed("EditProduct");
+
+        public void InitializeLicense()
+        {
+            _licenseService.InitializeTrial();
+            _licenseService.RecordAppRun();
+            OnPropertyChanged(nameof(IsTrialActive));
+            OnPropertyChanged(nameof(IsTrialExpired));
+            OnPropertyChanged(nameof(ShowTrialBanner));
+            OnPropertyChanged(nameof(TrialDaysRemaining));
+            OnPropertyChanged(nameof(LicenseStatusMessage));
+            OnPropertyChanged(nameof(CanCreateOrder));
+            OnPropertyChanged(nameof(CanAddProduct));
+            OnPropertyChanged(nameof(CanEditProduct));
+        }
+
+        public Core.Models.LicenseStatus GetLicenseStatus() => _licenseService.GetLicenseStatus();
+
+#if DEBUG
+        public void DebugForceExpire()
+        {
+            _licenseService.ForceTrialExpired();
+            InitializeLicense(); // Refresh all license-related properties
+        }
+
+        public void DebugResetTrial()
+        {
+            _licenseService.ResetTrial();
+            InitializeLicense(); // Refresh all license-related properties
+        }
+#endif
     }
 }
