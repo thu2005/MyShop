@@ -507,6 +507,7 @@ namespace MyShop.App.Views
             var newOrder = new Order
             {
                 Id = _editingOrderId ?? 0,
+                UserId = _sessionManager.CurrentUser?.Id ?? 0, // Track who created the order for KPI
                 CustomerId = _selectedCustomer?.Id,
                 DiscountId = _selectedDiscount?.Id,
                 Notes = NotesTextBox.Text,

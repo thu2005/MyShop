@@ -246,13 +246,14 @@ export const orderResolvers = {
             orderNumber,
             customerId: input.customerId || null,
             userId: context.user!.id,
-            status: 'PENDING',
+            status: input.status || 'PENDING',
             subtotal,
             discountId,
             discountAmount,
             taxAmount,
             total,
             notes: input.notes || null,
+            completedAt: input.status === 'COMPLETED' ? new Date() : null,
             orderItems: {
               create: orderItemsData,
             },
@@ -304,6 +305,24 @@ export const orderResolvers = {
               totalSpent: {
                 increment: total,
               },
+            },
+          });
+        }
+
+        // Create commission if order is completed
+        if (input.status === 'COMPLETED') {
+          const orderTotalNumber = Number(total);
+          const commissionRate = orderTotalNumber >= 1000 ? 0.05 : 0.03;
+          const commissionAmount = orderTotalNumber * commissionRate;
+
+          await tx.commission.create({
+            data: {
+              userId: context.user!.id,
+              orderId: newOrder.id,
+              orderTotal: orderTotalNumber,
+              commissionRate,
+              commissionAmount,
+              isPaid: true, // POS app: completed = payment received
             },
           });
         }
@@ -460,6 +479,31 @@ export const orderResolvers = {
             },
           },
         });
+
+        // Create commission when order is completed
+        if (input.status === 'COMPLETED' && existingOrder.status !== 'COMPLETED') {
+          // Check if commission already exists
+          const existingCommission = await tx.commission.findUnique({
+            where: { orderId: id },
+          });
+
+          if (!existingCommission) {
+            const orderTotalNumber = Number(updatedOrder.total);
+            const commissionRate = orderTotalNumber >= 1000 ? 0.05 : 0.03;
+            const commissionAmount = orderTotalNumber * commissionRate;
+
+            await tx.commission.create({
+              data: {
+                userId: updatedOrder.userId,
+                orderId: updatedOrder.id,
+                orderTotal: orderTotalNumber,
+                commissionRate,
+                commissionAmount,
+                isPaid: true,
+              },
+            });
+          }
+        }
 
         return updatedOrder;
       });
