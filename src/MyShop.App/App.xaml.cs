@@ -57,6 +57,12 @@ namespace MyShop.App
             services.AddSingleton<ISessionManager, SessionManager>();
             services.AddSingleton<IOnboardingService, OnboardingService>();
 
+            // License Management Services
+            services.AddSingleton<IFingerprintService, FingerprintService>();
+            services.AddSingleton<ICryptoHelper, CryptoHelper>();
+            services.AddSingleton<ISecureStorageService, SecureStorageService>();
+            services.AddSingleton<ILicenseService, LicenseService>();
+
             var configService = new ConfigService();
             var graphQLService = new GraphQLService(configService.GetServerUrl());
             services.AddSingleton(graphQLService);

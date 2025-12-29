@@ -10,6 +10,7 @@
 
     <Page.Resources>
         <converters:RoleToVisibilityConverter x:Key="RoleToVisibilityConverter" />
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
     </Page.Resources>
 
     <NavigationView x:Name="NavView" 
@@ -43,6 +44,29 @@
         <NavigationView.FooterMenuItems>
             <NavigationViewItem Content="HELP" Tag="Help" Icon="Help" FontWeight="SemiBold" SelectsOnInvoked="False"/>
         </NavigationView.FooterMenuItems>
+
+        <NavigationView.PaneFooter>
+            <Border Background="#FFF3CD" 
+                    Padding="12,10" 
+                    Margin="8,0,8,8" 
+                    CornerRadius="6"
+                    DoubleTapped="DebugBanner_DoubleTapped"
+                    Visibility="{x:Bind ViewModel.ShowTrialBanner, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                <StackPanel Spacing="4">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE7BA;" FontSize="16" Foreground="#856404"/>
+                        <TextBlock Text="TRIAL VERSION" 
+                                   FontWeight="Bold" 
+                                   FontSize="12"
+                                   Foreground="#856404"/>
+                    </StackPanel>
+                    <TextBlock Text="{x:Bind ViewModel.LicenseStatusMessage, Mode=OneWay}" 
+                               FontSize="11"
+                               Foreground="#856404"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+        </NavigationView.PaneFooter>
 
         <NavigationView.MenuItems>
             <NavigationViewItem Content="DASHBOARD" Tag="Dashboard" Icon="ViewAll" FontWeight="SemiBold"/>

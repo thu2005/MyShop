@@ -62,14 +62,14 @@ namespace MyShop.App.Views.Dialogs
                 _dotOpacities.Add(i == index ? 1.0 : 0.3);
             }
 
-            // Update primary button text
+            // Update close button text (Next/Get Started)
             if (index == count - 1)
             {
-                PrimaryButtonText = "Get Started";
+                CloseButtonText = "Get Started";
             }
             else
             {
-                PrimaryButtonText = "Next";
+                CloseButtonText = "Next";
             }
         }
     }

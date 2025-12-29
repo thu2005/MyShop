@@ -1,6 +1,8 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.Extensions.DependencyInjection;
 using MyShop.App.ViewModels;
+using MyShop.Core.Interfaces.Services;
 using MyShop.Core.Models;
 using System;
 
@@ -65,9 +67,29 @@ namespace MyShop.App.Views
             }
         }
 
-        private void OnAddOrderClick(object sender, RoutedEventArgs e)
+        private async void OnAddOrderClick(object sender, RoutedEventArgs e)
         {
+            // Check license before allowing order creation
+            var licenseService = App.Current.Services.GetRequiredService<ILicenseService>();
+            if (!licenseService.IsFeatureAllowed("CreateOrder"))
+            {
+                await ShowTrialExpiredDialog("Create Order");
+                return;
+            }
+            
             Frame.Navigate(typeof(CreateOrderPage), ViewModel);
+        }
+
+        private async System.Threading.Tasks.Task ShowTrialExpiredDialog(string featureName)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = "Trial Expired",
+                Content = $"The '{featureName}' feature is not available in expired trial mode.\n\nPlease activate your license to unlock all features.",
+                CloseButtonText = "OK",
+                XamlRoot = this.XamlRoot
+            };
+            await dialog.ShowAsync();
         }
 
         private void OnViewOrderClick(object sender, RoutedEventArgs e)

@@ -6,9 +6,10 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     Title="Welcome to MyShop"
-    PrimaryButtonText="Next"
-    CloseButtonText="Skip"
-    DefaultButton="Primary"
+    PrimaryButtonText="Skip"
+    CloseButtonText="Next"
+    CloseButtonStyle="{StaticResource AccentButtonStyle}"
+    DefaultButton="Close"
     RequestedTheme="Light">
 
     <Grid Width="500" Height="450">
