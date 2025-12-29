@@ -1,28 +1,42 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+	<PropertyGroup>
+		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
 
-    <IsPackable>false</IsPackable>
-    <IsTestProject>true</IsTestProject>
-  </PropertyGroup>
+		<!-- Test Project Configuration -->
+		<IsPackable>false</IsPackable>
+		<IsTestProject>true</IsTestProject>
 
-  <ItemGroup>
-    <PackageReference Include="coverlet.collector" Version="6.0.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
-    <PackageReference Include="xunit" Version="2.5.3" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
-  </ItemGroup>
+		<!-- Platform Configuration -->
+		
+		<!-- Disable Windows App SDK Bootstrap (not needed for tests) -->
+		<WindowsAppSdkBootstrapInitialize>false</WindowsAppSdkBootstrapInitialize>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\MyShop.Core\MyShop.Core.csproj" />
-    <ProjectReference Include="..\MyShop.Data\MyShop.Data.csproj" />
-  </ItemGroup>
+	<ItemGroup Label="Testing Frameworks">
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+		<PackageReference Include="xunit" Version="2.9.2" />
+		<PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="coverlet.collector" Version="6.0.2">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
 
-  <ItemGroup>
-    <Using Include="Xunit" />
-  </ItemGroup>
+	<ItemGroup Label="Project References">
+		<ProjectReference Include="..\MyShop.App\MyShop.App.csproj" />
+		<ProjectReference Include="..\MyShop.Core\MyShop.Core.csproj" />
+		<ProjectReference Include="..\MyShop.Data\MyShop.Data.csproj" />
+	</ItemGroup>
+
+	<ItemGroup Label="Global Usings">
+		<Using Include="Xunit" />
+		<Using Include="System.Threading.Tasks" />
+	</ItemGroup>
 
 </Project>

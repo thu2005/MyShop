@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using MyShop.App.Services;
 using MyShop.App.ViewModels.Base;
 using MyShop.Core.Interfaces.Repositories;
 using MyShop.Core.Interfaces.Services;
@@ -10,7 +11,6 @@ using MyShop.Core.Models;
 
 namespace MyShop.App.ViewModels
 {
-    // Ensure this class is public and accessible
     public class CategoryStat
     {
         public string Name { get; set; }
@@ -21,26 +21,25 @@ namespace MyShop.App.ViewModels
 
     public class ProductViewModel : ViewModelBase
     {
-        private readonly IProductRepository _productRepository;
-        private readonly IAuthService _authService;
-        private readonly IAuthorizationService _authorizationService;
-        
+        // --- Dependencies ---
+        private readonly ProductService _productService; // From Refactoring
+        private readonly IAuthService _authService;      // From Main (Auth)
+        private readonly IAuthorizationService _authorizationService; // From Main (Auth)
+
+        // --- Data Collections ---
         private List<Product> _allProducts;
-        private List<Product> _filteredProducts; // Products after filtering, before pagination
+        private List<Product> _filteredProducts; // Needed for Pagination
         private ObservableCollection<Product> _products;
         private CategoryStat _selectedCategory;
-
-        // Keep this for binding in the View if needed, or internal logic
         private ObservableCollection<CategoryStat> _categories;
 
+        // --- Filter States ---
         private string _currentSearchTerm = string.Empty;
-        private List<Product> _currentSearchResults = new List<Product>();
         private decimal? _minPrice = null;
         private decimal? _maxPrice = null;
         private string _primarySort = null;
-        private string _secondarySort = null;
 
-        // Pagination properties
+        // --- Pagination Properties ---
         private int _currentPage = 1;
         private int _totalPages = 1;
         private int _totalProducts = 0;
@@ -48,7 +47,7 @@ namespace MyShop.App.ViewModels
 
         public List<int> AvailablePageSizes { get; } = new List<int> { 10, 20, 50, 100 };
 
-        // Role-based properties
+        // --- Role-based Properties ---
         public User? CurrentUser => _authService.CurrentUser;
         public UserRole UserRole => CurrentUser?.Role ?? UserRole.STAFF;
         public bool IsAdmin => _authorizationService.IsAuthorized(UserRole.ADMIN);
@@ -58,9 +57,13 @@ namespace MyShop.App.ViewModels
             IAuthService authService,
             IAuthorizationService authorizationService)
         {
-            _productRepository = productRepository;
+            // Initialize the Service
+            _productService = new ProductService(productRepository);
+
+            // Initialize Auth
             _authService = authService;
             _authorizationService = authorizationService;
+
             _products = new ObservableCollection<Product>();
             _allProducts = new List<Product>();
             _filteredProducts = new List<Product>();
@@ -127,12 +130,12 @@ namespace MyShop.App.ViewModels
             try
             {
                 IsBusy = true;
-                var dbData = await _productRepository.GetAllAsync();
+                // Use Service to fetch data
+                var dbData = await _productService.LoadProductsAsync();
+
                 _allProducts.Clear();
                 _allProducts.AddRange(dbData);
 
-                // We don't necessarily need to populate _categories for the UI anymore, 
-                // but we keep the logic if we want to construct the "All" category internally.
                 FilterProducts();
             }
             catch (Exception ex)
@@ -147,121 +150,51 @@ namespace MyShop.App.ViewModels
 
         public void SelectCategoryById(int categoryId)
         {
-            // Create a temporary stat to trigger the filter logic
-            // In a real app, you might want to look up the exact name, but ID is enough for filtering
-            SelectedCategory = new CategoryStat { Id = categoryId };
+            SelectedCategory = new CategoryStat { Id = categoryId, Name = "Selection" };
         }
 
         public async void ClearFilters()
         {
-            // Reset all filter states
             _currentSearchTerm = string.Empty;
-            _currentSearchResults.Clear();
             _minPrice = null;
             _maxPrice = null;
             _primarySort = null;
-            _secondarySort = null;
             SelectedCategory = null;
 
-            // Reload all products
             await LoadProductsAsync();
         }
 
-        public async Task FilterProductsAsync()
+        public Task SearchProductsAsync(string keyword)
         {
-            if (IsBusy) return;
-
-            try
-            {
-                IsBusy = true;
-                ErrorMessage = null;
-
-                List<Product> filteredProducts;
-
-                // Priority 1: Filter by search term using API if exists
-                if (!string.IsNullOrWhiteSpace(_currentSearchTerm))
-                {
-                    filteredProducts = await _productRepository.SearchByNameAsync(_currentSearchTerm);
-                }
-                // Priority 2: Filter by category using API if selected
-                else if (SelectedCategory != null && SelectedCategory.Id != 0)
-                {
-                    filteredProducts = await _productRepository.GetByCategoryAsync(SelectedCategory.Id);
-                }
-                else
-                {
-                    // No filter selected, get all
-                    filteredProducts = await _productRepository.GetAllAsync();
-                }
-
-                // Then apply additional client-side filters on the API results
-                
-                // Filter by category if search was used (client-side)
-                if (!string.IsNullOrWhiteSpace(_currentSearchTerm) && SelectedCategory != null && SelectedCategory.Id != 0)
-                {
-                    filteredProducts = filteredProducts.Where(p => p.CategoryId == SelectedCategory.Id).ToList();
-                }
-
-                // Filter by custom price range if set (client-side)
-                if (_minPrice.HasValue)
-                {
-                    filteredProducts = filteredProducts.Where(p => p.Price >= _minPrice.Value).ToList();
-                }
-                if (_maxPrice.HasValue)
-                {
-                    filteredProducts = filteredProducts.Where(p => p.Price <= _maxPrice.Value).ToList();
-                }
-
-                // Apply sorting
-                var sorted = ApplySorting(filteredProducts);
-
-                _filteredProducts.Clear();
-                _filteredProducts.AddRange(sorted.ToList());
-
-                CurrentPage = 1;
-                UpdatePagination();
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = $"Failed to filter products: {ex.Message}";
-                System.Diagnostics.Debug.WriteLine($"Error filtering products: {ex.Message}");
-            }
-            finally
-            {
-                IsBusy = false;
-            }
+            _currentSearchTerm = keyword;
+            FilterProducts();
+            return Task.CompletedTask;
         }
 
         private void FilterProducts()
         {
-            IEnumerable<Product> source = string.IsNullOrWhiteSpace(_currentSearchTerm)
-                ? _allProducts
-                : _currentSearchResults;
+            // 1. Search (Service)
+            var filtered = _productService.SearchProducts(_allProducts, _currentSearchTerm);
 
-            // Filter by category
+            // 2. Filter by Category (Service)
             if (SelectedCategory != null && SelectedCategory.Id != 0)
             {
-                source = source.Where(p => p.CategoryId == SelectedCategory.Id);
+                filtered = _productService.FilterByCategory(filtered, SelectedCategory.Id);
             }
 
-            // Filter by price range
-            if (_minPrice.HasValue)
+            // 3. Filter by Price (Service)
+            filtered = _productService.FilterByPriceRange(filtered, _minPrice, _maxPrice);
+
+            // 4. Sort (Service)
+            if (!string.IsNullOrEmpty(_primarySort))
             {
-                source = source.Where(p => p.Price >= _minPrice.Value);
-            }
-            if (_maxPrice.HasValue)
-            {
-                source = source.Where(p => p.Price <= _maxPrice.Value);
+                filtered = _productService.SortProducts(filtered, _primarySort);
             }
 
-            // Apply sorting
-            var sorted = ApplySorting(source);
-
-            // Store filtered results before pagination
+            // 5. Pagination Logic
             _filteredProducts.Clear();
-            _filteredProducts.AddRange(sorted.ToList());
+            _filteredProducts.AddRange(filtered);
 
-            // Reset to first page when filters change
             CurrentPage = 1;
             UpdatePagination();
         }
@@ -287,68 +220,34 @@ namespace MyShop.App.ViewModels
 
         public void GoToNextPage()
         {
-            if (HasNextPage)
-            {
-                CurrentPage++;
-                UpdatePagination();
-            }
+            if (HasNextPage) { CurrentPage++; UpdatePagination(); }
         }
 
         public void GoToPreviousPage()
         {
-            if (HasPreviousPage)
-            {
-                CurrentPage--;
-                UpdatePagination();
-            }
+            if (HasPreviousPage) { CurrentPage--; UpdatePagination(); }
         }
 
         public void GoToFirstPage()
         {
-            CurrentPage = 1;
-            UpdatePagination();
+            CurrentPage = 1; UpdatePagination();
         }
 
         public void GoToLastPage()
         {
-            CurrentPage = TotalPages;
-            UpdatePagination();
-        }
-
-
-        public Task SearchProductsAsync(string keyword)
-        {
-            _currentSearchTerm = keyword;
-            if (string.IsNullOrWhiteSpace(keyword))
-            {
-                _currentSearchResults.Clear();
-            }
-            else
-            {
-                // Client-side filtering: search by Name, SKU, or Description
-                var lowerKeyword = keyword.ToLower();
-                _currentSearchResults = _allProducts
-                    .Where(p => 
-                        (p.Name?.ToLower().Contains(lowerKeyword) ?? false) ||
-                        (p.Sku?.ToLower().Contains(lowerKeyword) ?? false) ||
-                        (p.Description?.ToLower().Contains(lowerKeyword) ?? false))
-                    .ToList();
-            }
-
-            FilterProducts();
-            return Task.CompletedTask;
+            CurrentPage = TotalPages; UpdatePagination();
         }
 
         public async Task AddProductAsync(Product newProduct)
         {
-            var created = await _productRepository.AddAsync(newProduct);
-            _allProducts.Insert(0, created);
+            await _productService.AddProductAsync(newProduct);
+            _allProducts.Add(newProduct);
             FilterProducts();
         }
 
         public async Task UpdateProductAsync(Product updatedProduct)
         {
-            await _productRepository.UpdateAsync(updatedProduct);
+            await _productService.UpdateProductAsync(updatedProduct);
             var index = _allProducts.FindIndex(p => p.Id == updatedProduct.Id);
             if (index >= 0) _allProducts[index] = updatedProduct;
             FilterProducts();
@@ -356,7 +255,7 @@ namespace MyShop.App.ViewModels
 
         public async Task DeleteProductAsync(int productId)
         {
-            await _productRepository.DeleteAsync(productId);
+            await _productService.DeleteProductAsync(productId);
             var p = _allProducts.FirstOrDefault(x => x.Id == productId);
             if (p != null) _allProducts.Remove(p);
             FilterProducts();
@@ -372,57 +271,7 @@ namespace MyShop.App.ViewModels
         public void SetSorting(string primarySort, string secondarySort)
         {
             _primarySort = primarySort;
-            _secondarySort = secondarySort;
             FilterProducts();
-        }
-
-        private IEnumerable<Product> ApplySorting(IEnumerable<Product> source)
-        {
-            if (string.IsNullOrEmpty(_primarySort))
-                return source;
-
-            IOrderedEnumerable<Product> ordered = null;
-
-            // Apply primary sort
-            switch (_primarySort)
-            {
-                case "PriceAsc":
-                    ordered = source.OrderBy(p => p.Price);
-                    break;
-                case "PriceDesc":
-                    ordered = source.OrderByDescending(p => p.Price);
-                    break;
-                case "StockAsc":
-                    ordered = source.OrderBy(p => p.Stock);
-                    break;
-                case "StockDesc":
-                    ordered = source.OrderByDescending(p => p.Stock);
-                    break;
-                default:
-                    return source;
-            }
-
-            // Apply secondary sort (tiebreaker)
-            if (!string.IsNullOrEmpty(_secondarySort) && ordered != null)
-            {
-                switch (_secondarySort)
-                {
-                    case "PriceAsc":
-                        ordered = ordered.ThenBy(p => p.Price);
-                        break;
-                    case "PriceDesc":
-                        ordered = ordered.ThenByDescending(p => p.Price);
-                        break;
-                    case "StockAsc":
-                        ordered = ordered.ThenBy(p => p.Stock);
-                        break;
-                    case "StockDesc":
-                        ordered = ordered.ThenByDescending(p => p.Stock);
-                        break;
-                }
-            }
-
-            return ordered ?? source;
         }
     }
 }
