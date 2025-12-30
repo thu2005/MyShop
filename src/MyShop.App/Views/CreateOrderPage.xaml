@@ -17,6 +17,7 @@
         <converters:OrderStatusToTextConverter x:Key="StatusToTextConverter"/>
         <converters:DiscountValueConverter x:Key="DiscountValueConverter"/>
         <converters:DiscountTypeDisplayConverter x:Key="DiscountTypeToTextConverter"/>
+        <converters:DiscountValueDisplayConverter x:Key="DiscountValueDisplayConverter"/>
 
         <Style x:Key="SectionHeaderStyle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="16"/>

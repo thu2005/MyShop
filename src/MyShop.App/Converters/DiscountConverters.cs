@@ -87,7 +87,7 @@ namespace MyShop.App.Converters
     }
 
     /// <summary>
-    /// Converts Discount object to formatted value string (e.g., "10%" or "50,000 ₫")
+    /// Converts Discount object to formatted value string (e.g., "10%" or "$50")
     /// </summary>
     public class DiscountValueConverter : IValueConverter
     {
@@ -98,9 +98,40 @@ namespace MyShop.App.Converters
                 return discount.Type switch
                 {
                     DiscountType.PERCENTAGE => $"{discount.Value}%",
-                    DiscountType.FIXED_AMOUNT => $"{discount.Value:N0} ₫",
+                    DiscountType.FIXED_AMOUNT => $"${discount.Value:N0}",
                     _ => discount.Value.ToString()
                 };
+            }
+
+            return string.Empty;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+            => throw new NotImplementedException();
+    }
+    /// <summary>
+    /// Converts Discount object to formatted display value with type prefix
+    /// </summary>
+    public class DiscountValueDisplayConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            if (value is Discount discount)
+            {
+                var valueText = discount.Type switch
+                {
+                    DiscountType.PERCENTAGE => $"{discount.Value}% off",
+                    DiscountType.FIXED_AMOUNT => $"${discount.Value:N2} off",
+                    _ => discount.Value.ToString()
+                };
+
+                // Add min purchase info if exists
+                if (discount.MinPurchase.HasValue && discount.MinPurchase.Value > 0)
+                {
+                    valueText += $" (min: ${discount.MinPurchase.Value:N2})";
+                }
+
+                return valueText;
             }
 
             return string.Empty;
