@@ -151,7 +151,7 @@
                                             </Ellipse>
                                         </Grid>
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                            <TextBlock Text="{x:Bind Product.Name}" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{x:Bind Product.Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{x:Bind Product.Name}"/>
                                             <TextBlock Text="{x:Bind Product.Price, Converter={StaticResource CurrencyConverter}}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="12,0,0,0">
@@ -282,7 +282,7 @@
                                             </Ellipse>
                                         </Grid>
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                            <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{x:Bind Name}"/>
                                             <TextBlock Text="{x:Bind Price, Converter={StaticResource CurrencyConverter}}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                                         </StackPanel>
                                         <TextBlock Grid.Column="2" VerticalAlignment="Center" FontWeight="Bold">
