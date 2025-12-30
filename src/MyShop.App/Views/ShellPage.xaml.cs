@@ -118,9 +118,13 @@ namespace MyShop.App.Views
             }
         }
 
-        private void NavView_Loaded(object sender, RoutedEventArgs e)
+        private async void NavView_Loaded(object sender, RoutedEventArgs e)
         {
             NavView.SelectedItem = NavView.MenuItems[0];
+            
+            // Load categories on UI thread
+            await ViewModel.EnsureCategoriesLoadedAsync();
+            
             if (ViewModel.Categories.Count > 0)
             {
                 RefreshCategoryMenuItems();

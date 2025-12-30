@@ -42,31 +42,35 @@
         </NavigationView.PaneHeader>
 
         <NavigationView.FooterMenuItems>
-            <NavigationViewItem Content="HELP" Tag="Help" Icon="Help" FontWeight="SemiBold" SelectsOnInvoked="False"/>
-        </NavigationView.FooterMenuItems>
-
-        <NavigationView.PaneFooter>
-            <Border Background="#FFF3CD" 
-                    Padding="12,10" 
-                    Margin="8,0,8,8" 
-                    CornerRadius="6"
-                    DoubleTapped="DebugBanner_DoubleTapped"
-                    Visibility="{x:Bind ViewModel.ShowTrialBanner, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
-                <StackPanel Spacing="4">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <FontIcon Glyph="&#xE7BA;" FontSize="16" Foreground="#856404"/>
+            <!-- Trial Banner as NavigationViewItem -->
+            <NavigationViewItem x:Name="TrialBannerItem"
+                                Tag="Trial" 
+                                SelectsOnInvoked="False"
+                                DoubleTapped="DebugBanner_DoubleTapped"
+                                Visibility="{x:Bind ViewModel.ShowTrialBanner, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
+                                Background="#FFF3CD"
+                                Height="40"
+                                ToolTipService.ToolTip="{x:Bind ViewModel.LicenseStatusMessage, Mode=OneWay}">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE7BA;" Foreground="#856404"/>
+                </NavigationViewItem.Icon>
+                <NavigationViewItem.Content>
+                    <StackPanel Spacing="2">
                         <TextBlock Text="TRIAL VERSION" 
                                    FontWeight="Bold" 
                                    FontSize="12"
                                    Foreground="#856404"/>
+                        <TextBlock Text="{x:Bind ViewModel.LicenseStatusMessage, Mode=OneWay}" 
+                                   FontSize="11"
+                                   Foreground="#856404"
+                                   TextWrapping="WrapWholeWords"
+                                   MaxWidth="180"/>
                     </StackPanel>
-                    <TextBlock Text="{x:Bind ViewModel.LicenseStatusMessage, Mode=OneWay}" 
-                               FontSize="11"
-                               Foreground="#856404"
-                               TextWrapping="Wrap"/>
-                </StackPanel>
-            </Border>
-        </NavigationView.PaneFooter>
+                </NavigationViewItem.Content>
+            </NavigationViewItem>
+            
+            <NavigationViewItem Content="HELP" Tag="Help" Icon="Help" FontWeight="SemiBold" SelectsOnInvoked="False"/>
+        </NavigationView.FooterMenuItems>
 
         <NavigationView.MenuItems>
             <NavigationViewItem Content="DASHBOARD" Tag="Dashboard" Icon="ViewAll" FontWeight="SemiBold"/>
