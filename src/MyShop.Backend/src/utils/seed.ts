@@ -186,6 +186,8 @@ async function seed() {
 
     // 0. Clean up existing data (Child tables first to avoid FK errors)
     console.log('Cleaning up previous data...');
+    await prisma.commission.deleteMany();
+    await prisma.salesTarget.deleteMany();
     await prisma.orderItem.deleteMany();
     await prisma.order.deleteMany();
     await prisma.product.deleteMany();
@@ -258,7 +260,7 @@ async function seed() {
 
     // 4. Products
     console.log('Seeding products...');
-    
+
     // NOTE: Specific imageUrl is handled by the map at the top.
     const iPhones = [
       { name: 'iPhone 15 Pro Max 256GB', price: 1199, cost: 900, sku: 'IPH-15PM-256', description: 'Titanium design, A17 Pro chip, 48MP Main camera.' },
@@ -496,6 +498,7 @@ async function seed() {
 
     // 6. Orders
     console.log('Seeding orders...');
+    let completedOrdersCount = 0;
     if (allCreatedProducts.length > 0 && customers.length > 0) {
       const getRandomProduct = () => allCreatedProducts[Math.floor(Math.random() * allCreatedProducts.length)];
       const getRandomCustomer = () => customers[Math.floor(Math.random() * customers.length)];
@@ -504,11 +507,13 @@ async function seed() {
 
       const statuses = ['COMPLETED', 'COMPLETED', 'COMPLETED', 'PROCESSING', 'PENDING', 'CANCELLED'];
       const numberOfOrdersToSeed = 100;
+      const COMMISSION_RATE = 3; // 3% commission
 
       for (let i = 1; i <= numberOfOrdersToSeed; i++) {
         const orderDate = getRandomDate(new Date('2024-01-01'), new Date());
         const orderNum = `ORD-2024-${i.toString().padStart(3, '0')}`;
         const status = statuses[Math.floor(Math.random() * statuses.length)];
+        const selectedUser = getRandomUser();
         const numItems = Math.floor(Math.random() * 4) + 1;
         const items = [];
         for (let j = 0; j < numItems; j++) {
@@ -517,11 +522,12 @@ async function seed() {
         }
         const subtotal = items.reduce((sum, item) => sum + Number(item.unitPrice) * item.quantity, 0);
 
-        await prisma.order.create({
+        const createdOrder = await prisma.order.create({
           data: {
-            orderNumber: orderNum, customerId: getRandomCustomer().id, userId: getRandomUser().id, status: status as any,
+            orderNumber: orderNum, customerId: getRandomCustomer().id, userId: selectedUser.id, status: status as any,
             subtotal: new Prisma.Decimal(subtotal), discountAmount: new Prisma.Decimal(0), taxAmount: new Prisma.Decimal(0),
             total: new Prisma.Decimal(subtotal), createdAt: orderDate,
+            completedAt: status === 'COMPLETED' ? orderDate : null,
             orderItems: {
               create: items.map(i => ({
                 productId: i.productId, quantity: i.quantity, unitPrice: i.unitPrice,
@@ -532,8 +538,27 @@ async function seed() {
             }
           }
         });
+
+        // Create Commission for COMPLETED orders
+        if (status === 'COMPLETED') {
+          const commissionAmount = subtotal * (COMMISSION_RATE / 100);
+          await prisma.commission.create({
+            data: {
+              userId: selectedUser.id,
+              orderId: createdOrder.id,
+              orderTotal: new Prisma.Decimal(subtotal),
+              commissionRate: new Prisma.Decimal(COMMISSION_RATE),
+              commissionAmount: new Prisma.Decimal(commissionAmount),
+              isPaid: Math.random() > 0.5, // 50% chance of being paid
+              paidAt: Math.random() > 0.5 ? orderDate : null,
+              createdAt: orderDate
+            }
+          });
+          completedOrdersCount++;
+        }
       }
       console.log(`Created ${numberOfOrdersToSeed} orders`);
+      console.log(`Created ${completedOrdersCount} commissions for completed orders`);
     }
 
     // 7. License

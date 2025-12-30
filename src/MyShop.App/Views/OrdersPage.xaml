@@ -136,7 +136,7 @@
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
-                <Button Content="Export" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" Foreground="#333333" Padding="12,8" CornerRadius="4">
+                <Button Content="Export" Background="White" BorderBrush="#E0E0E0" BorderThickness="1" Foreground="#333333" Padding="12,8" CornerRadius="4" Click="OnExportClick">
                     <Button.ContentTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" Spacing="8">

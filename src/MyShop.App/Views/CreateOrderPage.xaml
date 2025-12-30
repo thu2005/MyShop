@@ -167,7 +167,7 @@
                          <ComboBoxItem Content="Cancelled" Tag="CANCELLED"/>
                     </ComboBox>
                     
-                    <Button Background="White" BorderThickness="1" BorderBrush="#E0E0E0" Padding="12,8" CornerRadius="4" VerticalAlignment="Bottom" Margin="0,0,0,1">
+                    <Button Click="OnPrintClick" Background="White" BorderThickness="1" BorderBrush="#E0E0E0" Padding="12,8" CornerRadius="4" VerticalAlignment="Bottom" Margin="0,0,0,1" ToolTipService.ToolTip="Print Order">
                         <FontIcon Glyph="&#xE749;" FontSize="16"/> <!-- Print -->
                     </Button>
 

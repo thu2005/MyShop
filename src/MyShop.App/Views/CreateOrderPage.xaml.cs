@@ -47,6 +47,7 @@ namespace MyShop.App.Views
         
         private CancellationTokenSource _autoSaveCts;
         private bool _isLoadingDraft = false;
+        private Order _loadedOrder;
 
         public CreateOrderPage()
         {
@@ -736,6 +737,8 @@ namespace MyShop.App.Views
         {
             var order = await _viewModel.GetOrderDetailsAsync(orderId);
             if (order == null) return;
+            
+            _loadedOrder = order;
 
             _originalCreatedAt = order.CreatedAt;
             _originalOrderNumber = order.OrderNumber;
@@ -822,7 +825,8 @@ namespace MyShop.App.Views
 
         private void OnFieldChanged(object sender, object e)
         {
-            if (_editingOrderId.HasValue || _isLoadingDraft) return;
+            // Don't save draft when editing or viewing existing order, or during draft loading
+            if (_editingOrderId.HasValue || _loadedOrder != null || _isLoadingDraft) return;
             
             // Cancel previous auto-save
             _autoSaveCts?.Cancel();
@@ -967,5 +971,101 @@ namespace MyShop.App.Views
         }
 
         #endregion
+
+        private async void OnPrintClick(object sender, RoutedEventArgs e)
+        {
+            // Get current status from ComboBox
+            var currentStatus = MyShop.Core.Models.OrderStatus.PENDING;
+            if (StatusComboBox.SelectedItem is ComboBoxItem selectedItem && selectedItem.Tag is string statusTag)
+            {
+                if (Enum.TryParse<MyShop.Core.Models.OrderStatus>(statusTag, out var parsed))
+                {
+                    currentStatus = parsed;
+                }
+            }
+
+            // Build a temporary Order object from current state if creating new order
+            Order orderToPrint;
+            
+            if (_loadedOrder != null)
+            {
+                // Use loaded order but update with current items and totals
+                orderToPrint = new Order
+                {
+                    Id = _loadedOrder.Id,
+                    OrderNumber = _loadedOrder.OrderNumber,
+                    Status = currentStatus,
+                    Customer = _selectedCustomer ?? _loadedOrder.Customer,
+                    OrderItems = _orderItems.ToList(),
+                    Discount = _selectedDiscount,
+                    Notes = NotesTextBox.Text,
+                    Subtotal = _orderItems.Sum(i => i.Total),
+                    DiscountAmount = CalculateDiscountAmount(),
+                    TaxAmount = 0,
+                    Total = CalculateFinalTotal(),
+                    CreatedAt = _loadedOrder.CreatedAt
+                };
+            }
+            else
+            {
+                // Creating new order - build from current state
+                orderToPrint = new Order
+                {
+                    OrderNumber = "NEW",
+                    Status = currentStatus,
+                    Customer = _selectedCustomer,
+                    OrderItems = _orderItems.ToList(),
+                    Discount = _selectedDiscount,
+                    Notes = NotesTextBox.Text,
+                    Subtotal = _orderItems.Sum(i => i.Total),
+                    DiscountAmount = CalculateDiscountAmount(),
+                    TaxAmount = 0,
+                    Total = CalculateFinalTotal(),
+                    CreatedAt = DateTime.Now
+                };
+            }
+
+            if (orderToPrint.OrderItems == null || !orderToPrint.OrderItems.Any())
+            {
+                var dialog = new ContentDialog
+                {
+                    XamlRoot = this.XamlRoot,
+                    Title = "No Items",
+                    Content = "Cannot print an order without items.",
+                    CloseButtonText = "OK"
+                };
+                await dialog.ShowAsync();
+                return;
+            }
+
+            await _viewModel.ExportSingleOrderAsync(orderToPrint);
+        }
+
+        private decimal CalculateDiscountAmount()
+        {
+            if (_selectedDiscount == null) return 0;
+            var subtotal = _orderItems.Sum(i => i.Total);
+            
+            if (_selectedDiscount.Type == DiscountType.PERCENTAGE)
+            {
+                var discountAmt = subtotal * (_selectedDiscount.Value / 100);
+                if (_selectedDiscount.MaxDiscount.HasValue && discountAmt > _selectedDiscount.MaxDiscount.Value)
+                {
+                    discountAmt = _selectedDiscount.MaxDiscount.Value;
+                }
+                return discountAmt;
+            }
+            else
+            {
+                return Math.Min(_selectedDiscount.Value, subtotal);
+            }
+        }
+
+        private decimal CalculateFinalTotal()
+        {
+            var subtotal = _orderItems.Sum(i => i.Total);
+            var discount = CalculateDiscountAmount();
+            return subtotal - discount;
+        }
     }
 }
