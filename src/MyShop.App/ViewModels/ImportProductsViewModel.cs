@@ -133,10 +133,15 @@ namespace MyShop.App.ViewModels
                             Stock = row.Stock,
                             MinStock = row.MinStock,
                             CategoryId = row.CategoryId!.Value,
-                            Images = string.IsNullOrEmpty(row.ImageUrl) ? new System.Collections.Generic.List<ProductImage>() : new System.Collections.Generic.List<ProductImage>
-                            {
-                                new ProductImage { ImageUrl = row.ImageUrl, DisplayOrder = 0, IsMain = true }
-                            }
+                            Images = !string.IsNullOrWhiteSpace(row.ImageUrl) 
+                                ? row.ImageUrl.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                                      .Select((url, index) => new ProductImage 
+                                      { 
+                                          ImageUrl = url.Trim(), 
+                                          DisplayOrder = index, 
+                                          IsMain = index == 0 
+                                      }).ToList()
+                                : new System.Collections.Generic.List<ProductImage>()
                         };
 
                         var result = await _productRepository.AddAsync(product);
