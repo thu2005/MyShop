@@ -84,7 +84,8 @@ namespace MyShop.Core.Services
             // Remote Clock Tampering Check (if cached)
             if (_cachedRemoteTime.HasValue && now < _cachedRemoteTime.Value.AddMinutes(-10))
             {
-                System.Diagnostics.Debug.WriteLine("CRITICAL: Local time is significantly behind remote time!");
+                var diff = _cachedRemoteTime.Value - now;
+                System.Diagnostics.Debug.WriteLine($"CRITICAL: Local time is significantly behind remote time! Diff: {diff.TotalMinutes:N1} minutes. Local UTC: {now:O}, Remote UTC: {_cachedRemoteTime.Value:O}");
                 return LicenseStatus.ClockTampered;
             }
 
@@ -323,6 +324,7 @@ namespace MyShop.Core.Services
             _storageService.ClearLicenseData();
             _cachedLicenseInfo = null;
             _isNewlyCreated = false;
+            _cachedRemoteTime = null;
             System.Diagnostics.Debug.WriteLine("DEBUG: Trial storage cleared and cache reset.");
         }
 #endif
