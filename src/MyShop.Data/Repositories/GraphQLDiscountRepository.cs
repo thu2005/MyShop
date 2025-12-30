@@ -176,10 +176,18 @@ namespace MyShop.Data.Repositories
                             value
                             maxDiscount
                             minPurchase
+                            buyQuantity
+                            getQuantity
                             startDate
                             endDate
+                            usageLimit
+                            usageCount
+                            applicableToAll
+                            memberOnly
+                            wholesaleMinQty
                             isActive
                             createdAt
+                            updatedAt
                         }
                     }",
                 Variables = new
