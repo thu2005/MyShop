@@ -14,12 +14,16 @@ namespace MyShop.App.Views
         public static ShellPage Instance { get; private set; }
         public ShellViewModel ViewModel { get; }
         private readonly IOnboardingService _onboardingService;
+        private readonly IConfigService _configService;
+        private readonly ISessionManager _sessionManager;
 
         public ShellPage()
         {
             this.InitializeComponent();
             Instance = this;
             _onboardingService = App.Current.Services.GetRequiredService<IOnboardingService>();
+            _configService = App.Current.Services.GetRequiredService<IConfigService>();
+            _sessionManager = App.Current.Services.GetRequiredService<ISessionManager>();
             ViewModel = App.Current.Services.GetRequiredService<ShellViewModel>();
             ViewModel.LogoutRequested += OnLogoutRequested;
 
@@ -120,7 +124,8 @@ namespace MyShop.App.Views
 
         private async void NavView_Loaded(object sender, RoutedEventArgs e)
         {
-            NavView.SelectedItem = NavView.MenuItems[0];
+            // Restore last opened page or default to first item
+            RestoreLastOpenedPage();
             
             // Load categories on UI thread
             await ViewModel.EnsureCategoriesLoadedAsync();
@@ -386,6 +391,40 @@ namespace MyShop.App.Views
             await onboardingDialog.ShowAsync();
         }
 
+        private void RestoreLastOpenedPage()
+        {
+            var lastPageTag = _configService.GetLastOpenedPage();
+            NavigationViewItem? targetItem = null;
+
+            if (!string.IsNullOrEmpty(lastPageTag))
+            {
+                // Try to find the navigation item with the saved tag
+                targetItem = NavView.MenuItems
+                    .OfType<NavigationViewItem>()
+                    .FirstOrDefault(i => i.Tag?.ToString() == lastPageTag);
+
+                // If not found in main items, check if it's a Products category
+                if (targetItem == null && lastPageTag.StartsWith("Products"))
+                {
+                    // Default to "All Products" if specific category not found
+                    targetItem = NavView.MenuItems
+                        .OfType<NavigationViewItem>()
+                        .FirstOrDefault(i => i.Tag?.ToString() == "Products_0");
+                }
+            }
+
+            // Default to first item (Dashboard) if nothing found
+            if (targetItem == null)
+            {
+                targetItem = NavView.MenuItems.OfType<NavigationViewItem>().FirstOrDefault();
+            }
+
+            if (targetItem != null)
+            {
+                NavView.SelectedItem = targetItem;
+            }
+        }
+
         public void SetSidebarSelectionWithoutNavigation(string tag)
         {
             // Temporarily remove event handler
@@ -470,6 +509,12 @@ namespace MyShop.App.Views
                     if (pageType != null)
                     {
                         ContentFrame.Navigate(pageType, navigationParam);
+                        
+                        // Save the last opened page only if session is persisted (Remember Me)
+                        if (_sessionManager.IsSessionPersisted)
+                        {
+                            _configService.SaveLastOpenedPage(tag);
+                        }
                     }
                 }
             }
