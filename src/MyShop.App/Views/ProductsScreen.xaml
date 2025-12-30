@@ -146,7 +146,7 @@
                                 </Grid.ColumnDefinitions>
 
                                 <Border Width="64" Height="64" CornerRadius="8" BorderBrush="#E5E7EB" BorderThickness="1">
-                                    <Image Source="{x:Bind ImageUrl, Converter={StaticResource StringToImageSourceConverter}}" Stretch="UniformToFill"/>
+                                    <Image Source="{x:Bind MainImage, Converter={StaticResource StringToImageSourceConverter}}" Stretch="UniformToFill"/>
                                 </Border>
 
                                 <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">

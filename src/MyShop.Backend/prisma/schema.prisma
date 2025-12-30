@@ -81,7 +81,6 @@ model Product {
   costPrice   Decimal? @db.Decimal(10, 2)
   stock       Int      @default(0)
   minStock    Int      @default(0)
-  imageUrl    String?  @db.VarChar(500)
   categoryId  Int
   isActive    Boolean  @default(true)
   popularity  Int      @default(0)
@@ -89,14 +88,32 @@ model Product {
   updatedAt   DateTime @updatedAt
 
   // Relations
-  category   Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category   Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   orderItems OrderItem[]
+  images     ProductImage[]
 
   @@map("products")
   @@index([categoryId])
   @@index([name])
   @@index([sku])
   @@index([barcode])
+}
+
+model ProductImage {
+  id           Int      @id @default(autoincrement())
+  productId    Int
+  imageUrl     String   @db.VarChar(500)
+  displayOrder Int      @default(0)
+  isMain       Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  // Relations
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_images")
+  @@index([productId])
+  @@index([isMain])
+  @@index([displayOrder])
 }
 
 // Person 5: Customers Management

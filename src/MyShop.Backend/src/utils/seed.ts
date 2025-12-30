@@ -454,7 +454,7 @@ async function seed() {
         // ==============================================================================
         const finalImageUrl = productImages[item.sku]
           ? productImages[item.sku]
-          : `https://placehold.co/600x400/333333/ffffff/png?text=${encodeURIComponent(item.name)}\n(${item.sku})`;
+          : `https://placehold.co/600x400/333333/ffffff/png?text=${encodeURIComponent(item.name)}\\n(${item.sku})`;
 
         const product = await prisma.product.create({
           data: {
@@ -467,7 +467,15 @@ async function seed() {
             minStock: 5,
             categoryId: category.id,
             description: item.description,
-            imageUrl: finalImageUrl,
+            images: {
+              create: [
+                {
+                  imageUrl: finalImageUrl,
+                  displayOrder: 0,
+                  isMain: true
+                }
+              ]
+            }
           },
         });
         allCreatedProducts.push(product);

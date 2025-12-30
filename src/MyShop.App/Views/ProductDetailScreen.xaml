@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:vm="using:MyShop.App.ViewModels"
+    xmlns:models="using:MyShop.Core.Models"
     xmlns:converters="using:MyShop.App.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -133,29 +134,91 @@
 
                 <!-- Right Column - Images -->
                 <StackPanel Grid.Column="1" Spacing="20">
-                    <!-- Product Image with Change Button -->
+                    <!-- Main Image (Large) -->
                     <Grid>
-                        <Border Background="White" CornerRadius="12" Padding="20" BorderBrush="#E5E7EB" BorderThickness="1" Height="380">
-                            <Image Source="{x:Bind ViewModel.CurrentProduct.ImageUrl, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" 
+                        <Border Background="White" CornerRadius="12" Padding="20" 
+                                BorderBrush="#E5E7EB" BorderThickness="1" Height="380">
+                            <Image x:Name="MainImageDisplay"
+                                   Source="{x:Bind ViewModel.MainImageUrl, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" 
                                    Stretch="Uniform"/>
                         </Border>
                         
-                        <!-- Change Image Button (Only in Edit Mode) -->
-                        <Button Command="{x:Bind ViewModel.UploadImageCommand}" 
+                        <!-- Upload/Manage Images Button (Edit Mode) -->
+                        <Button Command="{x:Bind ViewModel.ManageImagesCommand}" 
                                 Visibility="{x:Bind ViewModel.IsEditMode, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
-                                Background="#0F3D5E" 
-                                Foreground="White"
-                                CornerRadius="6"
-                                Padding="16,10"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Bottom"
-                                Margin="0,0,0,20">
+                                Background="#0F3D5E" Foreground="White" CornerRadius="6" Padding="16,10"
+                                HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,20">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <FontIcon Glyph="&#xE8B9;" FontSize="14"/>
-                                <TextBlock Text="Change Image" FontWeight="SemiBold" FontSize="13"/>
+                                <TextBlock Text="Manage Images" FontWeight="SemiBold" FontSize="13"/>
                             </StackPanel>
                         </Button>
                     </Grid>
+                    
+                    <!-- All Images Grid (Thumbnails) -->
+                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.ProductImagesCollection, Mode=OneWay}">
+                        <ItemsRepeater.Layout>
+                            <UniformGridLayout MinItemWidth="80" MinItemHeight="80" 
+                                             ItemsStretch="Fill" MinColumnSpacing="8" MinRowSpacing="8"/>
+                        </ItemsRepeater.Layout>
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate x:DataType="models:ProductImage">
+                                <Grid>
+                                    <Border CornerRadius="8" BorderBrush="#E5E7EB" BorderThickness="1"
+                                            Background="White">
+                                        <Image Source="{x:Bind ImageUrl, Converter={StaticResource StringToImageSourceConverter}}" 
+                                               Stretch="UniformToFill"/>
+                                    </Border>
+                                    
+                                    <!-- Main Image Indicator (Star Icon - Always visible if IsMain) -->
+                                    <Border Background="#10B981" CornerRadius="12" 
+                                            Width="24" Height="24"
+                                            HorizontalAlignment="Left" VerticalAlignment="Top"
+                                            Margin="4"
+                                            Visibility="{x:Bind IsMain, Converter={StaticResource BoolToVisibilityConverter}}">
+                                        <FontIcon Glyph="&#xE734;" FontSize="12" Foreground="White"/>
+                                    </Border>
+                                    
+                                    <!-- Hover Overlay with Action Buttons (Edit Mode Only) -->
+                                    <Grid x:Name="HoverOverlay" 
+                                          Background="#80000000" 
+                                          CornerRadius="8"
+                                          Opacity="0"
+                                          PointerEntered="OnImagePointerEntered"
+                                          PointerExited="OnImagePointerExited"
+                                          Visibility="{Binding ElementName=PageRoot, Path=ViewModel.IsEditMode, Mode=OneWay}">
+                                        
+                                        <StackPanel Orientation="Horizontal" 
+                                                   HorizontalAlignment="Center" 
+                                                   VerticalAlignment="Center"
+                                                   Spacing="8">
+                                            <!-- Set as Main Button -->
+                                            <Button Background="#10B981" 
+                                                    CornerRadius="16"
+                                                    Width="32" Height="32"
+                                                    Padding="0"
+                                                    Click="OnSetMainImageClick"
+                                                    Tag="{x:Bind}"
+                                                    ToolTipService.ToolTip="Set as main image">
+                                                <FontIcon Glyph="&#xE734;" FontSize="14" Foreground="White"/>
+                                            </Button>
+                                            
+                                            <!-- Delete Button -->
+                                            <Button Background="#EF4444" 
+                                                    CornerRadius="16"
+                                                    Width="32" Height="32"
+                                                    Padding="0"
+                                                    Click="OnDeleteImageClick"
+                                                    Tag="{x:Bind}"
+                                                    ToolTipService.ToolTip="Delete image">
+                                                <FontIcon Glyph="&#xE74D;" FontSize="14" Foreground="White"/>
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
 
                     <!-- Action Buttons -->
                     <Grid ColumnSpacing="18" Margin="0,20,0,0">

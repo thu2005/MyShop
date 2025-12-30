@@ -213,6 +213,93 @@ namespace MyShop.App.Views
             }
         }
 
+        private void OnSetMainImageClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+        {
+            if (!ViewModel.IsEditMode) return;
+            
+            var button = sender as Microsoft.UI.Xaml.Controls.Button;
+            if (button?.Tag is ProductImage clickedImage)
+            {
+                // Set all images to not main
+                foreach (var img in ViewModel.ProductImagesCollection)
+                {
+                    img.IsMain = false;
+                }
+                
+                // Set clicked image as main
+                clickedImage.IsMain = true;
+                
+                // Update CurrentProduct.Images to match
+                if (ViewModel.CurrentProduct.Images != null)
+                {
+                    foreach (var img in ViewModel.CurrentProduct.Images)
+                    {
+                        img.IsMain = false;
+                    }
+                    var matchingImage = ViewModel.CurrentProduct.Images.FirstOrDefault(i => i.ImageUrl == clickedImage.ImageUrl);
+                    if (matchingImage != null)
+                    {
+                        matchingImage.IsMain = true;
+                    }
+                }
+                
+                // Trigger UI update for thumbnails
+                var temp = new System.Collections.ObjectModel.ObservableCollection<ProductImage>(ViewModel.ProductImagesCollection);
+                ViewModel.ProductImagesCollection.Clear();
+                foreach (var img in temp)
+                {
+                    ViewModel.ProductImagesCollection.Add(img);
+                }
+                
+                // IMPORTANT: Update main image URL to change large preview
+                var mainImg = ViewModel.CurrentProduct.Images?.FirstOrDefault(i => i.IsMain);
+                ViewModel.MainImageUrl = mainImg?.ImageUrl ?? ViewModel.CurrentProduct.Images?.FirstOrDefault()?.ImageUrl;
+            }
+        }
+
+        private void OnDeleteImageClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+        {
+            if (!ViewModel.IsEditMode) return;
+            
+            var button = sender as Microsoft.UI.Xaml.Controls.Button;
+            if (button?.Tag is ProductImage imageToDelete)
+            {
+                // Remove from both collections
+                ViewModel.CurrentProduct.Images?.Remove(imageToDelete);
+                ViewModel.ProductImagesCollection.Remove(imageToDelete);
+                
+                // If deleted image was main, set first image as main
+                if (imageToDelete.IsMain && ViewModel.ProductImagesCollection.Count > 0)
+                {
+                    ViewModel.ProductImagesCollection[0].IsMain = true;
+                    
+                    // Trigger UI refresh
+                    var temp = new System.Collections.ObjectModel.ObservableCollection<ProductImage>(ViewModel.ProductImagesCollection);
+                    ViewModel.ProductImagesCollection.Clear();
+                    foreach (var img in temp)
+                    {
+                        ViewModel.ProductImagesCollection.Add(img);
+                    }
+                }
+            }
+        }
+
+        private void OnImagePointerEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            if (sender is Microsoft.UI.Xaml.Controls.Grid overlay)
+            {
+                overlay.Opacity = 1;
+            }
+        }
+
+        private void OnImagePointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            if (sender is Microsoft.UI.Xaml.Controls.Grid overlay)
+            {
+                overlay.Opacity = 0;
+            }
+        }
+
         private async System.Threading.Tasks.Task ReloadShellCategories()
         {
             // Find the ShellPage in the navigation stack and reload its categories

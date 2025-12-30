@@ -143,10 +143,10 @@
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <Grid Grid.Column="0" Width="40" Height="40" Margin="0,0,12,0">
-                                            <Ellipse Fill="#1D546C"/>
+                                            <Ellipse Fill="#ffffffff"/>
                                             <Ellipse>
                                                 <Ellipse.Fill>
-                                                    <ImageBrush ImageSource="{x:Bind Product.ImageUrl, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" Stretch="UniformToFill"/>
+                                                    <ImageBrush ImageSource="{x:Bind Product.MainImage, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" Stretch="UniformToFill"/>
                                                 </Ellipse.Fill>
                                             </Ellipse>
                                         </Grid>
@@ -274,10 +274,10 @@
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <Grid Grid.Column="0" Width="40" Height="40" Margin="0,0,12,0">
-                                            <Ellipse Fill="#1D546C"/>
+                                            <Ellipse Fill="#ffffffff"/>
                                             <Ellipse>
                                                 <Ellipse.Fill>
-                                                    <ImageBrush ImageSource="{x:Bind ImageUrl, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" Stretch="UniformToFill"/>
+                                                    <ImageBrush ImageSource="{x:Bind MainImage, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" Stretch="UniformToFill"/>
                                                 </Ellipse.Fill>
                                             </Ellipse>
                                         </Grid>

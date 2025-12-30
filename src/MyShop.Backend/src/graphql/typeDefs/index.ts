@@ -103,7 +103,7 @@ export const typeDefs = gql`
     costPrice: Decimal
     stock: Int!
     minStock: Int = 0
-    imageUrl: String
+    imageUrls: [String!]
     categoryId: Int!
   }
 
@@ -116,7 +116,8 @@ export const typeDefs = gql`
     costPrice: Decimal
     stock: Int
     minStock: Int
-    imageUrl: String
+    imageUrls: [String!]
+    mainImageIndex: Int
     categoryId: Int
     isActive: Boolean
   }
@@ -283,13 +284,23 @@ export const typeDefs = gql`
     costPrice: Decimal
     stock: Int!
     minStock: Int!
-    imageUrl: String
     categoryId: Int!
     category: Category!
     isActive: Boolean!
     popularity: Int!
+    images: [ProductImage!]!
+    mainImage: String
     createdAt: DateTime!
     updatedAt: DateTime!
+  }
+
+  type ProductImage {
+    id: Int!
+    productId: Int!
+    imageUrl: String!
+    displayOrder: Int!
+    isMain: Boolean!
+    createdAt: DateTime!
   }
 
   type ProductList {

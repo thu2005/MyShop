@@ -33,11 +33,17 @@ namespace MyShop.Data.Repositories
                             costPrice
                             stock
                             minStock
-                            imageUrl
                             categoryId
                             isActive
                             createdAt
                             updatedAt
+                            images {
+                                id
+                                imageUrl
+                                displayOrder
+                                isMain
+                            }
+                            mainImage
                         }
                     }",
                 Variables = new { id }
@@ -70,7 +76,13 @@ namespace MyShop.Data.Repositories
                                     name
                                 }
                                 isActive
-                                imageUrl 
+                                images {
+                                    id
+                                    imageUrl
+                                    displayOrder
+                                    isMain
+                                }
+                                mainImage
                             }
                         }
                     }"
@@ -98,7 +110,7 @@ namespace MyShop.Data.Repositories
                                 price
                                 stock
                                 categoryId
-                                imageUrl
+                                mainImage
                             }
                         }
                     }",
@@ -123,7 +135,7 @@ namespace MyShop.Data.Repositories
                                 price
                                 stock
                                 categoryId
-                                imageUrl
+                                mainImage
                             }
                         }
                     }",
@@ -146,7 +158,7 @@ namespace MyShop.Data.Repositories
                             sku
                             stock
                             minStock
-                            imageUrl
+                            mainImage
                         }
                     }",
                 Variables = new { threshold }
@@ -170,7 +182,12 @@ namespace MyShop.Data.Repositories
                             costPrice
                             stock
                             categoryId
-                            imageUrl
+                            images {
+                                id
+                                imageUrl
+                                displayOrder
+                                isMain
+                            }
                         }
                     }",
                 Variables = new
@@ -186,7 +203,7 @@ namespace MyShop.Data.Repositories
                         description = entity.Description,
                         barcode = entity.Barcode,
                         minStock = entity.MinStock,
-                        imageUrl = entity.ImageUrl
+                        imageUrls = entity.Images?.Select(i => i.ImageUrl).ToList()
                     }
                 }
             };
@@ -216,6 +233,12 @@ namespace MyShop.Data.Repositories
                         updateProduct(id: $id, input: $input) {
                             id
                             name
+                            images {
+                                id
+                                imageUrl
+                                displayOrder
+                                isMain
+                            }
                         }
                     }",
                 Variables = new
@@ -230,7 +253,8 @@ namespace MyShop.Data.Repositories
                         costPrice = entity.CostPrice,
                         stock = entity.Stock,
                         categoryId = entity.CategoryId,
-                        imageUrl = entity.ImageUrl // Include this if updating image is allowed
+                        imageUrls = entity.Images?.Select(i => i.ImageUrl).ToList(),
+                        mainImageIndex = entity.Images?.FindIndex(i => i.IsMain)
                     }
                 }
             };

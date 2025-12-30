@@ -81,7 +81,11 @@ export const dashboardResolvers = {
         include: {
           orderItems: {
             include: {
-              product: true,
+              product: {
+                include: {
+                  images: true,
+                },
+              },
             },
           },
         },

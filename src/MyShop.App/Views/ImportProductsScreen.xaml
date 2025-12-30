@@ -96,7 +96,7 @@
                                 <Border Width="40" Height="40" Margin="4" CornerRadius="4" Background="#F3F4F6">
                                     <Grid>
                                         <TextBlock Text="" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#9CA3AF"/>
-                                        <Image Source="{Binding ImageUrl}" Stretch="UniformToFill"/>
+                                        <Image Source="{Binding MainImage}" Stretch="UniformToFill"/>
                                     </Grid>
                                 </Border>
                             </DataTemplate>
