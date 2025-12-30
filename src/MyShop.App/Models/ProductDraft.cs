@@ -13,6 +13,7 @@ namespace MyShop.App.Models
         public string Stock { get; set; }
         public string MinStock { get; set; }
         public string ImageUrl { get; set; }
+        public System.Collections.Generic.List<MyShop.Core.Models.ProductImage> Images { get; set; } = new();
         public int? CategoryId { get; set; }
         public DateTime SavedAt { get; set; }
     }

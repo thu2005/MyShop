@@ -87,6 +87,7 @@ namespace MyShop.App.Views
                     Stock = StockBox.Text,
 
                     ImageUrl = _imageUrls.Count > 0 ? _imageUrls[_mainImageIndex].ImageUrl : null,
+                    Images = _imageUrls.ToList(),
                     CategoryId = CategoryComboBox.SelectedValue as int?,
                     SavedAt = DateTime.Now
                 };
@@ -158,12 +159,38 @@ namespace MyShop.App.Views
                     CategoryComboBox.SelectedValue = draft.CategoryId.Value;
                 }
 
-                // Restore image preview if path exists
-                if (!string.IsNullOrEmpty(draft.ImageUrl))
+                // Restore images
+                if (draft.Images != null && draft.Images.Count > 0)
                 {
                     try
                     {
-                        // Restore as main image
+                        _imageUrls.Clear();
+                        foreach (var img in draft.Images)
+                        {
+                            _imageUrls.Add(img);
+                            if (img.IsMain) _mainImageIndex = _imageUrls.Count - 1;
+                        }
+
+                        if (_imageUrls.Count > 0 && !_imageUrls.Any(i => i.IsMain))
+                        {
+                             // Fallback if no main image marked
+                             _mainImageIndex = 0;
+                             _imageUrls[0].IsMain = true;
+                        }
+                        
+                        UpdateImagePreview();
+                        ThumbnailsContainer.Visibility = Visibility.Visible;
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Failed to restore images: {ex.Message}");
+                    }
+                }
+                else if (!string.IsNullOrEmpty(draft.ImageUrl))
+                {
+                    try
+                    {
+                        // Legacy restore for single image path drafts
                         _imageUrls.Clear();
                         var productImg = new ProductImage 
                         { 
@@ -377,6 +404,8 @@ namespace MyShop.App.Views
                     _mainImageIndex = index;
                     UpdateImagePreview();
                     UpdateStarIndicators();
+                    // Trigger autosave
+                    OnFieldChanged(null, null);
                 }
             }
         }
@@ -401,6 +430,8 @@ namespace MyShop.App.Views
                 UpdateImagePreview();
                 ThumbnailsContainer.Visibility = _imageUrls.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
                 UpdateStarIndicators();
+                // Trigger autosave
+                OnFieldChanged(null, null);
             }
         }
 
