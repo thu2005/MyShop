@@ -530,9 +530,16 @@ namespace MyShop.App.Views
         {
             if (args.InvokedItemContainer is NavigationViewItem item)
             {
-                if (item.Tag?.ToString() == "Help")
+                var tag = item.Tag?.ToString();
+                if (tag == "Help")
                 {
                     _ = ShowOnboardingDialogAsync();
+                }
+                else if (tag == "Trial")
+                {
+#if !DEBUG
+                    _ = ShowActivationDialog();
+#endif
                 }
             }
         }

@@ -33,7 +33,8 @@ namespace MyShop.Core.Services
             "DeleteCategory",
             "AddCustomer",
             "EditCustomer",
-            "DeleteCustomer"
+            "DeleteCustomer",
+            "ManageDiscounts"
         };
 
         public LicenseService(

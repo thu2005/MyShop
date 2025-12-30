@@ -16,6 +16,7 @@ namespace MyShop.App.ViewModels
         private readonly IDiscountRepository _discountRepository;
         private readonly IAuthService _authService;
         private readonly IAuthorizationService _authorizationService;
+        private readonly ILicenseService _licenseService;
         private List<SelectableDiscount> _allDiscounts = new();
 
         [ObservableProperty]
@@ -61,11 +62,13 @@ namespace MyShop.App.ViewModels
         public DiscountsViewModel(
             IDiscountRepository discountRepository,
             IAuthService authService,
-            IAuthorizationService authorizationService)
+            IAuthorizationService authorizationService,
+            ILicenseService licenseService)
         {
             _discountRepository = discountRepository;
             _authService = authService;
             _authorizationService = authorizationService;
+            _licenseService = licenseService;
             _ = LoadDiscountsFromBackendAsync();
         }
 
@@ -110,6 +113,12 @@ namespace MyShop.App.ViewModels
                  return;
              }
 
+             if (!_licenseService.IsFeatureAllowed("ManageDiscounts"))
+             {
+                 ErrorMessage = "License restriction: Cannot create discounts.";
+                 return;
+             }
+
              try
              {
                  IsLoading = true;
@@ -135,6 +144,12 @@ namespace MyShop.App.ViewModels
         {
              if (discount == null) return;
              if (!IsAdmin) return; // Only admin can update discounts
+
+             if (!_licenseService.IsFeatureAllowed("ManageDiscounts"))
+             {
+                 ErrorMessage = "License restriction: Cannot update discounts.";
+                 return;
+             }
 
              try
              {

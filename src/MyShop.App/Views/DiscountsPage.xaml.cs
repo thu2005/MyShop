@@ -4,6 +4,8 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using MyShop.App.ViewModels;
 using MyShop.Core.Models;
+using Microsoft.Extensions.DependencyInjection;
+using MyShop.Core.Interfaces.Services;
 
 namespace MyShop.App.Views
 {
@@ -25,6 +27,17 @@ namespace MyShop.App.Views
         private async void NewDiscountButton_Click(object sender, RoutedEventArgs e)
         {
             if (!ViewModel.IsAdmin) return;
+
+            var licenseService = App.Current.Services.GetRequiredService<ILicenseService>();
+            if (!licenseService.IsFeatureAllowed("ManageDiscounts"))
+            {
+                var shell = ShellPage.Instance;
+                if (shell != null)
+                {
+                    await shell.ShowTrialExpiredDialog("Create Discount");
+                }
+                return;
+            }
 
             var stackPanel = new StackPanel { Spacing = 16, Width = 450 };
 
@@ -366,6 +379,17 @@ namespace MyShop.App.Views
         private async void EditDiscount_Click(object sender, RoutedEventArgs e)
         {
             if (!ViewModel.IsAdmin) return;
+
+            var licenseService = App.Current.Services.GetRequiredService<ILicenseService>();
+            if (!licenseService.IsFeatureAllowed("ManageDiscounts"))
+            {
+                var shell = ShellPage.Instance;
+                if (shell != null)
+                {
+                    await shell.ShowTrialExpiredDialog("Edit Discount");
+                }
+                return;
+            }
 
             if (sender is MenuFlyoutItem menuItem && menuItem.Tag is SelectableDiscount wrapper)
             {

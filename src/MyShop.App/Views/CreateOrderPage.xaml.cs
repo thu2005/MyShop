@@ -161,6 +161,7 @@ namespace MyShop.App.Views
             }
         }
 
+
         private async void OnAddProductClick(object sender, RoutedEventArgs e)
         {
             // Check license before allowing order modification (adding products)
@@ -1111,13 +1112,5 @@ namespace MyShop.App.Views
             return subtotal - discount;
         }
 
-        private async System.Threading.Tasks.Task ShowTrialExpiredDialog(string featureName)
-        {
-            var shell = ShellPage.Instance;
-            if (shell != null)
-            {
-                await shell.ShowTrialExpiredDialog(featureName);
-            }
-        }
     }
 }

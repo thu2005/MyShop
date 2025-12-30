@@ -140,6 +140,7 @@ namespace MyShop.App.ViewModels
         public bool CanCreateOrder => _licenseService.IsFeatureAllowed("CreateOrder");
         public bool CanAddProduct => _licenseService.IsFeatureAllowed("AddProduct");
         public bool CanEditProduct => _licenseService.IsFeatureAllowed("EditProduct");
+        public bool CanManageDiscounts => _licenseService.IsFeatureAllowed("ManageDiscounts");
 
         public void InitializeLicense()
         {
@@ -153,6 +154,7 @@ namespace MyShop.App.ViewModels
             OnPropertyChanged(nameof(CanCreateOrder));
             OnPropertyChanged(nameof(CanAddProduct));
             OnPropertyChanged(nameof(CanEditProduct));
+            OnPropertyChanged(nameof(CanManageDiscounts));
         }
 
         public Core.Models.LicenseStatus GetLicenseStatus() => _licenseService.GetLicenseStatus();
