@@ -141,9 +141,20 @@ namespace MyShop.App.ViewModels
                 IsBusy = true;
                 ErrorMessage = null;
 
-                var orders = await _orderRepository.GetAllAsync();
+                // Load orders and total count from server
+                var ordersTask = _orderRepository.GetAllAsync();
+                var countTask = _orderRepository.CountAsync();
+                
+                await Task.WhenAll(ordersTask, countTask);
+                
+                var orders = await ordersTask;
+                var totalCount = await countTask;
+
                 _allOrders.Clear();
                 _allOrders.AddRange(orders.OrderByDescending(o => o.CreatedAt));
+
+                // Set total from server, not from local list
+                TotalOrders = totalCount;
 
                 // Apply current filters if any
                 if (SelectedStatus.HasValue || SelectedPriceFilter != PriceFilter.All || StartDate.HasValue || EndDate.HasValue)
@@ -284,7 +295,7 @@ namespace MyShop.App.ViewModels
 
         private void UpdatePagination()
         {
-            TotalOrders = _allOrders.Count;
+            // TotalOrders is set from server in LoadOrdersAsync, don't override it here
             TotalPages = (int)Math.Ceiling((double)TotalOrders / PageSize);
 
             if (TotalPages == 0) TotalPages = 1;
@@ -352,8 +363,9 @@ namespace MyShop.App.ViewModels
                 ErrorMessage = null;
 
                 var created = await _orderRepository.AddAsync(newOrder);
-                _allOrders.Insert(0, created);
-                UpdatePagination();
+                
+                // Reload orders to update total count and list
+                await LoadOrdersAsync();
 
                 return created;
             }
@@ -378,13 +390,9 @@ namespace MyShop.App.ViewModels
 
                 await _orderRepository.UpdateAsync(updatedOrder);
 
-                var index = _allOrders.FindIndex(o => o.Id == updatedOrder.Id);
-                if (index >= 0)
-                {
-                    _allOrders[index] = updatedOrder;
-                }
-
-                UpdatePagination();
+                // Reload orders to ensure list is up-to-date
+                await LoadOrdersAsync();
+                
                 return true;
             }
             catch (Exception ex)

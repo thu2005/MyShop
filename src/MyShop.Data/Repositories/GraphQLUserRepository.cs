@@ -131,6 +131,19 @@ namespace MyShop.Data.Repositories
 
         public override async Task UpdateAsync(User entity)
         {
+            var updateInput = new System.Collections.Generic.Dictionary<string, object?>
+            {
+                { "username", entity.Username },
+                { "email", entity.Email },
+                { "role", entity.Role.ToString().ToUpper() },
+                { "isActive", entity.IsActive }
+            };
+
+            if (!string.IsNullOrWhiteSpace(entity.PasswordHash))
+            {
+                updateInput.Add("password", entity.PasswordHash);
+            }
+
             var request = new GraphQLRequest
             {
                 Query = @"
@@ -146,13 +159,7 @@ namespace MyShop.Data.Repositories
                 Variables = new
                 {
                     id = entity.Id,
-                    input = new
-                    {
-                        username = entity.Username,
-                        email = entity.Email,
-                        role = entity.Role.ToString().ToUpper(),
-                        isActive = entity.IsActive
-                    }
+                    input = updateInput
                 }
             };
 

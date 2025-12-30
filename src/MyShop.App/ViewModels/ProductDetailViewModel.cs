@@ -76,6 +76,7 @@ namespace MyShop.App.ViewModels
         public User? CurrentUser => _authService.CurrentUser;
         public UserRole UserRole => CurrentUser?.Role ?? UserRole.STAFF;
         public bool IsAdmin => _authorizationService.IsAuthorized(UserRole.ADMIN);
+        public bool IsStaff => !IsAdmin;
 
         public ProductDetailViewModel(
             IProductRepository productRepository, 

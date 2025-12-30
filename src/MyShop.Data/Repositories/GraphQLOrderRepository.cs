@@ -53,6 +53,11 @@ namespace MyShop.Data.Repositories
                                 id
                                 code
                                 name
+                                value
+                                type
+                                maxDiscount
+                                minPurchase
+                                isActive
                             }
                             orderItems {
                                 id
@@ -90,7 +95,8 @@ namespace MyShop.Data.Repositories
             {
                 Query = @"
                     query GetOrders {
-                        orders(pagination: { pageSize: 100 }) {
+                        orders(pagination: { pageSize: 10000 }) {
+                            total
                             orders {
                                 id
                                 orderNumber
@@ -298,6 +304,7 @@ namespace MyShop.Data.Repositories
                     input = new
                     {
                         customerId = entity.CustomerId,
+                        status = entity.Status.ToString(), // Add status
                         items = entity.OrderItems?.Select(item => new
                         {
                             productId = item.ProductId,

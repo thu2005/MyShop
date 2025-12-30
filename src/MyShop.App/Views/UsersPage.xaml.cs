@@ -117,6 +117,9 @@ namespace MyShop.App.Views
             };
 
             var emailBox = new TextBox { Header = "Email", Text = user.Email ?? "", Margin = new Thickness(0, 0, 0, 8), IsSpellCheckEnabled = false };
+            var passwordBox = new PasswordBox { Header = "New Password (leave blank to keep current)", Margin = new Thickness(0, 0, 0, 8) };
+            var confirmPasswordBox = new PasswordBox { Header = "Confirm New Password", Margin = new Thickness(0, 0, 0, 8) };
+            
             var errorText = new TextBlock 
             { 
                 Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red),
@@ -135,6 +138,8 @@ namespace MyShop.App.Views
 
             var stack = new StackPanel();
             stack.Children.Add(emailBox);
+            stack.Children.Add(passwordBox);
+            stack.Children.Add(confirmPasswordBox);
             stack.Children.Add(activeToggle);
             stack.Children.Add(errorText);
             dialog.Content = stack;
@@ -144,9 +149,17 @@ namespace MyShop.App.Views
                 if (args.Result == ContentDialogResult.Primary)
                 {
                     string email = emailBox.Text.Trim();
+                    string password = passwordBox.Password;
+                    string confirmPassword = confirmPasswordBox.Password;
                     string? error = null;
+
                     if (string.IsNullOrWhiteSpace(email)) error = "Email is required.";
                     else if (!System.Text.RegularExpressions.Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$")) error = "Invalid email format.";
+                    else if (!string.IsNullOrEmpty(password))
+                    {
+                        if (password.Length < 6) error = "New password must be at least 6 characters long.";
+                        else if (password != confirmPassword) error = "Passwords do not match.";
+                    }
 
                     if (error != null)
                     {
@@ -163,10 +176,20 @@ namespace MyShop.App.Views
             {
                 user.Email = emailBox.Text.Trim();
                 user.IsActive = activeToggle.IsOn;
+                
+                if (!string.IsNullOrEmpty(passwordBox.Password))
+                {
+                    user.PasswordHash = passwordBox.Password;
+                }
+                else
+                {
+                    user.PasswordHash = string.Empty; // Repository handles this by not sending it if empty
+                }
 
                 await ViewModel.UpdateUserAsync(user);
             }
         }
+
         private async void DeleteUser_Click(object sender, RoutedEventArgs e)
         {
             var user = ((FrameworkElement)sender).Tag as User;
@@ -188,6 +211,19 @@ namespace MyShop.App.Views
             {
                 await ViewModel.DeleteUserAsync(user);
             }
+        }
+
+        private void StaffSearchBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+        {
+            if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput)
+            {
+                ViewModel.SearchUsers(sender.Text);
+            }
+        }
+
+        private void StaffSearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
+        {
+            ViewModel.SearchUsers(sender.Text);
         }
     }
 }

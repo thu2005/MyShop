@@ -32,8 +32,15 @@ namespace MyShop.Data.Repositories
                             value
                             maxDiscount
                             minPurchase
+                            buyQuantity
+                            getQuantity
                             startDate
                             endDate
+                            usageLimit
+                            usageCount
+                            applicableToAll
+                            memberOnly
+                            wholesaleMinQty
                             isActive
                             createdAt
                             updatedAt
@@ -62,8 +69,15 @@ namespace MyShop.Data.Repositories
                                 value
                                 maxDiscount
                                 minPurchase
+                                buyQuantity
+                                getQuantity
                                 startDate
                                 endDate
+                                usageLimit
+                                usageCount
+                                applicableToAll
+                                memberOnly
+                                wholesaleMinQty
                                 isActive
                             }
                         }
@@ -95,8 +109,15 @@ namespace MyShop.Data.Repositories
                             value
                             maxDiscount
                             minPurchase
+                            buyQuantity
+                            getQuantity
                             startDate
                             endDate
+                            usageLimit
+                            usageCount
+                            applicableToAll
+                            memberOnly
+                            wholesaleMinQty
                             isActive
                         }
                     }"
@@ -121,8 +142,15 @@ namespace MyShop.Data.Repositories
                             value
                             maxDiscount
                             minPurchase
+                            buyQuantity
+                            getQuantity
                             startDate
                             endDate
+                            usageLimit
+                            usageCount
+                            applicableToAll
+                            memberOnly
+                            wholesaleMinQty
                             isActive
                         }
                     }",
@@ -138,7 +166,7 @@ namespace MyShop.Data.Repositories
             var request = new GraphQLRequest
             {
                 Query = @"
-                    mutation CreateDiscount($input: DiscountInput!) {
+                    mutation CreateDiscount($input: CreateDiscountInput!) {
                         createDiscount(input: $input) {
                             id
                             code
@@ -159,14 +187,21 @@ namespace MyShop.Data.Repositories
                     input = new
                     {
                         code = entity.Code,
+                        name = entity.Name,
                         description = entity.Description,
                         type = entity.Type.ToString(),
                         value = entity.Value,
                         maxDiscount = entity.MaxDiscount,
                         minPurchase = entity.MinPurchase,
+                        buyQuantity = entity.BuyQuantity,
+                        getQuantity = entity.GetQuantity,
                         startDate = entity.StartDate,
                         endDate = entity.EndDate,
-                        isActive = entity.IsActive
+                        usageLimit = entity.UsageLimit,
+                        applicableToAll = entity.ApplicableToAll,
+                        memberOnly = entity.MemberOnly,
+                        wholesaleMinQty = entity.WholesaleMinQty
+                        // Note: isActive is not in CreateDiscountInput, it's managed by backend
                     }
                 }
             };
@@ -180,7 +215,7 @@ namespace MyShop.Data.Repositories
             var request = new GraphQLRequest
             {
                 Query = @"
-                    mutation UpdateDiscount($id: Int!, $input: DiscountInput!) {
+                    mutation UpdateDiscount($id: Int!, $input: UpdateDiscountInput!) {
                         updateDiscount(id: $id, input: $input) {
                             id
                         }
@@ -191,14 +226,21 @@ namespace MyShop.Data.Repositories
                     input = new
                     {
                         code = entity.Code,
+                        name = entity.Name,
                         description = entity.Description,
                         type = entity.Type.ToString(),
                         value = entity.Value,
                         maxDiscount = entity.MaxDiscount,
                         minPurchase = entity.MinPurchase,
+                        buyQuantity = entity.BuyQuantity,
+                        getQuantity = entity.GetQuantity,
                         startDate = entity.StartDate,
                         endDate = entity.EndDate,
-                        isActive = entity.IsActive
+                        usageLimit = entity.UsageLimit,
+                        isActive = entity.IsActive,
+                        applicableToAll = entity.ApplicableToAll,
+                        memberOnly = entity.MemberOnly,
+                        wholesaleMinQty = entity.WholesaleMinQty
                     }
                 }
             };

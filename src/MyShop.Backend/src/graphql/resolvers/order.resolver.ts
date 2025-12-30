@@ -246,13 +246,14 @@ export const orderResolvers = {
             orderNumber,
             customerId: input.customerId || null,
             userId: context.user!.id,
-            status: 'PENDING',
+            status: input.status || 'PENDING',
             subtotal,
             discountId,
             discountAmount,
             taxAmount,
             total,
             notes: input.notes || null,
+            completedAt: input.status === 'COMPLETED' ? new Date() : null,
             orderItems: {
               create: orderItemsData,
             },
@@ -304,6 +305,24 @@ export const orderResolvers = {
               totalSpent: {
                 increment: total,
               },
+            },
+          });
+        }
+
+        // Create commission if order is completed
+        if (input.status === 'COMPLETED') {
+          const orderTotalNumber = Number(total);
+          const commissionRate = orderTotalNumber >= 1000 ? 0.05 : 0.03;
+          const commissionAmount = orderTotalNumber * commissionRate;
+
+          await tx.commission.create({
+            data: {
+              userId: context.user!.id,
+              orderId: newOrder.id,
+              orderTotal: orderTotalNumber,
+              commissionRate,
+              commissionAmount,
+              isPaid: true, // POS app: completed = payment received
             },
           });
         }
@@ -409,8 +428,11 @@ export const orderResolvers = {
               where: { id: itemToDelete.id },
             });
           }
+        }
 
-          // Recalculate order totals
+        // Recalculate totals if items or discount changed
+        if ((input.items && Array.isArray(input.items)) || input.discountId !== undefined) {
+          // Calculate subtotal from DB items (safest source of truth)
           const updatedItems = await tx.orderItem.findMany({
             where: { orderId: id },
           });
@@ -429,16 +451,17 @@ export const orderResolvers = {
             if (discount && discount.isActive) {
               if (discount.type === 'PERCENTAGE') {
                 discountAmount = subtotal.mul(discount.value).div(100);
-                if (discount.maxDiscount && discountAmount.greaterThan(discount.maxDiscount)) {
+                if (discount.maxDiscount && discountAmount.gt(discount.maxDiscount)) {
                   discountAmount = discount.maxDiscount;
                 }
-              } else {
+              } else if (discount.type === 'FIXED_AMOUNT') {
                 discountAmount = discount.value;
               }
             }
           }
 
-          const total = subtotal.sub(discountAmount);
+          const taxAmount = existingOrder.taxAmount ? new Prisma.Decimal(existingOrder.taxAmount) : new Prisma.Decimal(0);
+          const total = subtotal.sub(discountAmount).add(taxAmount);
 
           updateData.subtotal = subtotal;
           updateData.discountAmount = discountAmount;
@@ -460,6 +483,73 @@ export const orderResolvers = {
             },
           },
         });
+
+        // Create commission when order is completed
+        if (input.status === 'COMPLETED' && existingOrder.status !== 'COMPLETED') {
+          // Check if commission already exists
+          const existingCommission = await tx.commission.findUnique({
+            where: { orderId: id },
+          });
+
+          if (!existingCommission) {
+            const orderTotalNumber = Number(updatedOrder.total);
+            const commissionRate = orderTotalNumber >= 1000 ? 0.05 : 0.03;
+            const commissionAmount = orderTotalNumber * commissionRate;
+
+            await tx.commission.create({
+              data: {
+                userId: updatedOrder.userId,
+                orderId: updatedOrder.id,
+                orderTotal: orderTotalNumber,
+                commissionRate,
+                commissionAmount,
+                isPaid: true,
+              },
+            });
+          }
+        }
+
+        // Restore stock when order is cancelled
+        if (input.status === 'CANCELLED' && existingOrder.status !== 'CANCELLED') {
+          // Restore product stock
+          for (const item of existingOrder.orderItems) {
+            await tx.product.update({
+              where: { id: item.productId },
+              data: {
+                stock: {
+                  increment: item.quantity,
+                },
+                popularity: {
+                  decrement: item.quantity,
+                },
+              },
+            });
+          }
+
+          // Restore discount usage count
+          if (existingOrder.discountId) {
+            await tx.discount.update({
+              where: { id: existingOrder.discountId },
+              data: {
+                usageCount: {
+                  decrement: 1,
+                },
+              },
+            });
+          }
+
+          // Update customer total spent
+          if (existingOrder.customerId) {
+            await tx.customer.update({
+              where: { id: existingOrder.customerId },
+              data: {
+                totalSpent: {
+                  decrement: existingOrder.total,
+                },
+              },
+            });
+          }
+        }
 
         return updatedOrder;
       });

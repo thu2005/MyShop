@@ -8,7 +8,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    Background="#F5F7FA">
 
     <Page.Resources>
         <converters:CurrencyConverter x:Key="CurrencyConverter" />
@@ -18,10 +18,10 @@
     </Page.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" VerticalScrollMode="Enabled">
-        <StackPanel Padding="32" Background="#F8F9FC" Spacing="18">
+        <StackPanel Padding="24" Background="#F8F9FC" Spacing="24">
             <!-- Header -->
             <StackPanel>
-                <TextBlock Text="Product Details" FontSize="32" FontWeight="Bold" Foreground="#0C2B4E"/>
+                <TextBlock Text="Product Details" FontSize="30" FontWeight="Bold" Foreground="#0C2B4E"/>
                 <TextBlock FontSize="14" 
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                     Margin="0,4,0,0">
@@ -97,23 +97,31 @@
                             </StackPanel>
                         </Grid>
 
-                        <!-- Regular Price & Sale Price -->
+                        <!-- Cost Price & Sale Price -->
                         <Grid ColumnSpacing="16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- Regular Price (CostPrice) -->
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="Regular Price" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,8"/>
+                            <!-- Cost Price (Admin Only) -->
+                            <StackPanel Grid.Column="0" Visibility="{x:Bind ViewModel.IsAdmin, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <TextBlock Text="Cost Price" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,8"/>
                                 <TextBox Text="{x:Bind ViewModel.EditCostPriceText, Mode=TwoWay}" 
                                          IsEnabled="{x:Bind ViewModel.IsEditMode, Mode=OneWay}"
                                          Background="White" BorderBrush="#E5E7EB" BorderThickness="1" Padding="12" CornerRadius="6"/>
                             </StackPanel>
 
-                            <!-- Sale Price (Price) -->
-                            <StackPanel Grid.Column="1">
+                            <!-- Sale Price (Half Width) - Admin Only -->
+                            <StackPanel Grid.Column="1" Visibility="{x:Bind ViewModel.IsAdmin, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <TextBlock Text="Sale Price" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,8"/>
+                                <TextBox Text="{x:Bind ViewModel.EditPriceText, Mode=TwoWay}" 
+                                         IsEnabled="{x:Bind ViewModel.IsEditMode, Mode=OneWay}"
+                                         Background="White" BorderBrush="#E5E7EB" BorderThickness="1" Padding="12" CornerRadius="6"/>
+                            </StackPanel>
+                            
+                            <!-- Sale Price (Full Width) - Staff Only -->
+                            <StackPanel Grid.Column="0" Grid.ColumnSpan="2" Visibility="{x:Bind ViewModel.IsStaff, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <TextBlock Text="Sale Price" FontWeight="SemiBold" FontSize="14" Margin="0,0,0,8"/>
                                 <TextBox Text="{x:Bind ViewModel.EditPriceText, Mode=TwoWay}" 
                                          IsEnabled="{x:Bind ViewModel.IsEditMode, Mode=OneWay}"

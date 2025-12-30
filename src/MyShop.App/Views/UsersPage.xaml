@@ -27,16 +27,27 @@
             </Grid.ColumnDefinitions>
             
             <StackPanel>
-                <TextBlock Text="Staff Management" FontSize="24" FontWeight="Bold" Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                <TextBlock Text="Staff Management" FontSize="30" FontWeight="Bold" Foreground="#0C2B4E"/>
                 <TextBlock Text="Home > Staff Management" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,4,0,0"/>
             </StackPanel>
 
-            <Button Grid.Column="1" Background="#003F62" Foreground="White" Padding="16,8" CornerRadius="4" Click="AddStaff_Click">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <SymbolIcon Symbol="AddFriend"/>
-                    <TextBlock Text="ADD NEW STAFF"/>
-                </StackPanel>
-            </Button>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16">
+                <AutoSuggestBox x:Name="StaffSearchBox" 
+                                Width="300" 
+                                PlaceholderText="Search staff by username..." 
+                                QueryIcon="Find"
+                                TextChanged="StaffSearchBox_TextChanged"
+                                QuerySubmitted="StaffSearchBox_QuerySubmitted"
+                                VerticalAlignment="Center"
+                                CornerRadius="4"/>
+                
+                <Button Background="#003F62" Foreground="White" Padding="16,8" CornerRadius="4" Click="AddStaff_Click">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <SymbolIcon Symbol="AddFriend"/>
+                        <TextBlock Text="ADD NEW STAFF"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
         </Grid>
 
         <!-- List Container -->

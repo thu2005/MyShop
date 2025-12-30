@@ -1,12 +1,15 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using Microsoft.Extensions.DependencyInjection;
 using MyShop.App.ViewModels;
+using MyShop.App.Services;
+using MyShop.App.Models;
 using MyShop.Core.Interfaces.Repositories;
 using MyShop.Core.Interfaces.Services;
 using MyShop.Core.Models;
@@ -24,9 +27,14 @@ namespace MyShop.App.Views
 
     public sealed partial class CreateOrderPage : Page
     {
+        private const string DRAFT_KEY = "CreateOrder_Draft";
+        private const int AUTO_SAVE_DELAY_MS = 2000;
+        
         private OrderViewModel _viewModel;
         private readonly ICustomerRepository _customerRepository;
         private readonly IDiscountRepository _discountRepository;
+        private readonly ISessionManager _sessionManager;
+        private readonly IDraftService _draftService;
         private readonly ObservableCollection<OrderItem> _orderItems;
         private ObservableCollection<Product> _availableProducts;
         private ObservableCollection<Customer> _customers;
@@ -37,19 +45,34 @@ namespace MyShop.App.Views
         private int? _editingOrderId;
         private DateTime _originalCreatedAt;
         private string _originalOrderNumber;
+        
+        private CancellationTokenSource _autoSaveCts;
+        private bool _isLoadingDraft = false;
 
         public CreateOrderPage()
         {
             this.InitializeComponent();
             _customerRepository = App.Current.GetService<ICustomerRepository>();
             _discountRepository = App.Current.GetService<IDiscountRepository>();
+            _sessionManager = App.Current.GetService<ISessionManager>();
+            _draftService = App.Current.GetService<IDraftService>();
             _orderItems = new ObservableCollection<OrderItem>();
             _availableProducts = new ObservableCollection<Product>();
             _customers = new ObservableCollection<Customer>();
             _discounts = new ObservableCollection<Discount>();
 
             OrderItemsList.ItemsSource = _orderItems;
-            _orderItems.CollectionChanged += (s, e) => UpdateTotals();
+            _orderItems.CollectionChanged += (s, e) =>
+            {
+                UpdateTotals();
+                if (!_isLoadingDraft) OnFieldChanged(s, e);
+            };
+            
+            // Hide commission for Admin
+            SetCommissionVisibility();
+            
+            // Attach auto-save events
+            AttachAutosaveEvents();
         }
 
         protected override async void OnNavigatedTo(NavigationEventArgs e)
@@ -80,14 +103,19 @@ namespace MyShop.App.Views
 
             if (orderId.HasValue)
             {
-               await LoadOrderForView(orderId.Value);
-               
                if (isEditMode)
                {
                    _editingOrderId = orderId.Value;
                    PageTitleText.Text = "Edit Order";
                    SaveButton.Content = new TextBlock { Text = "Update Order", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold };
                }
+
+               await LoadOrderForView(orderId.Value);
+            }
+            else
+            {
+                // Load draft only when creating new order (not editing)
+                await LoadDraft();
             }
             
             if (isReadOnly)
@@ -262,11 +290,12 @@ namespace MyShop.App.Views
                     var totalTextBlock = grid.Children.OfType<TextBlock>().FirstOrDefault(t => Grid.GetColumn(t) == 4);
                     if (totalTextBlock != null)
                     {
-                        totalTextBlock.Text = $"{item.Total:N0} ₫";
+                        totalTextBlock.Text = $"${item.Total:N2}";
                     }
                 }
                 
                 UpdateTotals();
+                if (!_isLoadingDraft) OnFieldChanged(sender, args);
             }
         }
 
@@ -291,10 +320,63 @@ namespace MyShop.App.Views
                 MaxHeight = 400
             };
 
-            listView.ItemClick += (s, args) =>
+            listView.ItemClick += async (s, args) =>
             {
                 if (args.ClickedItem is Discount selected)
                 {
+                    // Check if discount is member-only and customer is not a member
+                    if (selected.MemberOnly && (_selectedCustomer == null || !_selectedCustomer.IsMember))
+                    {
+                        dialog.Hide();
+
+                        var warningDialog = new ContentDialog
+                        {
+                            XamlRoot = this.XamlRoot,
+                            Title = "Member Only Discount",
+                            Content = "This discount is only available for members. Please select a member customer first.",
+                            CloseButtonText = "OK"
+                        };
+                        await warningDialog.ShowAsync();
+                        return;
+                    }
+
+                    // Check minimum purchase requirement
+                    decimal currentSubtotal = _orderItems.Sum(i => i.Total);
+                    if (selected.MinPurchase.HasValue && currentSubtotal < selected.MinPurchase.Value)
+                    {
+                        dialog.Hide();
+
+                        var warningDialog = new ContentDialog
+                        {
+                            XamlRoot = this.XamlRoot,
+                            Title = "Minimum Purchase Required",
+                            Content = $"This discount requires a minimum purchase of {selected.MinPurchase.Value:N0} ₫.\nYour current subtotal is {currentSubtotal:N0} ₫.",
+                            CloseButtonText = "OK"
+                        };
+                        await warningDialog.ShowAsync();
+                        return;
+                    }
+
+                    // Check wholesale minimum quantity
+                    if (selected.Type == DiscountType.WHOLESALE_DISCOUNT && selected.WholesaleMinQty.HasValue)
+                    {
+                        int totalQuantity = _orderItems.Sum(i => i.Quantity);
+                        if (totalQuantity < selected.WholesaleMinQty.Value)
+                        {
+                            dialog.Hide();
+
+                            var warningDialog = new ContentDialog
+                            {
+                                XamlRoot = this.XamlRoot,
+                                Title = "Minimum Quantity Required",
+                                Content = $"This wholesale discount requires a minimum quantity of {selected.WholesaleMinQty.Value} items.\nYour current total quantity is {totalQuantity}.",
+                                CloseButtonText = "OK"
+                            };
+                            await warningDialog.ShowAsync();
+                            return;
+                        }
+                    }
+
                     _selectedDiscount = selected;
                     dialog.Hide();
                     UpdateDiscountUI();
@@ -342,26 +424,70 @@ namespace MyShop.App.Views
 
             if (_selectedDiscount != null)
             {
-                if (_selectedDiscount.Type == DiscountType.PERCENTAGE)
+                // Debug log
+                System.Diagnostics.Debug.WriteLine($"Discount: {_selectedDiscount.Name}, Type: {_selectedDiscount.Type}, Value: {_selectedDiscount.Value}, Subtotal: {subtotal}");
+
+                // Check minimum purchase requirement
+                bool meetsMinPurchase = !_selectedDiscount.MinPurchase.HasValue || subtotal >= _selectedDiscount.MinPurchase.Value;
+
+                if (meetsMinPurchase)
                 {
-                    discountAmount = subtotal * (_selectedDiscount.Value / 100);
-                    if (_selectedDiscount.MaxDiscount.HasValue && discountAmount > _selectedDiscount.MaxDiscount.Value)
+                    switch (_selectedDiscount.Type)
                     {
-                        discountAmount = _selectedDiscount.MaxDiscount.Value;
+                        case DiscountType.PERCENTAGE:
+                        case DiscountType.MEMBER_DISCOUNT:
+                            // Value is stored as percentage (e.g., 30 for 30%)
+                            discountAmount = subtotal * _selectedDiscount.Value / 100m;
+                            System.Diagnostics.Debug.WriteLine($"PERCENTAGE: {subtotal} * {_selectedDiscount.Value} / 100 = {discountAmount}");
+                            // Apply max discount cap if specified
+                            if (_selectedDiscount.MaxDiscount.HasValue && discountAmount > _selectedDiscount.MaxDiscount.Value)
+                            {
+                                discountAmount = _selectedDiscount.MaxDiscount.Value;
+                            }
+                            break;
+
+                        case DiscountType.FIXED_AMOUNT:
+                            discountAmount = _selectedDiscount.Value;
+                            break;
+
+                        case DiscountType.WHOLESALE_DISCOUNT:
+                            // Check if total quantity meets wholesale minimum
+                            int totalQuantity = _orderItems.Sum(i => i.Quantity);
+                            if (_selectedDiscount.WholesaleMinQty.HasValue && totalQuantity >= _selectedDiscount.WholesaleMinQty.Value)
+                            {
+                                // Value is stored as percentage (e.g., 30 for 30%)
+                                discountAmount = subtotal * _selectedDiscount.Value / 100m;
+                                if (_selectedDiscount.MaxDiscount.HasValue && discountAmount > _selectedDiscount.MaxDiscount.Value)
+                                {
+                                    discountAmount = _selectedDiscount.MaxDiscount.Value;
+                                }
+                            }
+                            break;
+
+                        case DiscountType.BUY_X_GET_Y:
+                            // This type needs product-level calculation, for now apply fixed value
+                            // TODO: Implement proper Buy X Get Y logic at product level
+                            discountAmount = _selectedDiscount.Value;
+                            break;
                     }
-                }
-                else if (_selectedDiscount.Type == DiscountType.FIXED_AMOUNT)
-                {
-                    discountAmount = _selectedDiscount.Value;
                 }
             }
 
             decimal total = subtotal - discountAmount;
             if (total < 0) total = 0;
 
-            SubtotalText.Text = $"{subtotal:N0} ₫";
-            DiscountAmountText.Text = $"-{discountAmount:N0} ₫";
-            TotalAmountText.Text = $"{total:N0} ₫";
+            // Calculate commission based on subtotal (real value of goods sold)
+            // 5% for orders >= $1000, 3% otherwise
+            decimal commissionRate = subtotal >= 1000 ? 0.05m : 0.03m;
+            decimal commissionAmount = subtotal * commissionRate;
+
+            SubtotalText.Text = $"${subtotal:N2}";
+            DiscountAmountText.Text = $"-${discountAmount:N2}";
+            TotalAmountText.Text = $"${total:N2}";
+            
+            // Update commission display
+            CommissionRateText.Text = $"({commissionRate * 100:N0}%)";
+            CommissionAmountText.Text = $"${commissionAmount:N2}";
         }
 
         private void OnClearCustomerClick(object sender, RoutedEventArgs e)
@@ -515,27 +641,49 @@ namespace MyShop.App.Views
                 return;
             }
 
-            var selectedStatus = MyShop.Core.Models.OrderStatus.PENDING;
-            if (StatusComboBox.SelectedItem is ComboBoxItem item && item.Tag is string tag)
+            // Validate member-only discount
+            if (_selectedDiscount != null && _selectedDiscount.MemberOnly)
             {
-                if (Enum.TryParse<MyShop.Core.Models.OrderStatus>(tag, out var parsed))
+                if (_selectedCustomer == null || !_selectedCustomer.IsMember)
                 {
-                    selectedStatus = parsed;
+                    var errorDialog = new ContentDialog
+                    {
+                        Title = "Validation Error",
+                        Content = "The selected discount is only available for members. Please select a member customer or remove the discount.",
+                        CloseButtonText = "OK",
+                        XamlRoot = this.XamlRoot
+                    };
+                    await errorDialog.ShowAsync();
+                    return;
                 }
             }
 
             var newOrder = new Order
             {
                 Id = _editingOrderId ?? 0,
+                UserId = _sessionManager.CurrentUser?.Id ?? 0, // Track who created the order for KPI
                 CustomerId = _selectedCustomer?.Id,
                 DiscountId = _selectedDiscount?.Id,
                 Notes = NotesTextBox.Text,
-                Status = selectedStatus,
                 OrderItems = _orderItems.ToList(),
                 CreatedAt = _editingOrderId.HasValue ? _originalCreatedAt : DateTime.Now,
                 UpdatedAt = DateTime.Now,
                 OrderNumber = _editingOrderId.HasValue ? _originalOrderNumber : "ORD-" + DateTime.Now.Ticks.ToString().Substring(10)
             };
+
+            // Only set status when editing (for UpdateOrder mutation)
+            if (_editingOrderId.HasValue)
+            {
+                var selectedStatus = MyShop.Core.Models.OrderStatus.PENDING;
+                if (StatusComboBox.SelectedItem is ComboBoxItem item && item.Tag is string tag)
+                {
+                    if (Enum.TryParse<MyShop.Core.Models.OrderStatus>(tag, out var parsed))
+                    {
+                        selectedStatus = parsed;
+                    }
+                }
+                newOrder.Status = selectedStatus;
+            }
 
             if (_editingOrderId.HasValue)
             {
@@ -562,6 +710,7 @@ namespace MyShop.App.Views
 
                 if (createdOrder != null)
                 {
+                    ClearDraft(); // Clear draft after successful save
                     Frame.GoBack();
                 }
                 else
@@ -688,6 +837,7 @@ namespace MyShop.App.Views
             // Switch Item Template to ReadOnly
             OrderItemsList.ItemTemplate = this.Resources["ReadOnlyOrderItemTemplate"] as DataTemplate;
         }
+
         private async Task ShowTrialExpiredDialog(string featureName)
         {
             var shell = ShellPage.Instance;
@@ -696,5 +846,169 @@ namespace MyShop.App.Views
                 await shell.ShowTrialExpiredDialog(featureName);
             }
         }
+
+        private void SetCommissionVisibility()
+        {
+            // Hide commission for Admin, show only for Staff
+            var isStaff = _sessionManager.CurrentUser?.Role == UserRole.STAFF;
+            CommissionLabel.Visibility = isStaff ? Visibility.Visible : Visibility.Collapsed;
+            CommissionPanel.Visibility = isStaff ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        #region Auto-Save Draft
+
+        private void AttachAutosaveEvents()
+        {
+            NotesTextBox.TextChanged += OnFieldChanged;
+            StatusComboBox.SelectionChanged += (s, e) => OnFieldChanged(s, null);
+        }
+
+        private void OnFieldChanged(object sender, object e)
+        {
+            if (_editingOrderId.HasValue || _isLoadingDraft) return;
+            
+            // Cancel previous auto-save
+            _autoSaveCts?.Cancel();
+            _autoSaveCts = new CancellationTokenSource();
+
+            // Debounced auto-save
+            _ = AutoSaveDraftAsync(_autoSaveCts.Token);
+        }
+
+        private async Task AutoSaveDraftAsync(CancellationToken cancellationToken)
+        {
+            try
+            {
+                await Task.Delay(AUTO_SAVE_DELAY_MS, cancellationToken);
+
+                var draft = new OrderDraft
+                {
+                    CustomerId = _selectedCustomer?.Id,
+                    CustomerName = _selectedCustomer?.Name,
+                    DiscountId = _selectedDiscount?.Id,
+                    DiscountCode = _selectedDiscount?.Code,
+                    Notes = NotesTextBox.Text,
+                    Status = (StatusComboBox.SelectedItem as ComboBoxItem)?.Tag as string,
+                    Items = _orderItems.Select(item => new OrderItemDraft
+                    {
+                        ProductId = item.ProductId,
+                        ProductName = item.Product?.Name ?? "",
+                        ProductSku = item.Product?.Sku ?? "",
+                        Quantity = item.Quantity,
+                        UnitPrice = item.UnitPrice,
+                        Total = item.Total
+                    }).ToList(),
+                    SavedAt = DateTime.Now
+                };
+
+                _draftService.SaveDraft(DRAFT_KEY, draft);
+                System.Diagnostics.Debug.WriteLine($"💾 Draft saved at {DateTime.Now:HH:mm:ss}");
+            }
+            catch (TaskCanceledException)
+            {
+                // Ignore cancellation
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to save draft: {ex.Message}");
+            }
+        }
+
+        private async Task LoadDraft()
+        {
+            try
+            {
+                if (_editingOrderId.HasValue) return; // Don't load draft when editing
+                if (!_draftService.HasDraft(DRAFT_KEY)) return;
+
+                var draft = _draftService.GetDraft<OrderDraft>(DRAFT_KEY);
+                if (draft == null) return;
+
+                _isLoadingDraft = true;
+
+                // Restore customer
+                if (draft.CustomerId.HasValue)
+                {
+                    var customer = _customers.FirstOrDefault(c => c.Id == draft.CustomerId.Value);
+                    if (customer != null)
+                    {
+                        _selectedCustomer = customer;
+                        CustomerSuggestBox.Text = customer.Name;
+                        ClearCustomerButton.Visibility = Visibility.Visible;
+                    }
+                }
+
+                // Restore discount
+                if (draft.DiscountId.HasValue)
+                {
+                    var discount = _discounts.FirstOrDefault(d => d.Id == draft.DiscountId.Value);
+                    if (discount != null)
+                    {
+                        _selectedDiscount = discount;
+                        SelectDiscountButton.Content = $"{discount.Code} - {discount.Name}";
+                        RemoveDiscountButton.Visibility = Visibility.Visible;
+                    }
+                }
+
+                // Restore notes
+                NotesTextBox.Text = draft.Notes ?? string.Empty;
+
+                // Restore status
+                if (!string.IsNullOrEmpty(draft.Status))
+                {
+                    foreach (ComboBoxItem item in StatusComboBox.Items)
+                    {
+                        if (item.Tag as string == draft.Status)
+                        {
+                            StatusComboBox.SelectedItem = item;
+                            break;
+                        }
+                    }
+                }
+
+                // Restore order items
+                _orderItems.Clear();
+                foreach (var draftItem in draft.Items)
+                {
+                    var product = _availableProducts.FirstOrDefault(p => p.Id == draftItem.ProductId);
+                    if (product != null)
+                    {
+                        _orderItems.Add(new OrderItem
+                        {
+                            ProductId = draftItem.ProductId,
+                            Product = product,
+                            Quantity = draftItem.Quantity,
+                            UnitPrice = draftItem.UnitPrice,
+                            Subtotal = draftItem.Quantity * draftItem.UnitPrice,
+                            Total = draftItem.Total
+                        });
+                    }
+                }
+
+                _isLoadingDraft = false;
+
+                System.Diagnostics.Debug.WriteLine($"✅ Draft restored from {draft.SavedAt:g}");
+            }
+            catch (Exception ex)
+            {
+                _isLoadingDraft = false;
+                System.Diagnostics.Debug.WriteLine($"Failed to load draft: {ex.Message}");
+            }
+        }
+
+        private void ClearDraft()
+        {
+            try
+            {
+                _draftService.ClearDraft(DRAFT_KEY);
+                System.Diagnostics.Debug.WriteLine("🗑️ Draft cleared");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to clear draft: {ex.Message}");
+            }
+        }
+
+        #endregion
     }
 }

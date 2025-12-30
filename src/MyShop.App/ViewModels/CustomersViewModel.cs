@@ -50,8 +50,14 @@ namespace MyShop.App.ViewModels
         
         [ObservableProperty]
         private bool _isLoading;
-        
-        private int _pageSize = 10;
+
+        [ObservableProperty]
+        private int _pageSize = 20;
+
+        public List<int> AvailablePageSizes { get; } = new List<int> { 10, 20, 50, 100 };
+
+        public bool HasPreviousPage => CurrentPage > 1;
+        public bool HasNextPage => CurrentPage < TotalPages;
 
         public CustomersViewModel(ICustomerRepository customerRepository)
         {
@@ -88,12 +94,20 @@ namespace MyShop.App.ViewModels
 
         partial void OnFromDateChanged(DateTimeOffset? value)
         {
+            CurrentPage = 1;
             ApplyFilters();
         }
 
         partial void OnToDateChanged(DateTimeOffset? value)
         {
+            CurrentPage = 1;
             ApplyFilters();
+        }
+
+        partial void OnPageSizeChanged(int value)
+        {
+            CurrentPage = 1;
+            UpdatePagination();
         }
 
         [RelayCommand]
@@ -118,6 +132,7 @@ namespace MyShop.App.ViewModels
                  IsLoading = true;
                  var createdCustomer = await _customerRepository.AddAsync(customer);
                  _allCustomers.Insert(0, new SelectableCustomer(createdCustomer));
+                 TotalCustomers = _allCustomers.Count;
                  ApplyFilters();
              }
              catch (Exception ex)
@@ -174,6 +189,7 @@ namespace MyShop.App.ViewModels
                 if (item != null)
                 {
                     _allCustomers.Remove(item);
+                    TotalCustomers = _allCustomers.Count;
                     ApplyFilters();
                 }
             }
@@ -201,6 +217,7 @@ namespace MyShop.App.ViewModels
                     await _customerRepository.DeleteAsync(item.Customer.Id);
                     _allCustomers.Remove(item);
                 }
+                TotalCustomers = _allCustomers.Count;
                 ApplyFilters();
                 IsAllSelected = false; // Reset header checkbox
             }
@@ -214,38 +231,49 @@ namespace MyShop.App.ViewModels
             }
         }
 
-        [RelayCommand]
-        private void NextPage()
+        public void GoToNextPage()
         {
-            if (CurrentPage < TotalPages)
+            if (HasNextPage)
             {
                 CurrentPage++;
+                UpdatePagination();
             }
         }
 
-        [RelayCommand]
-        private void PrevPage()
+        public void GoToPreviousPage()
         {
-            if (CurrentPage > 1)
+            if (HasPreviousPage)
             {
                 CurrentPage--;
+                UpdatePagination();
             }
+        }
+
+        public void GoToFirstPage()
+        {
+            CurrentPage = 1;
+            UpdatePagination();
+        }
+
+        public void GoToLastPage()
+        {
+            CurrentPage = TotalPages;
+            UpdatePagination();
         }
 
         partial void OnSearchTextChanged(string value)
         {
+            CurrentPage = 1;
             ApplyFilters();
         }
 
         partial void OnSelectedFilterChanged(string value)
         {
+            CurrentPage = 1;
             ApplyFilters();
         }
 
-        partial void OnCurrentPageChanged(int value)
-        {
-            _ = LoadCustomersAsync();
-        }
+        private List<SelectableCustomer> _filteredCustomers = new();
 
         private void ApplyFilters()
         {
@@ -280,8 +308,26 @@ namespace MyShop.App.ViewModels
                 filtered = filtered.Where(c => c.Customer.CreatedAt.Date <= toDateOnly);
             }
 
-            Customers = new ObservableCollection<SelectableCustomer>(filtered);
-            TotalCustomers = Customers.Count;
+            _filteredCustomers = filtered.OrderByDescending(c => c.Customer.CreatedAt).ToList();
+            TotalCustomers = _filteredCustomers.Count;
+            UpdatePagination();
+        }
+
+        private void UpdatePagination()
+        {
+            TotalPages = (int)Math.Ceiling((double)TotalCustomers / PageSize);
+            if (TotalPages == 0) TotalPages = 1;
+            if (CurrentPage > TotalPages) CurrentPage = TotalPages;
+
+            var pagedCustomers = _filteredCustomers
+                .Skip((CurrentPage - 1) * PageSize)
+                .Take(PageSize)
+                .ToList();
+
+            Customers = new ObservableCollection<SelectableCustomer>(pagedCustomers);
+
+            OnPropertyChanged(nameof(HasPreviousPage));
+            OnPropertyChanged(nameof(HasNextPage));
         }
 
         private async Task LoadCustomersFromBackendAsync()
@@ -291,14 +337,14 @@ namespace MyShop.App.ViewModels
                 IsLoading = true;
                 var (customers, total) = await _customerRepository.GetCustomersAsync(
                     page: 1,
-                    pageSize: 100,
+                    pageSize: 10000, // Load all, paginate locally
                     searchText: null,
                     isMember: null
                 );
 
                 _allCustomers = customers.Select(c => new SelectableCustomer(c)).ToList();
+                TotalCustomers = _allCustomers.Count;
                 ApplyFilters();
-                TotalPages = 1;
             }
             catch (Exception ex)
             {

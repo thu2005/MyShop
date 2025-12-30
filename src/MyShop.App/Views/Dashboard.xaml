@@ -10,7 +10,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    Background="#F5F7FA">
 
     <Page.Resources>
         <converters:BoolToColorConverter x:Key="BoolToColorConverter"/>
@@ -35,7 +35,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Text="Dashboard" FontSize="24" FontWeight="Bold" Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                    <TextBlock Text="Dashboard" FontSize="30" FontWeight="Bold" Foreground="#0C2B4E"/>
                     <TextBlock Text="Home > Dashboard" 
                                FontSize="14" 
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -57,12 +57,12 @@
 
                 <controls:StatCard Grid.Column="0"
                                    Title="Total Products"
-                                   Value="{x:Bind ViewModel.Stats.TotalProducts, Mode=OneWay, Converter={StaticResource CurrencyConverter}}"
+                                   Value="{x:Bind ViewModel.Stats.TotalProducts, Mode=OneWay}"
                                    IconGlyph="&#xE7F8;"/>
 
                 <controls:StatCard Grid.Column="1"
                                    Title="Today Orders"
-                                   Value="{x:Bind ViewModel.Stats.TodayOrders, Mode=OneWay, Converter={StaticResource CurrencyConverter}}"
+                                   Value="{x:Bind ViewModel.Stats.TodayOrders, Mode=OneWay}"
                                    IconGlyph="&#xE7BF;"/>
 
                 <controls:StatCard Grid.Column="2"
@@ -204,7 +204,11 @@
                     </Grid>
 
                     <!-- Items -->
-                    <ListView Grid.Row="2" ItemsSource="{x:Bind ViewModel.RecentOrders, Mode=OneWay}" SelectionMode="None">
+                    <ListView Grid.Row="2" 
+                              ItemsSource="{x:Bind ViewModel.RecentOrders, Mode=OneWay}" 
+                              SelectionMode="None"
+                              IsItemClickEnabled="True"
+                              ItemClick="OnRecentOrderClick">
                         <ListView.ItemContainerStyle>
                             <Style TargetType="ListViewItem">
                                 <Setter Property="HorizontalContentAlignment" Value="Stretch"/>

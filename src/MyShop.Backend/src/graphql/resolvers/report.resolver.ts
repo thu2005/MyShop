@@ -383,6 +383,25 @@ export const reportResolvers = {
 
       console.log('[Staff Performance] Staff count:', staffSales.size);
 
+      // Get PAID commissions for all staff in the date range
+      const commissions = await context.prisma.commission.findMany({
+        where: {
+          createdAt: { gte: new Date(startDate), lte: new Date(endDate) },
+          isPaid: true,
+        },
+      });
+
+      // Map commissions by userId
+      const commissionByUser = new Map<number, Prisma.Decimal>();
+      for (const commission of commissions) {
+        const existing = commissionByUser.get(commission.userId);
+        if (existing) {
+          commissionByUser.set(commission.userId, existing.add(commission.commissionAmount));
+        } else {
+          commissionByUser.set(commission.userId, new Prisma.Decimal(commission.commissionAmount));
+        }
+      }
+
       // Return ALL staff sorted by revenue
       const result = Array.from(staffSales.entries())
         .sort((a, b) => b[1].revenue.comparedTo(a[1].revenue))
@@ -393,6 +412,7 @@ export const reportResolvers = {
           totalOrders: data.orders,
           totalRevenue: data.revenue,
           totalProfit: data.revenue.sub(data.cost),
+          totalCommission: commissionByUser.get(staffId) || new Prisma.Decimal(0),
         }));
 
       console.log('[Staff Performance] Returning staff:', result.length);

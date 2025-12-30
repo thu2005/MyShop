@@ -3,6 +3,8 @@ using GraphQL.Client.Serializer.SystemTextJson;
 using System;
 using System.Linq;
 using System.Net.Http.Headers;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using MyShop.Core.Interfaces.Services;
@@ -15,10 +17,21 @@ namespace MyShop.Core.Services
 
         public GraphQLService(string endpoint)
         {
+            var jsonSerializerOptions = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                Converters =
+                {
+                    new JsonStringEnumConverter(),
+                    new GraphQLNullableDateTimeConverter(),
+                    new GraphQLDateTimeConverter()
+                }
+            };
+
             _client = new GraphQLHttpClient(new GraphQLHttpClientOptions
             {
                 EndPoint = new Uri(endpoint)
-            }, new SystemTextJsonSerializer());
+            }, new SystemTextJsonSerializer(jsonSerializerOptions));
         }
 
         public GraphQLHttpClient Client => _client;
@@ -57,6 +70,72 @@ namespace MyShop.Core.Services
             {
                 _client.HttpClient.DefaultRequestHeaders.Authorization =
                     new AuthenticationHeaderValue("Bearer", token);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Custom DateTime converter for GraphQL that ensures dates are serialized in ISO 8601 format
+    /// </summary>
+    public class GraphQLDateTimeConverter : JsonConverter<DateTime>
+    {
+        public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType == JsonTokenType.String)
+            {
+                var dateString = reader.GetString();
+                if (DateTime.TryParse(dateString, out var date))
+                {
+                    return date;
+                }
+            }
+            return default;
+        }
+
+        public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
+        {
+            // Write DateTime in ISO 8601 format which GraphQL expects (with milliseconds precision)
+            writer.WriteStringValue(value.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"));
+        }
+    }
+
+    /// <summary>
+    /// Custom nullable DateTime converter for GraphQL
+    /// </summary>
+    public class GraphQLNullableDateTimeConverter : JsonConverter<DateTime?>
+    {
+        public override DateTime? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType == JsonTokenType.Null)
+            {
+                return null;
+            }
+
+            if (reader.TokenType == JsonTokenType.String)
+            {
+                var dateString = reader.GetString();
+                if (string.IsNullOrEmpty(dateString))
+                {
+                    return null;
+                }
+                if (DateTime.TryParse(dateString, out var date))
+                {
+                    return date;
+                }
+            }
+            return null;
+        }
+
+        public override void Write(Utf8JsonWriter writer, DateTime? value, JsonSerializerOptions options)
+        {
+            if (value.HasValue)
+            {
+                // Write DateTime in ISO 8601 format which GraphQL expects (with milliseconds precision)
+                writer.WriteStringValue(value.Value.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"));
+            }
+            else
+            {
+                writer.WriteNullValue();
             }
         }
     }

@@ -7,9 +7,8 @@
     mc:Ignorable="d"
     Title="Welcome to MyShop"
     PrimaryButtonText="Skip"
-    CloseButtonText="Next"
-    CloseButtonStyle="{StaticResource AccentButtonStyle}"
-    DefaultButton="Close"
+    SecondaryButtonText="Next"
+    DefaultButton="Secondary"
     RequestedTheme="Light">
 
     <Grid Width="500" Height="450">
@@ -24,12 +23,22 @@
                 </StackPanel>
             </FlipViewItem>
 
-            <!-- Slide 2: Products (All) -->
-            <FlipViewItem Tag="ALL">
+            <!-- Slide 2a: Products (Admin Only) -->
+            <FlipViewItem Tag="ADMIN">
                 <StackPanel Spacing="20" VerticalAlignment="Center">
                     <FontIcon Glyph="&#xE7BF;" FontSize="60" Foreground="#0C2B4E"/>
                     <TextBlock Text="Manage Products" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#0C2B4E"/>
                     <TextBlock Text="Easily add, edit, and categorize your products. Keep track of stock and pricing in real-time." 
+                               TextWrapping="Wrap" TextAlignment="Center" FontSize="16" Opacity="0.8" Foreground="Black"/>
+                </StackPanel>
+            </FlipViewItem>
+
+            <!-- Slide 2b: Products (Staff Only) -->
+            <FlipViewItem Tag="STAFF">
+                <StackPanel Spacing="20" VerticalAlignment="Center">
+                    <FontIcon Glyph="&#xE7BF;" FontSize="60" Foreground="#0C2B4E"/>
+                    <TextBlock Text="View Products" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#0C2B4E"/>
+                    <TextBlock Text="Browse and search the product catalog. View stock levels, pricing, and details to assist customers." 
                                TextWrapping="Wrap" TextAlignment="Center" FontSize="16" Opacity="0.8" Foreground="Black"/>
                 </StackPanel>
             </FlipViewItem>

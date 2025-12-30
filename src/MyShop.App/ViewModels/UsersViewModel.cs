@@ -13,6 +13,7 @@ namespace MyShop.App.ViewModels
     {
         private readonly IUserRepository _userRepository;
         private bool _isLoading;
+        private System.Collections.Generic.List<User> _allStaff = new System.Collections.Generic.List<User>();
 
         public UsersViewModel(IUserRepository userRepository)
         {
@@ -43,12 +44,9 @@ namespace MyShop.App.ViewModels
                 var allUsers = await _userRepository.GetAllAsync();
                 
                 var staffUsers = allUsers.Where(u => u.Role == UserRole.STAFF).ToList();
+                _allStaff = staffUsers;
                 
-                Users.Clear();
-                foreach (var user in staffUsers)
-                {
-                    Users.Add(user);
-                }
+                UpdateUsersList(staffUsers);
             }
             catch (Exception ex)
             {
@@ -58,6 +56,32 @@ namespace MyShop.App.ViewModels
             {
                 IsLoading = false;
             }
+        }
+
+        private void UpdateUsersList(System.Collections.Generic.IEnumerable<User> users)
+        {
+            Users.Clear();
+            foreach (var user in users)
+            {
+                Users.Add(user);
+            }
+        }
+
+        public void SearchUsers(string keyword)
+        {
+            if (string.IsNullOrWhiteSpace(keyword))
+            {
+                UpdateUsersList(_allStaff);
+                return;
+            }
+
+            var lowerKeyword = keyword.ToLower();
+            var filtered = _allStaff.Where(u => 
+                (u.Username?.ToLower().Contains(lowerKeyword) ?? false) ||
+                (u.Email?.ToLower().Contains(lowerKeyword) ?? false)
+            ).ToList();
+
+            UpdateUsersList(filtered);
         }
 
         public async Task<bool> UpdateUserAsync(User user)
@@ -85,6 +109,7 @@ namespace MyShop.App.ViewModels
             try
             {
                 var newUser = await _userRepository.AddAsync(user);
+                _allStaff.Insert(0, newUser);
                 Users.Insert(0, newUser);
                 return true;
             }
@@ -100,6 +125,8 @@ namespace MyShop.App.ViewModels
             try
             {
                 await _userRepository.DeleteAsync(user.Id);
+                var toRemove = _allStaff.FirstOrDefault(u => u.Id == user.Id);
+                if (toRemove != null) _allStaff.Remove(toRemove);
                 Users.Remove(user);
                 return true;
             }
@@ -109,6 +136,7 @@ namespace MyShop.App.ViewModels
                 return false;
             }
         }
+
         public async Task<bool> IsUsernameAvailableAsync(string username)
         {
             try

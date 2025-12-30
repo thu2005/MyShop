@@ -59,6 +59,7 @@ namespace MyShop.Data.Repositories
                                 name
                                 description
                                 sku
+                                barcode
                                 price
                                 costPrice
                                 stock

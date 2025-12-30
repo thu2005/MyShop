@@ -31,6 +31,7 @@ namespace MyShop.App.Views.Dialogs
                     string? tag = item.Tag as string;
                     if (tag == "ALL") return false;
                     if (tag == "ADMIN" && role == UserRole.ADMIN) return false;
+                    if (tag == "STAFF" && role == UserRole.STAFF) return false;
                     return true;
                 })
                 .ToList();
@@ -62,14 +63,14 @@ namespace MyShop.App.Views.Dialogs
                 _dotOpacities.Add(i == index ? 1.0 : 0.3);
             }
 
-            // Update close button text (Next/Get Started)
+            // Update secondary button text
             if (index == count - 1)
             {
-                CloseButtonText = "Get Started";
+                SecondaryButtonText = "Get Started";
             }
             else
             {
-                CloseButtonText = "Next";
+                SecondaryButtonText = "Next";
             }
         }
     }

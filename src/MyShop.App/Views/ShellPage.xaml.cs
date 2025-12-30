@@ -353,7 +353,7 @@ namespace MyShop.App.Views
                 XamlRoot = this.XamlRoot
             };
 
-            onboardingDialog.PrimaryButtonClick += (s, args) =>
+            onboardingDialog.SecondaryButtonClick += (s, args) =>
             {
                 // Skip button (now on the left/primary)
                 _onboardingService.MarkOnboardingAsCompleted(username);
@@ -377,6 +377,12 @@ namespace MyShop.App.Views
                         _onboardingService.MarkOnboardingAsCompleted(username);
                     }
                 }
+            };
+
+
+            onboardingDialog.PrimaryButtonClick += (s, args) =>
+            {
+                _onboardingService.MarkOnboardingAsCompleted(username);
             };
 
             await onboardingDialog.ShowAsync();
@@ -451,11 +457,13 @@ namespace MyShop.App.Views
                             case "Customers":
                             pageType = typeof(CustomersPage);
                             break;
+                        case "Discounts":
+                                pageType = typeof(DiscountsPage);
+                                break;
                         case "Reports":
                                 pageType = typeof(ReportsPage);
                                 break;
                             case "Users":
-                                // STEP 2: Điều hướng đến trang quản lý nhân viên
                                 pageType = typeof(UsersPage);
                                 break;
                         }
@@ -542,7 +550,7 @@ namespace MyShop.App.Views
                     // Validate empty input
                     if (string.IsNullOrWhiteSpace(inputBox.Text))
                     {
-                        errorText.Text = "⚠️ Category name cannot be empty.";
+                        errorText.Text = "Category name cannot be empty.";
                         errorText.Visibility = Visibility.Visible;
                         dialog.Hide();
                         continue; // Retry
@@ -552,13 +560,19 @@ namespace MyShop.App.Views
                     {
                         await ViewModel.UpdateCategoryAsync(categoryId, inputBox.Text.Trim());
                         success = true;
+                        
+                        // Refresh ProductsScreen if it's currently displayed
+                        if (ContentFrame.Content is ProductsScreen productsScreen)
+                        {
+                            await productsScreen.ViewModel.LoadProductsAsync();
+                        }
                     }
                     catch (Exception ex)
                     {
                         // Show error message inline
                         errorText.Text = ex.Message.Contains("already exists") 
-                            ? "⚠️ Category name already exists. Please choose a different name."
-                            : $"⚠️ Error: {ex.Message}";
+                            ? "Category name already exists. Please choose a different name."
+                            : $"Error: {ex.Message}";
                         errorText.Visibility = Visibility.Visible;
                         
                         // Keep dialog open for retry

@@ -70,5 +70,15 @@ namespace MyShop.Core.Models
         public int TotalOrders { get; set; }
         public decimal TotalRevenue { get; set; }
         public decimal TotalProfit { get; set; }
+        public decimal TotalCommission { get; set; }
+    }
+
+    public class CommissionStats
+    {
+        public decimal TotalOrderAmount { get; set; }
+        public decimal TotalCommission { get; set; }
+        public decimal PaidCommission { get; set; }
+        public decimal UnpaidCommission { get; set; }
+        public int TotalOrders { get; set; }
     }
 }

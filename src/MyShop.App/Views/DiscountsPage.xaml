@@ -1,0 +1,259 @@
+<Page
+    x:Class="MyShop.App.Views.DiscountsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:converters="using:MyShop.App.Converters"
+    mc:Ignorable="d"
+    x:Name="PageRoot"
+    Background="#F5F7FA">
+
+    <Page.Resources>
+        <converters:DateFormatConverter x:Key="DateFormatConverter"/>
+        <converters:BoolToSelectionModeConverter x:Key="BoolToSelectionModeConverter"/>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <converters:CurrencyConverter x:Key="CurrencyConverter"/>
+        <converters:RoleToVisibilityConverter x:Key="RoleToVisibilityConverter"/>
+        <converters:StatusLabelConverter x:Key="StatusLabelConverter"/>
+        <converters:StatusToColorConverter x:Key="StatusToColorConverter"/>
+        
+
+        <Style x:Key="TabRadioButtonStyle" TargetType="RadioButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#666666"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Grid x:Name="RootGrid"
+                              Background="{TemplateBinding Background}"
+                              CornerRadius="{TemplateBinding CornerRadius}">
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal"/>
+                                    <VisualState x:Name="PointerOver">
+                                        <VisualState.Setters>
+                                            <Setter Target="RootGrid.Background" Value="#F5F5F5"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Pressed">
+                                        <VisualState.Setters>
+                                            <Setter Target="RootGrid.Background" Value="#E5E5E5"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Disabled"/>
+                                </VisualStateGroup>
+                                <VisualStateGroup x:Name="CheckStates">
+                                    <VisualState x:Name="Checked">
+                                        <VisualState.Setters>
+                                            <Setter Target="RootGrid.Background" Value="#D9EDFF"/>
+                                            <Setter Target="ContentPresenter.Foreground" Value="#005FB8"/>
+                                            <Setter Target="ContentPresenter.FontWeight" Value="SemiBold"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Unchecked"/>
+                                    <VisualState x:Name="Indeterminate"/>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                            <ContentPresenter x:Name="ContentPresenter"
+                                              Content="{TemplateBinding Content}"
+                                              ContentTransitions="{TemplateBinding ContentTransitions}"
+                                              ContentTemplate="{TemplateBinding ContentTemplate}"
+                                              Padding="{TemplateBinding Padding}"
+                                              HorizontalContentAlignment="Center"
+                                              VerticalContentAlignment="Center"
+                                              AutomationProperties.AccessibilityView="Raw"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="DialogPrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#003F62"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Grid x:Name="RootGrid" Background="#003F62" CornerRadius="{TemplateBinding CornerRadius}">
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal"/>
+                                    <VisualState x:Name="PointerOver">
+                                        <VisualState.Setters>
+                                            <Setter Target="RootGrid.Background" Value="#004F7A"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Pressed">
+                                        <VisualState.Setters>
+                                            <Setter Target="RootGrid.Background" Value="#002F4A"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Disabled">
+                                        <VisualState.Setters>
+                                            <Setter Target="RootGrid.Background" Value="#CCCCCC"/>
+                                            <Setter Target="ContentPresenter.Foreground" Value="#666666"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                            <ContentPresenter x:Name="ContentPresenter"
+                                              Content="{TemplateBinding Content}"
+                                              Padding="{TemplateBinding Padding}"
+                                              HorizontalContentAlignment="Center"
+                                              VerticalContentAlignment="Center"
+                                              Foreground="{TemplateBinding Foreground}"/>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+    </Page.Resources>
+
+    <Grid Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- Header -->
+            <RowDefinition Height="Auto"/> <!-- Filters -->
+            <RowDefinition Height="*"/>    <!-- List -->
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="0,0,0,24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel>
+                 <TextBlock Text="Discounts Management" FontSize="24" FontWeight="Bold" Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                 <TextBlock Text="Home > Discounts" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,4,0,0"/>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12"
+                        Visibility="{x:Bind ViewModel.IsAdmin, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                <Button x:Name="NewDiscountButton" Background="#003F62" Foreground="White" Padding="12,8" CornerRadius="4" Click="NewDiscountButton_Click">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE710;" FontSize="16"/> <!-- Add -->
+                        <TextBlock Text="New Discount"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Tabs & Search -->
+        <Grid Grid.Row="1" Margin="0,0,0,24">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Tabs -->
+            <StackPanel Orientation="Horizontal" Spacing="4" Background="White" CornerRadius="8" Padding="4">
+                <RadioButton x:Name="AllDiscountsRadio" Content="All Discounts" IsChecked="True" Style="{StaticResource TabRadioButtonStyle}" Checked="FilterRadio_Checked" Tag="All" />
+                <RadioButton x:Name="ActiveRadio" Content="Active" Style="{StaticResource TabRadioButtonStyle}" Checked="FilterRadio_Checked" Tag="Active" />
+                <RadioButton x:Name="ExpiredRadio" Content="Expired" Style="{StaticResource TabRadioButtonStyle}" Checked="FilterRadio_Checked" Tag="Expired" />
+                <RadioButton x:Name="InactiveRadio" Content="Inactive" Style="{StaticResource TabRadioButtonStyle}" Checked="FilterRadio_Checked" Tag="Inactive" />
+            </StackPanel>
+
+            <!-- Search -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="12">
+                <TextBox PlaceholderText="Search discounts..." Width="300" VerticalAlignment="Center" Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- List -->
+        <Grid Grid.Row="2" Background="White" CornerRadius="8" Padding="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/> <!-- Title -->
+                <RowDefinition Height="Auto"/> <!-- Header -->
+                <RowDefinition Height="*"/>    <!-- Items -->
+            </Grid.RowDefinitions>
+
+            <TextBlock Text="All Discounts" FontSize="18" FontWeight="SemiBold" Margin="24,12"/>
+
+            <!-- Table Header -->
+            <Grid Grid.Row="1" Background="#F9FAFB" Padding="24,12" BorderBrush="#E0E0E0" BorderThickness="0,1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.5*"/> <!-- Code -->
+                    <ColumnDefinition Width="2*"/> <!-- Name -->
+                    <ColumnDefinition Width="1.5*"/> <!-- Type -->
+                    <ColumnDefinition Width="1*"/> <!-- Value -->
+                    <ColumnDefinition Width="1.5*"/> <!-- Start Date -->
+                    <ColumnDefinition Width="1.5*"/> <!-- End Date -->
+                    <ColumnDefinition Width="1*"/> <!-- Status -->
+                    <ColumnDefinition Width="1*"/> <!-- Actions -->
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="Code" FontWeight="SemiBold" Foreground="#666666" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="Name" FontWeight="SemiBold" Foreground="#666666" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="2" Text="Type" FontWeight="SemiBold" Foreground="#666666" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="3" Text="Value" FontWeight="SemiBold" Foreground="#666666" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="4" Text="Start Date" FontWeight="SemiBold" Foreground="#666666" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="5" Text="End Date" FontWeight="SemiBold" Foreground="#666666" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="6" Text="Status" FontWeight="SemiBold" Foreground="#666666" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="7" Text="Action" FontWeight="SemiBold" Foreground="#666666" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Grid>
+
+            <!-- Items -->
+            <ListView Grid.Row="2" ItemsSource="{x:Bind ViewModel.Discounts, Mode=OneWay}"
+                      SelectionMode="None">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        <Setter Property="Padding" Value="0"/>
+                        <Setter Property="Margin" Value="0"/>
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Padding="24,16" BorderBrush="#F0F0F0" BorderThickness="0,0,0,1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="1.5*"/>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="1.5*"/>
+                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="1.5*"/>
+                                <ColumnDefinition Width="1.5*"/>
+                                <ColumnDefinition Width="1*"/>
+                                <ColumnDefinition Width="1*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Text="{Binding Discount.Code}" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="#003F62"/>
+
+                            <TextBlock Grid.Column="1" Text="{Binding Discount.Name}" VerticalAlignment="Center"/>
+
+                            <TextBlock Grid.Column="2" Text="{Binding Discount.Type}" VerticalAlignment="Center"/>
+
+                            <TextBlock Grid.Column="3" Text="{Binding Discount.Value}" VerticalAlignment="Center"/>
+
+                            <TextBlock Grid.Column="4" Text="{Binding Discount.StartDate, Converter={StaticResource DateFormatConverter}}" VerticalAlignment="Center"/>
+
+                            <TextBlock Grid.Column="5" Text="{Binding Discount.EndDate, Converter={StaticResource DateFormatConverter}}" VerticalAlignment="Center"/>
+
+                            <Border Grid.Column="6" VerticalAlignment="Center" HorizontalAlignment="Left" CornerRadius="4" Padding="8,4"
+                                    Background="{Binding Discount, Converter={StaticResource DiscountStatusToColorConverter}}">
+                                <TextBlock Text="{Binding Discount, Converter={StaticResource DiscountStatusLabelConverter}}"
+                                           FontSize="12"
+                                           FontWeight="Medium"
+                                           Foreground="White"/>
+                            </Border>
+
+                            <Button Grid.Column="7" Background="Transparent" BorderThickness="0" HorizontalAlignment="Center" Click="MenuButton_Click" Tag="{Binding}">
+                                <SymbolIcon Symbol="More"/>
+                            </Button>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </Grid>
+
+    </Grid>
+</Page>

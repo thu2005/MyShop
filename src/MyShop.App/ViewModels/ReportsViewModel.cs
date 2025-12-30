@@ -46,11 +46,22 @@ namespace MyShop.App.ViewModels
         [ObservableProperty]
         private bool _isBusy;
 
+        // Commands
+        public IAsyncRelayCommand LoadReportCommand { get; }
+        public IAsyncRelayCommand ExportToPdfCommand { get; }
+
         // Role-based properties
         public User? CurrentUser => _authService.CurrentUser;
         public UserRole UserRole => CurrentUser?.Role ?? UserRole.STAFF;
         public bool IsAdmin => _authorizationService.IsAuthorized(UserRole.ADMIN);
         public bool IsStaff => !IsAdmin;
+
+        // Commission summary for staff
+        [ObservableProperty]
+        private string _totalOrderAmount = "$0.00";
+
+        [ObservableProperty]
+        private string _totalCommissionAmount = "$0.00";
 
         public ReportsViewModel(
             IReportRepository reportRepository,
@@ -62,6 +73,7 @@ namespace MyShop.App.ViewModels
             _authorizationService = authorizationService;
             
             LoadReportCommand = new AsyncRelayCommand(LoadReportAsync);
+            ExportToPdfCommand = new AsyncRelayCommand(ExportToPdfAsync);
             
             // Initialize default dates
             _endDate = DateTimeOffset.Now;
@@ -200,7 +212,7 @@ namespace MyShop.App.ViewModels
         public SolidColorBrush OrdersChangeColor => new SolidColorBrush(OrdersChange >= 0 ? Colors.Green : Colors.Red);
         public SolidColorBrush RevenueChangeColor => new SolidColorBrush(RevenueChange >= 0 ? Colors.Green : Colors.Red);
 
-        public IAsyncRelayCommand LoadReportCommand { get; }
+
 
         private void OnPeriodChanged()
         {
@@ -228,7 +240,7 @@ namespace MyShop.App.ViewModels
             {
                 IsBusy = true;
 
-                // 1. Load Summary Report
+                // Load Summary Report
                 var startVal = _startDate ?? DateTime.Now.AddDays(-7);
                 var endVal = _endDate ?? DateTime.Now;
                 var report = await _reportRepository.GetReportByPeriodAsync(_selectedPeriod, startVal.DateTime, endVal.DateTime);
@@ -264,38 +276,53 @@ namespace MyShop.App.ViewModels
                     end = report.PeriodEnd;
                 }
 
-                // 2. Load Top Products Chart (Row Chart: Y=Product Name, X=Quantity)
+                // Load Top Products Chart (Row Chart: Y=Product Name, X=Quantity)
                 var topProducts = await _reportRepository.GetTopProductsByQuantityAsync(start, end);
                 SetupProductsChart(topProducts);
 
-                // 3. Load Top Customers List
+                // Load Top Customers List
                 var customers = await _reportRepository.GetTopCustomersAsync(start, end);
                 _topCustomers.Clear();
                 foreach (var c in customers) _topCustomers.Add(c);
                 
-                // 4. Load All Staff Performance
+                // Load All Staff Performance
                 try
                 {
-                    System.Diagnostics.Debug.WriteLine($"[ReportsViewModel] Loading staff performance from {start} to {end}");
                     var staff = await _reportRepository.GetAllStaffPerformanceAsync(start, end);
-                    System.Diagnostics.Debug.WriteLine($"[ReportsViewModel] Loaded {staff.Count} staff members");
                     
                     _allStaff.Clear();
                     foreach (var s in staff)
                     {
-                        System.Diagnostics.Debug.WriteLine($"[ReportsViewModel] Staff: {s.Username}, Orders: {s.TotalOrders}, Revenue: {s.TotalRevenue}");
                         _allStaff.Add(s);
                     }
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[ReportsViewModel] Error loading staff: {ex.Message}");
-                    System.Diagnostics.Debug.WriteLine($"[ReportsViewModel] Stack trace: {ex.StackTrace}");
                 }
 
-                // 5. Load Revenue/Profit Timeline Chart (Column Chart)
+                if (!IsAdmin && CurrentUser != null)
+                {
+                    try
+                    {
+                        var commissionStats = await _reportRepository.GetCommissionStatsAsync(CurrentUser.Id, start, end);
+                        if (commissionStats != null)
+                        {
+                            var estimatedOrderTotal = commissionStats.TotalCommission > 0 
+                                ? commissionStats.TotalCommission / 0.05m 
+                                : 0;
+                            
+                            TotalOrderAmount = $"${estimatedOrderTotal:N2}";
+                            TotalCommissionAmount = $"${commissionStats.TotalCommission:N2}";
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error loading commission stats: {ex.Message}");
+                    }
+                }
+
                 var timelineGrouping = TimelineGrouping.DAY;
-                if (_selectedPeriod == PeriodType.MONTHLY || _selectedPeriod == PeriodType.YEARLY) timelineGrouping = TimelineGrouping.MONTH;
+                if (_selectedPeriod == PeriodType.YEARLY) timelineGrouping = TimelineGrouping.MONTH;
                 
                 var timeline = await _reportRepository.GetRevenueAndProfitTimelineAsync(start, end, timelineGrouping);
                 SetupRevenueProfitChart(timeline);
@@ -315,26 +342,8 @@ namespace MyShop.App.ViewModels
         {
             var quantityValues = products.Select(p => (double)p.QuantitySold).ToArray();
             
-            // Show only first word + "..." for labels
-            var productNames = products.Select(p =>
-            {
-                var name = p.ProductName;
-                var firstWord = name.Split(' ').FirstOrDefault() ?? name;
-                
-                // If there are more words, add ellipsis
-                if (name.Contains(' '))
-                {
-                    return firstWord + "...";
-                }
-                
-                // If single word is too long, truncate it
-                if (firstWord.Length > 12)
-                {
-                    return firstWord.Substring(0, 10) + "...";
-                }
-                
-                return firstWord;
-            }).ToArray();
+            // Use FULL labels for the tooltip
+            var productNames = products.Select(p => p.ProductName).ToArray();
 
             ProductsSeries = new ISeries[]
             {
@@ -363,7 +372,21 @@ namespace MyShop.App.ViewModels
                 new Axis
                 {
                     Labels = productNames,
-                    LabelsRotation = 0,
+                    // Use Labeler to truncate text on the Axis only
+                    Labeler = value => 
+                    {
+                        int index = (int)value;
+                        if (index >= 0 && index < productNames.Length)
+                        {
+                            var name = productNames[index];
+                            var firstWord = name.Split(' ').FirstOrDefault() ?? name;
+                            if (name.Contains(' ')) return firstWord + "...";
+                            if (firstWord.Length > 10) return firstWord.Substring(0, 8) + "...";
+                            return firstWord;
+                        }
+                        return "";
+                    },
+                    LabelsRotation = -15,
                     LabelsPaint = new SolidColorPaint(SKColors.Gray),
                     TextSize = 10,
                     MinStep = 1,
@@ -382,6 +405,7 @@ namespace MyShop.App.ViewModels
             int productCount = products.Count;
             ProductsChartMinWidth = Math.Max(600, productCount * 80);
         }
+
 
         private void SetupRevenueProfitChart(List<RevenueProfit> timeline)
         {

@@ -81,6 +81,7 @@
 
             <NavigationViewItem Content="ORDER LIST" Tag="Orders" Icon="List" FontWeight="SemiBold"/>
             <NavigationViewItem Content="CUSTOMERS" Tag="Customers" Icon="People" FontWeight="SemiBold"/>
+            <NavigationViewItem Content="DISCOUNTS" Tag="Discounts" Icon="Tag" FontWeight="SemiBold"/>
             <NavigationViewItem Content="REPORT" Tag="Reports" Icon="Document" FontWeight="SemiBold"/>
             <NavigationViewItem Content="STAFF ACCOUNTS" 
                                 Tag="Users" 
@@ -133,7 +134,7 @@
                     </StackPanel>
                 </Grid>
 
-                <Frame x:Name="ContentFrame" Grid.Row="1" Background="#F5F5F5"/>
+                <Frame x:Name="ContentFrame" Grid.Row="1" Background="#F5F7FA"/>
             </Grid>
         </NavigationView.Content>
     </NavigationView>

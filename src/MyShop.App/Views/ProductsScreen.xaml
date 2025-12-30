@@ -10,12 +10,13 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    Background="#F5F7FA">
 
     <Page.Resources>
         <converters:StringToImageSourceConverter x:Key="StringToImageSourceConverter" />
         <converters:StockToWidthConverter x:Key="StockToWidthConverter" />
         <converters:CurrencyConverter x:Key="CurrencyConverter" />
+        <converters:RoleToHeightConverter x:Key="RoleToHeightConverter" />
     </Page.Resources>
 
     <Grid Padding="24">
@@ -33,8 +34,8 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <StackPanel Spacing="4">
-               <TextBlock Text="Products" FontSize="24" FontWeight="Bold" Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+            <StackPanel>
+               <TextBlock Text="Products" FontSize="30" FontWeight="Bold" Foreground="#0C2B4E"/>
                <TextBlock Text="Home > Products" 
                                FontSize="14" 
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -42,6 +43,12 @@
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" Visibility="{x:Bind ViewModel.IsAdmin, Mode=OneWay}">
+                <Button Background="#0F3D5E" Foreground="White" CornerRadius="6" Padding="12,6" Click="OnImportClick" BorderThickness="0">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon Glyph="&#xE8A5;" FontSize="14"/>
+                        <TextBlock Text="Import" FontWeight="SemiBold"/>
+                    </StackPanel>
+                </Button>
                 <Button Grid.Column="5" Background="#0F3D5E" Foreground="White" CornerRadius="6" Padding="12,6" Click="OnAddProductClick" BorderThickness="0">
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <FontIcon Glyph="&#xE710;" FontSize="12"/>
@@ -117,7 +124,7 @@
         <ScrollViewer Grid.Row="2">
             <ItemsRepeater ItemsSource="{x:Bind ViewModel.Products, Mode=OneWay}" Margin="0,0,0,16">
                 <ItemsRepeater.Layout>
-                    <UniformGridLayout MinItemWidth="300" MinItemHeight="300" ItemsStretch="Fill" MinColumnSpacing="16" MinRowSpacing="16"/>
+                    <UniformGridLayout MinItemWidth="300" MinItemHeight="{x:Bind ViewModel.IsAdmin, Converter={StaticResource RoleToHeightConverter}, Mode=OneWay}" ItemsStretch="Fill" MinColumnSpacing="16" MinRowSpacing="16"/>
                 </ItemsRepeater.Layout>
                 <ItemsRepeater.ItemTemplate>
                     <DataTemplate x:DataType="models:Product">
@@ -126,7 +133,7 @@
                             <Grid Background="White" CornerRadius="12" Padding="20" BorderBrush="#E5E7EB" BorderThickness="1">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
 
@@ -171,9 +178,9 @@
                             <!-- Stats Box -->
                             <Border Grid.Row="2" BorderBrush="#E5E7EB" BorderThickness="1" CornerRadius="8" Padding="16,12">
                                 <StackPanel Spacing="12">
-                                    <!-- Regular Price (Admin Only) -->
+                                    <!-- Cost Price (Admin Only) -->
                                     <Grid Visibility="{Binding ElementName=PageRoot, Path=ViewModel.IsAdmin, Mode=OneWay}">
-                                        <TextBlock Text="Regular Price" Foreground="#374151" FontSize="14"/>
+                                        <TextBlock Text="Cost Price" Foreground="#374151" FontSize="14"/>
                                         <TextBlock Text="{x:Bind CostPrice, Converter={StaticResource CurrencyConverter}, FallbackValue='N/A'}" 
                                                    HorizontalAlignment="Right" Foreground="#059669" FontSize="14" FontWeight="Medium"/>
                                     </Grid>
