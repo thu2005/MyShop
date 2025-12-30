@@ -15,9 +15,9 @@
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         <converters:CurrencyConverter x:Key="CurrencyConverter"/>
         <converters:RoleToVisibilityConverter x:Key="RoleToVisibilityConverter"/>
-        <converters:StatusLabelConverter x:Key="StatusLabelConverter"/>
-        <converters:StatusToColorConverter x:Key="StatusToColorConverter"/>
-        
+        <converters:DiscountStatusLabelConverter x:Key="DiscountStatusLabelConverter"/>
+        <converters:DiscountStatusToColorConverter x:Key="DiscountStatusToColorConverter"/>
+
 
         <Style x:Key="TabRadioButtonStyle" TargetType="RadioButton">
             <Setter Property="Background" Value="Transparent"/>

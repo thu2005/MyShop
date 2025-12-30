@@ -389,12 +389,10 @@ namespace MyShop.App.Views
                 }
             };
 
-
             onboardingDialog.PrimaryButtonClick += (s, args) =>
             {
                 _onboardingService.MarkOnboardingAsCompleted(username);
             };
-
             await onboardingDialog.ShowAsync();
         }
 

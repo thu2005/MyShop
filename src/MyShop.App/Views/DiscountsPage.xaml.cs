@@ -204,17 +204,18 @@ namespace MyShop.App.Views
                 Grid.SetColumn(codeText, 0);
                 headerGrid.Children.Add(codeText);
 
+                // Determine status based on expired/active/inactive
+                var (statusLabel, statusColor) = GetDiscountStatus(discount);
+
                 var statusBorder = new Border
                 {
                     CornerRadius = new CornerRadius(4),
                     Padding = new Thickness(12, 6, 12, 6),
-                    Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-                        discount.IsActive ? Windows.UI.Color.FromArgb(255, 34, 197, 94) : Windows.UI.Color.FromArgb(255, 239, 68, 68)
-                    )
+                    Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(statusColor)
                 };
                 var statusText = new TextBlock
                 {
-                    Text = discount.IsActive ? "Active" : "Inactive",
+                    Text = statusLabel,
                     Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.White),
                     FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                     FontSize = 12
@@ -334,6 +335,32 @@ namespace MyShop.App.Views
                 DiscountType.FIXED_AMOUNT => $"₫{value:N0}",
                 _ => value.ToString()
             };
+        }
+
+        private (string label, Windows.UI.Color color) GetDiscountStatus(Discount discount)
+        {
+            var now = DateTime.UtcNow;
+
+            // Check if discount has expired (highest priority)
+            if (discount.EndDate.HasValue && discount.EndDate.Value < now)
+            {
+                return ("Expired", Windows.UI.Color.FromArgb(255, 239, 68, 68)); // Red
+            }
+
+            // Check if discount is inactive
+            if (!discount.IsActive)
+            {
+                return ("Inactive", Windows.UI.Color.FromArgb(255, 156, 163, 175)); // Gray
+            }
+
+            // Check if discount hasn't started yet
+            if (discount.StartDate.HasValue && discount.StartDate.Value > now)
+            {
+                return ("Scheduled", Windows.UI.Color.FromArgb(255, 251, 146, 60)); // Orange
+            }
+
+            // Discount is currently active
+            return ("Active", Windows.UI.Color.FromArgb(255, 34, 197, 94)); // Green
         }
 
         private async void EditDiscount_Click(object sender, RoutedEventArgs e)
