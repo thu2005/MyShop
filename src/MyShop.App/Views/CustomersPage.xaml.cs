@@ -334,6 +334,7 @@ namespace MyShop.App.Views
             {
                 await shell.ShowTrialExpiredDialog(featureName);
             }
+        }
 
         private void OnFirstPageClick(object sender, RoutedEventArgs e)
         {

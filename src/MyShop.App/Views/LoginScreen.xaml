@@ -19,7 +19,7 @@
                     BorderThickness="1"
                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
             
-            <TextBlock Text="MyShop Login" 
+            <TextBlock Text="MyShop" 
                        FontSize="28" 
                        HorizontalAlignment="Center" 
                        FontWeight="Bold" />
@@ -52,6 +52,12 @@
             <HyperlinkButton Content="Server Settings" 
                              Command="{x:Bind ViewModel.OpenConfigCommand}"
                              HorizontalAlignment="Center" />
+            
+            <TextBlock Text="{x:Bind ViewModel.AppVersion, Mode=OneTime}" 
+                       FontSize="11" 
+                       HorizontalAlignment="Center" 
+                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                       Margin="0,8,0,0"/>
         </StackPanel>
     </Grid>
 </Page>

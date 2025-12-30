@@ -17,6 +17,7 @@ namespace MyShop.App.ViewModels
         private readonly IProductRepository _productRepository;
         private readonly ICategoryRepository _categoryRepository;
         private readonly ILicenseService _licenseService;
+        private bool _isCategoriesLoaded = false;
 
         public ShellViewModel(
             IAuthService authService,
@@ -34,17 +35,7 @@ namespace MyShop.App.ViewModels
             LogoutCommand = new RelayCommand(_ => ExecuteLogout());
             AdminPanelCommand = new RelayCommand(_ => ExecuteOpenAdminPanel());
 
-            // Load categories on startup with proper error handling
-            Task.Run(async () => {
-                try 
-                {
-                    await LoadCategoriesAsync();
-                }
-                catch (System.Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Initial Category Load failed: {ex.Message}");
-                }
-            });
+            // NOTE: Categories are now loaded via LoadCategoriesAsync() called from ShellPage.NavView_Loaded
         }
 
         public ObservableCollection<CategoryStat> Categories { get; } = new();
@@ -55,7 +46,6 @@ namespace MyShop.App.ViewModels
             {
                 var categories = await _categoryRepository.GetAllAsync();
                 var products = await _productRepository.GetAllAsync();
-                
                 
                 var stats = new List<CategoryStat>
                 {
@@ -72,12 +62,23 @@ namespace MyShop.App.ViewModels
                     });
                 }
 
+                // Since this is called from UI thread (via ShellPage), we can update directly
                 Categories.Clear();
                 foreach (var s in stats) Categories.Add(s);
+                
+                _isCategoriesLoaded = true;
             }
             catch (System.Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Shell Load Error: {ex.Message}");
+            }
+        }
+
+        public async Task EnsureCategoriesLoadedAsync()
+        {
+            if (!_isCategoriesLoaded)
+            {
+                await LoadCategoriesAsync();
             }
         }
 
