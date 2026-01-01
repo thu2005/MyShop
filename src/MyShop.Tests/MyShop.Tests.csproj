@@ -5,13 +5,11 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 
-		<!-- Test Project Configuration -->
 		<IsPackable>false</IsPackable>
 		<IsTestProject>true</IsTestProject>
 
-		<!-- Platform Configuration -->
-		
-		<!-- Disable Windows App SDK Bootstrap (not needed for tests) -->
+		<RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+
 		<WindowsAppSdkBootstrapInitialize>false</WindowsAppSdkBootstrapInitialize>
 	</PropertyGroup>
 
@@ -30,7 +28,7 @@
 	</ItemGroup>
 
 	<ItemGroup Label="Project References">
-		<ProjectReference Include="..\MyShop.App\MyShop.App.csproj" />
+		<ProjectReference Include="..\MyShop.App\MyShop.App.csproj" Properties="Platform=x64" />
 		<ProjectReference Include="..\MyShop.Core\MyShop.Core.csproj" />
 		<ProjectReference Include="..\MyShop.Data\MyShop.Data.csproj" />
 	</ItemGroup>

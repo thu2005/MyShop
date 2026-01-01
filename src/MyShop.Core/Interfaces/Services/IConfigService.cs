@@ -8,5 +8,9 @@ namespace MyShop.Core.Interfaces.Services
         void SaveServerUrl(string url);
         string GetDatabaseName();
         void SaveDatabaseName(string dbName);
+        
+        // Last opened page feature
+        string? GetLastOpenedPage();
+        void SaveLastOpenedPage(string pageTag);
     }
 }

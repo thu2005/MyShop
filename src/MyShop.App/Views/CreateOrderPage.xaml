@@ -15,8 +15,10 @@
         <converters:OrderStatusToForegroundConverter x:Key="StatusToForegroundConverter"/>
         <converters:OrderStatusToBackgroundConverter x:Key="StatusToBackgroundConverter"/>
         <converters:OrderStatusToTextConverter x:Key="StatusToTextConverter"/>
-        <converters:DiscountDisplayConverter x:Key="DiscountDisplayConverter"/>
-        <converters:DiscountTypeDisplayConverter x:Key="DiscountTypeDisplayConverter"/>
+        <converters:DiscountValueConverter x:Key="DiscountValueConverter"/>
+        <converters:DiscountTypeDisplayConverter x:Key="DiscountTypeToTextConverter"/>
+        <converters:DiscountValueDisplayConverter x:Key="DiscountValueDisplayConverter"/>
+        <converters:StringToImageSourceConverter x:Key="StringToImageSourceConverter"/>
 
         <Style x:Key="SectionHeaderStyle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="16"/>
@@ -61,17 +63,19 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <StackPanel Spacing="2">
-                    <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold" Foreground="#1A1A1A"/>
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                         <Border Background="#F0F0F0" CornerRadius="4" Padding="6,2">
-                            <TextBlock Text="{x:Bind Code}" FontSize="11" FontFamily="Consolas" Foreground="#333333"/>
-                         </Border>
-                         <TextBlock Text="{x:Bind Type, Converter={StaticResource DiscountTypeDisplayConverter}}" FontSize="12" Foreground="#666666" VerticalAlignment="Center"/>
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold" Foreground="#1A1A1A"/>
+                        <Border Background="#2196F3" CornerRadius="4" Padding="6,2">
+                            <TextBlock Text="{x:Bind Type, Converter={StaticResource DiscountTypeToTextConverter}}" FontSize="10" Foreground="White" FontWeight="SemiBold"/>
+                        </Border>
+                        <Border Background="#FF9800" CornerRadius="4" Padding="6,2" Visibility="{x:Bind MemberOnly}">
+                            <TextBlock Text="Member Only" FontSize="10" Foreground="White" FontWeight="SemiBold"/>
+                        </Border>
                     </StackPanel>
-                    <TextBlock Text="{x:Bind Description}" FontSize="12" Foreground="#888888" TextTrimming="CharacterEllipsis" MaxLines="1" Margin="0,2,0,0"/>
+                    <TextBlock Text="{x:Bind Code}" FontSize="12" Foreground="#666666" Margin="0,4,0,0"/>
+                    <TextBlock Text="{x:Bind Converter={StaticResource DiscountValueDisplayConverter}}" FontSize="13" FontWeight="Bold" Foreground="#00796B" Margin="0,4,0,0"/>
                 </StackPanel>
-                <TextBlock Grid.Column="1" Text="{x:Bind Converter={StaticResource DiscountDisplayConverter}}" FontWeight="Bold" FontSize="15" VerticalAlignment="Center" Foreground="#00796B"/>
             </Grid>
         </DataTemplate>
 
@@ -113,7 +117,7 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Border Width="40" Height="40" CornerRadius="4" Background="#F5F5F5" Margin="0,0,12,0">
-                        <FontIcon Glyph="&#xE7F4;" Foreground="#CCCCCC"/>
+                        <Image Source="{x:Bind Product.MainImage, Converter={StaticResource StringToImageSourceConverter}}" Stretch="UniformToFill"/>
                     </Border>
                     <TextBlock Grid.Column="1" Text="{x:Bind Product.Name}" VerticalAlignment="Center" FontWeight="Medium" TextTrimming="CharacterEllipsis"/>
                 </Grid>
@@ -147,7 +151,7 @@
 
                 <StackPanel Spacing="12">
                     <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                        <TextBlock x:Name="PageTitleText" Text="New Order" FontSize="24" FontWeight="Bold" Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                        <TextBlock x:Name="PageTitleText" Text="New Order" FontSize="30" FontWeight="Bold" Foreground="#0C2B4E"/>
                         <Border x:Name="StatusBadgeBorder" CornerRadius="4" Padding="8,4" Background="#20FF9F00" VerticalAlignment="Center">
                             <TextBlock x:Name="StatusBadgeText" Text="PENDING" FontSize="12" FontWeight="SemiBold" Foreground="#FFFF9F00"/>
                         </Border>
@@ -167,7 +171,7 @@
                          <ComboBoxItem Content="Cancelled" Tag="CANCELLED"/>
                     </ComboBox>
                     
-                    <Button Background="White" BorderThickness="1" BorderBrush="#E0E0E0" Padding="12,8" CornerRadius="4" VerticalAlignment="Bottom" Margin="0,0,0,1">
+                    <Button Click="OnPrintClick" Background="White" BorderThickness="1" BorderBrush="#E0E0E0" Padding="12,8" CornerRadius="4" VerticalAlignment="Bottom" Margin="0,0,0,1" ToolTipService.ToolTip="Print Order">
                         <FontIcon Glyph="&#xE749;" FontSize="16"/> <!-- Print -->
                     </Button>
 
@@ -295,10 +299,9 @@
                                 </Grid.ColumnDefinitions>
 
                                 <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                                    <!-- Image Placeholder -->
+                                    <!-- Product Image -->
                                     <Border Width="40" Height="40" Background="#F0F0F0" CornerRadius="4">
-                                         <FontIcon Glyph="&#xE74C;" FontSize="16" Foreground="#CCCCCC" 
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <Image Source="{x:Bind Product.MainImage, Converter={StaticResource StringToImageSourceConverter}}" Stretch="UniformToFill"/>
                                     </Border>
                                     <TextBlock Text="{x:Bind Product.Name}" VerticalAlignment="Center" FontWeight="Medium" TextTrimming="CharacterEllipsis"/>
                                 </StackPanel>

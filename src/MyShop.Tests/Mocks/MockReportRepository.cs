@@ -14,6 +14,7 @@ namespace MyShop.Tests.Mocks
         public List<CustomerSalesData> MockTopCustomers { get; set; } = new();
         public List<RevenueProfit> MockTimeline { get; set; } = new();
         public List<StaffPerformanceData> MockStaffPerformance { get; set; } = new();
+        public CommissionStats? MockCommissionStats { get; set; }
 
         public MockReportRepository()
         {
@@ -30,6 +31,15 @@ namespace MyShop.Tests.Mocks
             MockTopProducts.Add(new ProductSalesData { ProductId = 1, ProductName = "Test Product", QuantitySold = 10, Revenue = 1000 });
             MockTopCustomers.Add(new CustomerSalesData { CustomerId = 1, CustomerName = "Test Customer", TotalOrders = 5, TotalSpent = 500 });
             MockStaffPerformance.Add(new StaffPerformanceData { StaffId = 1, Username = "Staff1", TotalOrders = 10, TotalRevenue = 1000 });
+
+            MockCommissionStats = new CommissionStats
+            {
+                TotalCommission = 0,
+                PaidCommission = 0,
+                UnpaidCommission = 0,
+                TotalOrderAmount = 0,
+                TotalOrders = 0
+            };
         }
 
         public Task<PeriodReport?> GetReportByPeriodAsync(PeriodType period, DateTime? startDate = null, DateTime? endDate = null)
@@ -55,6 +65,11 @@ namespace MyShop.Tests.Mocks
         public Task<List<StaffPerformanceData>> GetAllStaffPerformanceAsync(DateTime startDate, DateTime endDate)
         {
             return Task.FromResult(MockStaffPerformance);
+        }
+
+        public Task<CommissionStats?> GetCommissionStatsAsync(int? userId, DateTime startDate, DateTime endDate)
+        {
+            return Task.FromResult(MockCommissionStats);
         }
     }
 }

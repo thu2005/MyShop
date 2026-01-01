@@ -10,7 +10,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    Background="#F5F7FA">
 
     <Page.Resources>
         <converters:StringToImageSourceConverter x:Key="StringToImageSourceConverter" />
@@ -34,8 +34,8 @@
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <StackPanel Spacing="4">
-               <TextBlock Text="Products" FontSize="24" FontWeight="Bold" Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+            <StackPanel>
+               <TextBlock Text="Products" FontSize="30" FontWeight="Bold" Foreground="#0C2B4E"/>
                <TextBlock Text="Home > Products" 
                                FontSize="14" 
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -146,7 +146,7 @@
                                 </Grid.ColumnDefinitions>
 
                                 <Border Width="64" Height="64" CornerRadius="8" BorderBrush="#E5E7EB" BorderThickness="1">
-                                    <Image Source="{x:Bind ImageUrl, Converter={StaticResource StringToImageSourceConverter}}" Stretch="UniformToFill"/>
+                                    <Image Source="{x:Bind MainImage, Converter={StaticResource StringToImageSourceConverter}}" Stretch="UniformToFill"/>
                                 </Border>
 
                                 <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">

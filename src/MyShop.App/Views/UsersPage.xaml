@@ -27,7 +27,7 @@
             </Grid.ColumnDefinitions>
             
             <StackPanel>
-                <TextBlock Text="Staff Management" FontSize="24" FontWeight="Bold" Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                <TextBlock Text="Staff Management" FontSize="30" FontWeight="Bold" Foreground="#0C2B4E"/>
                 <TextBlock Text="Home > Staff Management" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,4,0,0"/>
             </StackPanel>
 

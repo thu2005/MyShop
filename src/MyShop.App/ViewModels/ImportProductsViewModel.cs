@@ -7,6 +7,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace MyShop.App.ViewModels
 {
@@ -110,6 +111,8 @@ namespace MyShop.App.ViewModels
                 var failed = 0;
 
 
+                var createdCategories = new Dictionary<string, int>();
+
                 foreach (var row in validRows)
                 {
                     try
@@ -117,9 +120,20 @@ namespace MyShop.App.ViewModels
                         // Create category if doesn't exist
                         if (!row.CategoryId.HasValue && !string.IsNullOrEmpty(row.CategoryName))
                         {
-                            var newCategory = new Category { Name = row.CategoryName };
-                            var created = await _categoryRepository.AddAsync(newCategory);
-                            row.CategoryId = created.Id;
+                            var catName = row.CategoryName.Trim();
+                            
+                            // Check local cache first
+                            if (createdCategories.ContainsKey(catName))
+                            {
+                                row.CategoryId = createdCategories[catName];
+                            }
+                            else
+                            {
+                                var newCategory = new Category { Name = catName };
+                                var created = await _categoryRepository.AddAsync(newCategory);
+                                row.CategoryId = created.Id;
+                                createdCategories.Add(catName, created.Id);
+                            }
                         }
 
                         var product = new Product
@@ -132,8 +146,16 @@ namespace MyShop.App.ViewModels
                             CostPrice = row.CostPrice ?? 0,
                             Stock = row.Stock,
                             MinStock = row.MinStock,
-                            ImageUrl = row.ImageUrl,
-                            CategoryId = row.CategoryId!.Value
+                            CategoryId = row.CategoryId!.Value,
+                            Images = !string.IsNullOrWhiteSpace(row.ImageUrl) 
+                                ? row.ImageUrl.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                                      .Select((url, index) => new ProductImage 
+                                      { 
+                                          ImageUrl = url.Trim(), 
+                                          DisplayOrder = index, 
+                                          IsMain = index == 0 
+                                      }).ToList()
+                                : new System.Collections.Generic.List<ProductImage>()
                         };
 
                         var result = await _productRepository.AddAsync(product);

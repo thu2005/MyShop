@@ -133,7 +133,7 @@
             </Grid.ColumnDefinitions>
             
             <StackPanel>
-                 <TextBlock Text="Customers List" FontSize="24" FontWeight="Bold" Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                 <TextBlock Text="Customers List" FontSize="30" FontWeight="Bold" Foreground="#0C2B4E"/>
                  <TextBlock Text="Home > Customers List" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,4,0,0"/>
             </StackPanel>
 

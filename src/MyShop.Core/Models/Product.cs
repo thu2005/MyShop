@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
 
 namespace MyShop.Core.Models
 {
@@ -34,9 +36,6 @@ namespace MyShop.Core.Models
 
         public int MinStock { get; set; }
 
-        [MaxLength(500)]
-        public string? ImageUrl { get; set; }
-
         public int CategoryId { get; set; }
 
         [ForeignKey(nameof(CategoryId))]
@@ -49,5 +48,20 @@ namespace MyShop.Core.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+        // Images collection
+        public List<ProductImage> Images { get; set; } = new();
+
+        // Computed property for main image
+        // Computed property for main image
+        [NotMapped]
+        private string? _mainImage;
+
+        [NotMapped]
+        public string? MainImage 
+        { 
+            get => _mainImage ?? Images?.FirstOrDefault(i => i.IsMain)?.ImageUrl ?? Images?.FirstOrDefault()?.ImageUrl;
+            set => _mainImage = value;
+        }
     }
 }

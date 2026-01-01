@@ -11,6 +11,9 @@ using Windows.Storage.Pickers;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.ObjectModel;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace MyShop.App.Views
 {
@@ -22,7 +25,8 @@ namespace MyShop.App.Views
 
         public AddProductViewModel ViewModel { get; }
         private readonly IDraftService _draftService;
-        private string _selectedImagePath;
+        private ObservableCollection<ProductImage> _imageUrls;
+        private int _mainImageIndex = 0;
         private CancellationTokenSource _autoSaveCts;
 
         public AddProductScreen()
@@ -30,6 +34,8 @@ namespace MyShop.App.Views
             this.InitializeComponent();
             ViewModel = App.Current.Services.GetService<AddProductViewModel>();
             _draftService = App.Current.Services.GetService<IDraftService>();
+            _imageUrls = new ObservableCollection<ProductImage>();
+            ThumbnailsRepeater.ItemsSource = _imageUrls;
         }
 
         protected override async void OnNavigatedTo(NavigationEventArgs e)
@@ -79,7 +85,9 @@ namespace MyShop.App.Views
                     Price = PriceBox.Text,
                     CostPrice = CostPriceBox.Text,
                     Stock = StockBox.Text,
-                    ImageUrl = _selectedImagePath,
+
+                    ImageUrl = _imageUrls.Count > 0 ? _imageUrls[_mainImageIndex].ImageUrl : null,
+                    Images = _imageUrls.ToList(),
                     CategoryId = CategoryComboBox.SelectedValue as int?,
                     SavedAt = DateTime.Now
                 };
@@ -151,23 +159,53 @@ namespace MyShop.App.Views
                     CategoryComboBox.SelectedValue = draft.CategoryId.Value;
                 }
 
-                // Restore image preview if path exists
-                if (!string.IsNullOrEmpty(draft.ImageUrl))
+                // Restore images
+                if (draft.Images != null && draft.Images.Count > 0)
                 {
                     try
                     {
-                        var file = await Windows.Storage.StorageFile.GetFileFromPathAsync(draft.ImageUrl);
-                        var bitmap = new BitmapImage();
-                        await bitmap.SetSourceAsync(await file.OpenAsync(Windows.Storage.FileAccessMode.Read));
-                        PreviewImage.Source = bitmap;
-                        PreviewImage.Visibility = Visibility.Visible;
-                        PlaceholderIcon.Visibility = Visibility.Collapsed;
-                        _selectedImagePath = draft.ImageUrl;
+                        _imageUrls.Clear();
+                        foreach (var img in draft.Images)
+                        {
+                            _imageUrls.Add(img);
+                            if (img.IsMain) _mainImageIndex = _imageUrls.Count - 1;
+                        }
+
+                        if (_imageUrls.Count > 0 && !_imageUrls.Any(i => i.IsMain))
+                        {
+                             // Fallback if no main image marked
+                             _mainImageIndex = 0;
+                             _imageUrls[0].IsMain = true;
+                        }
+                        
+                        UpdateImagePreview();
+                        ThumbnailsContainer.Visibility = Visibility.Visible;
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Failed to restore images: {ex.Message}");
+                    }
+                }
+                else if (!string.IsNullOrEmpty(draft.ImageUrl))
+                {
+                    try
+                    {
+                        // Legacy restore for single image path drafts
+                        _imageUrls.Clear();
+                        var productImg = new ProductImage 
+                        { 
+                            ImageUrl = draft.ImageUrl, 
+                            IsMain = true, 
+                            DisplayOrder = 0 
+                        };
+                        _imageUrls.Add(productImg);
+                        _mainImageIndex = 0;
+                        UpdateImagePreview();
+                        ThumbnailsContainer.Visibility = Visibility.Visible;
                     }
                     catch (Exception ex)
                     {
                         System.Diagnostics.Debug.WriteLine($"Failed to restore image: {ex.Message}");
-                        // File not accessible, ignore
                     }
                 }
 
@@ -194,18 +232,23 @@ namespace MyShop.App.Views
                 var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindowInstance);
                 WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
 
-                var file = await picker.PickSingleFileAsync();
-                if (file != null)
+                var files = await picker.PickMultipleFilesAsync();
+                if (files != null && files.Count > 0)
                 {
-                    // Show preview
-                    var bitmap = new BitmapImage();
-                    await bitmap.SetSourceAsync(await file.OpenAsync(Windows.Storage.FileAccessMode.Read));
-                    PreviewImage.Source = bitmap;
-                    PreviewImage.Visibility = Visibility.Visible;
-                    PlaceholderIcon.Visibility = Visibility.Collapsed;
+                    foreach (var file in files)
+                    {
+                        var imageUrl = await ViewModel.UploadImageAsync(file);
+                        var newImg = new ProductImage 
+                        { 
+                            ImageUrl = imageUrl, 
+                            DisplayOrder = _imageUrls.Count,
+                            IsMain = _imageUrls.Count == 0 // First image added is main
+                        };
+                        _imageUrls.Add(newImg);
+                    }
 
-                    // Store file for upload
-                    _selectedImagePath = file.Path;
+                    UpdateImagePreview();
+                    ThumbnailsContainer.Visibility = _imageUrls.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
                     
                     // Trigger autosave
                     OnFieldChanged(null, null);
@@ -265,7 +308,7 @@ namespace MyShop.App.Views
                 if (!string.IsNullOrWhiteSpace(PriceBox.Text))
                     decimal.TryParse(PriceBox.Text, out price);
 
-                // Create product
+                // Create product base
                 var newProduct = new Product
                 {
                     Name = NameBox.Text,
@@ -279,13 +322,31 @@ namespace MyShop.App.Views
                     UpdatedAt = DateTime.UtcNow
                 };
 
-                // Upload image if selected
-                if (!string.IsNullOrEmpty(_selectedImagePath))
+                // Prepare images for saving (Reorder to ensure IsMain is index 0)
+                var imagesToSave = new List<ProductImage>();
+                if (_imageUrls.Count > 0)
                 {
-                    var file = await Windows.Storage.StorageFile.GetFileFromPathAsync(_selectedImagePath);
-                    var imageUrl = await ViewModel.UploadImageAsync(file);
-                    newProduct.ImageUrl = imageUrl;
+                    // Fix main index if out of bounds
+                    if (_mainImageIndex >= _imageUrls.Count) _mainImageIndex = 0;
+                    
+                    // Get main image and add first
+                    var mainImage = _imageUrls[_mainImageIndex];
+                    mainImage.IsMain = true;
+                    mainImage.DisplayOrder = 0;
+                    imagesToSave.Add(mainImage);
+
+                    // Add others
+                    int displayOrder = 1;
+                    foreach (var img in _imageUrls)
+                    {
+                        if (img == mainImage) continue;
+                        img.IsMain = false;
+                        img.DisplayOrder = displayOrder++;
+                        imagesToSave.Add(img);
+                    }
                 }
+                
+                newProduct.Images = imagesToSave;
 
                 // Save product
                 await ViewModel.AddProductAsync(newProduct);
@@ -314,6 +375,84 @@ namespace MyShop.App.Views
             }
         }
 
+    private void UpdateImagePreview()
+        {
+            if (_imageUrls.Count > 0)
+            {
+                if (_mainImageIndex >= _imageUrls.Count) _mainImageIndex = 0;
+                var mainImageUrl = _imageUrls[_mainImageIndex].ImageUrl;
+                MainImagePreview.Source = new BitmapImage(new Uri(mainImageUrl));
+                MainImagePreview.Visibility = Visibility.Visible;
+                PlaceholderIcon.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                MainImagePreview.Visibility = Visibility.Collapsed;
+                PlaceholderIcon.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void OnSetMainImageClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is ProductImage imageItem)
+            {
+                var index = _imageUrls.IndexOf(imageItem);
+                if (index >= 0)
+                {
+                    foreach (var img in _imageUrls) img.IsMain = false;
+                    imageItem.IsMain = true;
+                    _mainImageIndex = index;
+                    UpdateImagePreview();
+                    UpdateStarIndicators();
+                    // Trigger autosave
+                    OnFieldChanged(null, null);
+                }
+            }
+        }
+
+        private void OnDeleteImageClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.Tag is ProductImage imageItem)
+            {
+                var index = _imageUrls.IndexOf(imageItem);
+                _imageUrls.Remove(imageItem);
+                
+                if (index == _mainImageIndex)
+                {
+                    _mainImageIndex = 0;
+                    if (_imageUrls.Count > 0) _imageUrls[0].IsMain = true;
+                }
+                else if (index < _mainImageIndex)
+                {
+                    _mainImageIndex--;
+                }
+                
+                UpdateImagePreview();
+                ThumbnailsContainer.Visibility = _imageUrls.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+                UpdateStarIndicators();
+                // Trigger autosave
+                OnFieldChanged(null, null);
+            }
+        }
+
+        private void UpdateStarIndicators()
+        {
+            // Force refresh of binding by recreating collection
+            var temp = new List<ProductImage>(_imageUrls);
+            _imageUrls.Clear();
+            foreach (var item in temp) _imageUrls.Add(item);
+        }
+
+        private void OnImagePointerEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            if (sender is Grid overlay) overlay.Opacity = 1;
+        }
+
+        private void OnImagePointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+        {
+            if (sender is Grid overlay) overlay.Opacity = 0;
+        }
+        
         private void OnCancelClick(object sender, RoutedEventArgs e)
         {
             // Keep draft when user cancels

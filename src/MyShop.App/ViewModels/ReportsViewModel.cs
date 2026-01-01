@@ -56,6 +56,13 @@ namespace MyShop.App.ViewModels
         public bool IsAdmin => _authorizationService.IsAuthorized(UserRole.ADMIN);
         public bool IsStaff => !IsAdmin;
 
+        // Commission summary for staff
+        [ObservableProperty]
+        private string _totalOrderAmount = "$0.00";
+
+        [ObservableProperty]
+        private string _totalCommissionAmount = "$0.00";
+
         public ReportsViewModel(
             IReportRepository reportRepository,
             IAuthService authService,
@@ -233,7 +240,7 @@ namespace MyShop.App.ViewModels
             {
                 IsBusy = true;
 
-                // 1. Load Summary Report
+                // Load Summary Report
                 var startVal = _startDate ?? DateTime.Now.AddDays(-7);
                 var endVal = _endDate ?? DateTime.Now;
                 var report = await _reportRepository.GetReportByPeriodAsync(_selectedPeriod, startVal.DateTime, endVal.DateTime);
@@ -269,16 +276,16 @@ namespace MyShop.App.ViewModels
                     end = report.PeriodEnd;
                 }
 
-                // 2. Load Top Products Chart (Row Chart: Y=Product Name, X=Quantity)
+                // Load Top Products Chart (Row Chart: Y=Product Name, X=Quantity)
                 var topProducts = await _reportRepository.GetTopProductsByQuantityAsync(start, end);
                 SetupProductsChart(topProducts);
 
-                // 3. Load Top Customers List
+                // Load Top Customers List
                 var customers = await _reportRepository.GetTopCustomersAsync(start, end);
                 _topCustomers.Clear();
                 foreach (var c in customers) _topCustomers.Add(c);
                 
-                // 4. Load All Staff Performance
+                // Load All Staff Performance
                 try
                 {
                     var staff = await _reportRepository.GetAllStaffPerformanceAsync(start, end);
@@ -293,7 +300,27 @@ namespace MyShop.App.ViewModels
                 {
                 }
 
-                // 5. Load Revenue/Profit Timeline Chart (Column Chart)
+                if (!IsAdmin && CurrentUser != null)
+                {
+                    try
+                    {
+                        var commissionStats = await _reportRepository.GetCommissionStatsAsync(CurrentUser.Id, start, end);
+                        if (commissionStats != null)
+                        {
+                            var estimatedOrderTotal = commissionStats.TotalCommission > 0 
+                                ? commissionStats.TotalCommission / 0.05m 
+                                : 0;
+                            
+                            TotalOrderAmount = $"${estimatedOrderTotal:N2}";
+                            TotalCommissionAmount = $"${commissionStats.TotalCommission:N2}";
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error loading commission stats: {ex.Message}");
+                    }
+                }
+
                 var timelineGrouping = TimelineGrouping.DAY;
                 if (_selectedPeriod == PeriodType.YEARLY) timelineGrouping = TimelineGrouping.MONTH;
                 

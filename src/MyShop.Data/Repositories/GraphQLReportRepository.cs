@@ -164,6 +164,7 @@ namespace MyShop.Data.Repositories
                             totalOrders
                             totalRevenue
                             totalProfit
+                            totalCommission
                         }
                     }",
                     Variables = new { 
@@ -193,12 +194,66 @@ namespace MyShop.Data.Repositories
             }
         }
 
+        public async Task<CommissionStats?> GetCommissionStatsAsync(int? userId, DateTime startDate, DateTime endDate)
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"[GraphQLReportRepository] Calling getCommissionStats with userId={userId}, startDate={startDate}, endDate={endDate}");
+                
+                var request = new GraphQLRequest
+                {
+                    Query = @"
+                    query GetCommissionStats($userId: Int, $dateRange: DateRangeInput!) {
+                        getCommissionStats(userId: $userId, dateRange: $dateRange) {
+                            totalCommission
+                            paidCommission
+                            unpaidCommission
+                            totalOrders
+                        }
+                    }",
+                    Variables = new { 
+                        userId = userId,
+                        dateRange = new { 
+                            from = startDate.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
+                            to = endDate.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+                        } 
+                    }
+                };
+
+                var response = await _graphQLService.Client.SendQueryAsync<CommissionStatsResponse>(request);
+                
+                if (response.Errors != null && response.Errors.Length > 0)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[GraphQLReportRepository] GraphQL Errors: {string.Join(", ", response.Errors.Select(e => e.Message))}");
+                }
+                
+                var result = response.Data?.GetCommissionStats;
+                if (result != null)
+                {
+                    // Calculate totalOrderAmount from the commission data
+                    // Since backend doesn't return it directly, we'll set it to 0 for now
+                    // The backend query needs to be updated to return order totals
+                    result.TotalOrderAmount = 0;
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"[GraphQLReportRepository] Commission stats received: {result?.TotalCommission ?? 0}");
+                
+                return result;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[GraphQLReportRepository] Exception: {ex.Message}\n{ex.StackTrace}");
+                return null;
+            }
+        }
+
         // Response wrappers
         private class ReportResponse { public PeriodReport? ReportByPeriod { get; set; } }
         private class TopProductsResponse { public List<ProductSalesData>? TopProductsByQuantity { get; set; } }
         private class TopCustomersResponse { public List<CustomerSalesData>? TopCustomers { get; set; } }
         private class TimelineResponse { public List<RevenueProfit>? RevenueAndProfitTimeline { get; set; } }
         private class StaffPerformanceResponse { public List<StaffPerformanceData>? AllStaffPerformance { get; set; } }
+        private class CommissionStatsResponse { public CommissionStats? GetCommissionStats { get; set; } }
 
         // Override unused base methods
         public override Task<object?> GetByIdAsync(int id) => throw new NotImplementedException();

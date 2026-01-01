@@ -35,7 +35,7 @@ namespace MyShop.App.ViewModels
         private ObservableCollection<Category> _categories;
 
         [ObservableProperty]
-        private ObservableCollection<string> _productImages;
+        private ObservableCollection<ProductImage> _productImagesCollection;
 
         // Editable properties
         [ObservableProperty]
@@ -78,6 +78,13 @@ namespace MyShop.App.ViewModels
         public bool IsAdmin => _authorizationService.IsAuthorized(UserRole.ADMIN);
         public bool IsStaff => !IsAdmin;
 
+        // Computed property for main image
+        public ProductImage? MainImage => CurrentProduct?.Images?.FirstOrDefault(i => i.IsMain) 
+                                          ?? CurrentProduct?.Images?.FirstOrDefault();
+
+        [ObservableProperty]
+        private string? _mainImageUrl;
+
         public ProductDetailViewModel(
             IProductRepository productRepository, 
             ICategoryRepository categoryRepository, 
@@ -90,7 +97,6 @@ namespace MyShop.App.ViewModels
             _imageUploadService = imageUploadService;
             _authService = authService;
             _authorizationService = authorizationService;
-            _productImages = new ObservableCollection<string>();
             _categories = new ObservableCollection<Category>();
         }
 
@@ -108,29 +114,42 @@ namespace MyShop.App.ViewModels
                 CostPrice = product.CostPrice,
                 Stock = product.Stock,
                 MinStock = product.MinStock,
-                ImageUrl = product.ImageUrl,
                 CategoryId = product.CategoryId,
                 Category = product.Category,
-                IsActive = product.IsActive
+                IsActive = product.IsActive,
+                Images = product.Images?.Select(img => new ProductImage
+                {
+                    Id = img.Id,
+                    ProductId = img.ProductId,
+                    ImageUrl = img.ImageUrl,
+                    DisplayOrder = img.DisplayOrder,
+                    IsMain = img.IsMain
+                }).ToList() ?? new System.Collections.Generic.List<ProductImage>()
             };
 
-            // Initialize string wrappers (use 0 as display value if null, but don't modify product)
+            // Initialize string wrappers
             EditStockText = CurrentProduct.Stock.ToString();
             EditCostPriceText = CurrentProduct.CostPrice?.ToString() ?? string.Empty;
             EditPriceText = CurrentProduct.Price.ToString();
 
-            // Load product images
-            ProductImages.Clear();
-            if (!string.IsNullOrEmpty(product.ImageUrl))
-            {
-                ProductImages.Add(product.ImageUrl);
-            }
+            // Load product images into observable collection
+            ProductImagesCollection = new ObservableCollection<ProductImage>(CurrentProduct.Images ?? new System.Collections.Generic.List<ProductImage>());
+
+            // Update main image URL
+            UpdateMainImageUrl();
 
             // Load categories
             await LoadCategoriesAsync();
             
-            // Trigger binding update for CategoryId after categories are loaded
+            // Trigger binding update
             OnPropertyChanged(nameof(CurrentProduct));
+            OnPropertyChanged(nameof(MainImage));
+        }
+
+        private void UpdateMainImageUrl()
+        {
+            var mainImg = CurrentProduct?.Images?.FirstOrDefault(i => i.IsMain);
+            MainImageUrl = mainImg?.ImageUrl ?? CurrentProduct?.Images?.FirstOrDefault()?.ImageUrl;
         }
 
         private void SyncEditablePropertiesFromProduct()
@@ -206,10 +225,17 @@ namespace MyShop.App.ViewModels
                     CostPrice = CurrentProduct.CostPrice,
                     Stock = CurrentProduct.Stock,
                     MinStock = CurrentProduct.MinStock,
-                    ImageUrl = CurrentProduct.ImageUrl,
                     CategoryId = CurrentProduct.CategoryId,
                     Category = CurrentProduct.Category,
-                    IsActive = CurrentProduct.IsActive
+                    IsActive = CurrentProduct.IsActive,
+                    Images = CurrentProduct.Images?.Select(img => new ProductImage
+                    {
+                        Id = img.Id,
+                        ProductId = img.ProductId,
+                        ImageUrl = img.ImageUrl,
+                        DisplayOrder = img.DisplayOrder,
+                        IsMain = img.IsMain
+                    }).ToList() ?? new System.Collections.Generic.List<ProductImage>()
                 };
                 
                 // Update string wrappers to reflect saved values
@@ -241,18 +267,26 @@ namespace MyShop.App.ViewModels
             CurrentProduct.Price = OriginalProduct.Price;
             CurrentProduct.CategoryId = OriginalProduct.CategoryId;
             CurrentProduct.Category = OriginalProduct.Category;
-            CurrentProduct.ImageUrl = OriginalProduct.ImageUrl;
+            CurrentProduct.Images = OriginalProduct.Images?.Select(img => new ProductImage
+            {
+                Id = img.Id,
+                ProductId = img.ProductId,
+                ImageUrl = img.ImageUrl,
+                DisplayOrder = img.DisplayOrder,
+                IsMain = img.IsMain
+            }).ToList() ?? new System.Collections.Generic.List<ProductImage>();
             
             // Restore string values
             EditStockText = OriginalProduct.Stock.ToString();
             EditCostPriceText = OriginalProduct.CostPrice?.ToString() ?? string.Empty;
             EditPriceText = OriginalProduct.Price.ToString();
             
+            OnPropertyChanged(nameof(MainImage));
             IsEditMode = false;
         }
 
         [RelayCommand]
-        private async Task UploadImage()
+        private async Task ManageImages()
         {
             if (IsBusy) return;
 
@@ -267,27 +301,43 @@ namespace MyShop.App.ViewModels
                 var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.MainWindowInstance);
                 WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
 
-                var file = await picker.PickSingleFileAsync();
-                if (file != null)
+                // Allow multiple file selection
+                var files = await picker.PickMultipleFilesAsync();
+                if (files != null && files.Count > 0)
                 {
                     IsBusy = true;
 
-                    // Upload to backend
-                    var imageUrl = await _imageUploadService.UploadProductImageAsync(file);
+                    foreach (var file in files)
+                    {
+                        // Upload to backend to get URL (but don't save to DB yet)
+                        var imageUrl = await _imageUploadService.UploadProductImageAsync(file);
 
-                    // Update product
-                    CurrentProduct.ImageUrl = imageUrl;
-                    ProductImages.Clear();
-                    ProductImages.Add(imageUrl);
+                        // Add new image to product (in memory only)
+                        var newImage = new ProductImage
+                        {
+                            ProductId = CurrentProduct.Id,
+                            ImageUrl = imageUrl,
+                            DisplayOrder = CurrentProduct.Images?.Count ?? 0,
+                            IsMain = CurrentProduct.Images?.Count == 0 // First image is main
+                        };
+                        
+                        if (CurrentProduct.Images == null)
+                            CurrentProduct.Images = new System.Collections.Generic.List<ProductImage>();
+                        
+                        CurrentProduct.Images.Add(newImage);
+                        
+                        // Add to observable collection for instant UI preview
+                        ProductImagesCollection.Add(newImage);
+                    }
                     
-                    // Auto-save to database
-                    await _productRepository.UpdateAsync(CurrentProduct);
-                    
-                    // Update original product with new image
-                    OriginalProduct.ImageUrl = imageUrl;
+                    // Don't auto-save - user needs to click UPDATE button
+                    // Images will be saved when SaveChanges is called
                     
                     // Trigger UI refresh
-                    OnPropertyChanged(nameof(CurrentProduct));
+                    OnPropertyChanged(nameof(MainImage));
+                    var temp = CurrentProduct;
+                    CurrentProduct = null;
+                    CurrentProduct = temp;
                 }
             }
             catch (Exception ex)

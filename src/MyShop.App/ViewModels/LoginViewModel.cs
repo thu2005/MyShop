@@ -1,6 +1,7 @@
 ﻿using MyShop.App.ViewModels.Base;
 using MyShop.Core.Interfaces.Services;
 using System;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
@@ -52,6 +53,8 @@ namespace MyShop.App.ViewModels
 
         public ICommand LoginCommand { get; }
         public ICommand OpenConfigCommand { get; }
+
+        public string AppVersion => $"v{Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0"}";
 
         public event EventHandler? LoginSuccessful;
         public event EventHandler? OpenConfigRequested;

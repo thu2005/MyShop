@@ -7,6 +7,8 @@ using Microsoft.UI.Xaml.Controls;
 using MyShop.App.Models;
 using MyShop.App.Services;
 using MyShop.App.ViewModels;
+using MyShop.Core.Interfaces.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MyShop.App.Views
 {
@@ -26,6 +28,13 @@ namespace MyShop.App.Views
 
         private async void NewCustomerButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
         {
+            // Check license before allowing customer creation
+            var licenseService = App.Current.Services.GetService<ILicenseService>();
+            if (licenseService != null && !licenseService.IsFeatureAllowed("AddCustomer"))
+            {
+                await ShowTrialExpiredDialog("Add Customer");
+                return;
+            }
             var dialog = new ContentDialog
             {
                 XamlRoot = this.XamlRoot,
@@ -142,6 +151,13 @@ namespace MyShop.App.Views
 
         private async void EditCustomer_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
         {
+            // Check license before allowing customer editing
+            var licenseService = App.Current.Services.GetService<ILicenseService>();
+            if (licenseService != null && !licenseService.IsFeatureAllowed("EditCustomer"))
+            {
+                await ShowTrialExpiredDialog("Edit Customer");
+                return;
+            }
             if (sender is MenuFlyoutItem menuItem && menuItem.Tag is SelectableCustomer wrapper)
             {
                 var customer = wrapper.Customer;
@@ -214,6 +230,13 @@ namespace MyShop.App.Views
 
         private async void DeleteCustomer_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
         {
+            // Check license before allowing customer deletion
+            var licenseService = App.Current.Services.GetService<ILicenseService>();
+            if (licenseService != null && !licenseService.IsFeatureAllowed("DeleteCustomer"))
+            {
+                await ShowTrialExpiredDialog("Delete Customer");
+                return;
+            }
             if (sender is MenuFlyoutItem menuItem && menuItem.Tag is SelectableCustomer wrapper)
             {
                 var customer = wrapper.Customer;
@@ -239,6 +262,13 @@ namespace MyShop.App.Views
 
         private async void DeleteSelected_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
         {
+            // Check license before allowing bulk deletion
+            var licenseService = App.Current.Services.GetService<ILicenseService>();
+            if (licenseService != null && !licenseService.IsFeatureAllowed("DeleteCustomer"))
+            {
+                await ShowTrialExpiredDialog("Delete Customers");
+                return;
+            }
             // Case 1: Enter Selection Mode
             if (!ViewModel.IsSelectionMode)
             {
@@ -294,6 +324,15 @@ namespace MyShop.App.Views
             if (sender is RadioButton radio && radio.Tag is string filterValue)
             {
                 ViewModel.SelectedFilter = filterValue;
+            }
+        }
+
+        private async System.Threading.Tasks.Task ShowTrialExpiredDialog(string featureName)
+        {
+            var shell = ShellPage.Instance;
+            if (shell != null)
+            {
+                await shell.ShowTrialExpiredDialog(featureName);
             }
         }
 

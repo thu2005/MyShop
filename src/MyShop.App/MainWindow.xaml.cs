@@ -28,6 +28,19 @@ namespace MyShop.App
         {
             this.InitializeComponent();
 
+            // Auto-maximize window
+            IntPtr hWnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+            Microsoft.UI.WindowId windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hWnd);
+            Microsoft.UI.Windowing.AppWindow appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
+            if (appWindow != null)
+            {
+                appWindow.SetPresenter(Microsoft.UI.Windowing.AppWindowPresenterKind.Overlapped);
+                if (appWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter presenter)
+                {
+                    presenter.Maximize();
+                }
+            }
+
             if (sessionManager.IsAuthenticated)
             {
                 RootFrame.Navigate(typeof(ShellPage));

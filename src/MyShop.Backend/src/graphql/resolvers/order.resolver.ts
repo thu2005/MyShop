@@ -9,7 +9,7 @@ export const orderResolvers = {
       requireAuth(context);
 
       const page = pagination?.page || 1;
-      const pageSize = Math.min(pagination?.pageSize || 20, 100);
+      const pageSize = Math.min(pagination?.pageSize || 20, 10000);
       const skip = (page - 1) * pageSize;
 
       const where: any = {};
@@ -76,7 +76,11 @@ export const orderResolvers = {
           discount: true,
           orderItems: {
             include: {
-              product: true,
+              product: {
+                include: {
+                  images: true,
+                } as any,
+              },
             },
           },
         },
@@ -297,8 +301,8 @@ export const orderResolvers = {
           });
         }
 
-        // Update customer total spent
-        if (input.customerId) {
+        // Update customer total spent (only if order is completed)
+        if (input.customerId && input.status === 'COMPLETED') {
           await tx.customer.update({
             where: { id: input.customerId },
             data: {
@@ -504,6 +508,18 @@ export const orderResolvers = {
                 commissionRate,
                 commissionAmount,
                 isPaid: true,
+              },
+            });
+          }
+
+          // Update customer total spent
+          if (updatedOrder.customerId) {
+            await tx.customer.update({
+              where: { id: updatedOrder.customerId },
+              data: {
+                totalSpent: {
+                  increment: updatedOrder.total,
+                },
               },
             });
           }

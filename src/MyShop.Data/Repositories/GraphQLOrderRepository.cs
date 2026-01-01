@@ -72,6 +72,7 @@ namespace MyShop.Data.Repositories
                                     name
                                     sku
                                     price
+                                    mainImage
                                 }
                             }
                         }

@@ -9,14 +9,14 @@
 
   <Identity
     Name="5b5caec0-acf5-47a5-b941-167ef9e11cc7"
-    Publisher="CN=pudin"
+    Publisher="CN=MyShopTeam"
     Version="1.0.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="5b5caec0-acf5-47a5-b941-167ef9e11cc7" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>MyShop.App</DisplayName>
-    <PublisherDisplayName>pudin</PublisherDisplayName>
+    <DisplayName>MyShop</DisplayName>
+    <PublisherDisplayName>MyShopTeam</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
@@ -34,8 +34,8 @@
       Executable="$targetnametoken$.exe"
       EntryPoint="$targetentrypoint$">
       <uap:VisualElements
-        DisplayName="MyShop.App"
-        Description="MyShop.App"
+        DisplayName="MyShop"
+        Description="MyShop"
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png">

@@ -22,6 +22,7 @@ namespace MyShop.Core.Services
         public User? CurrentUser { get; set; }
         public string? Token { get; set; }
         public bool IsAuthenticated => !string.IsNullOrEmpty(Token);
+        public bool IsSessionPersisted => _localSettings.Values.ContainsKey(TokenKey);
 
         public void ClearSession()
         {
@@ -29,6 +30,7 @@ namespace MyShop.Core.Services
             CurrentUser = null;
             _localSettings.Values.Remove(TokenKey);
             _localSettings.Values.Remove(UserKey);
+            _localSettings.Values.Remove("LastOpenedPage"); // Clear last opened page on logout
 
             _graphQLService.SetAuthToken(null);
         }

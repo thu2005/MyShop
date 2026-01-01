@@ -6,6 +6,8 @@ using MyShop.Core.Models;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
+using MyShop.Core.Interfaces.Services;
 
 namespace MyShop.App.Views.Dialogs
 {

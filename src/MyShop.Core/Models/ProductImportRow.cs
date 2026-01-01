@@ -25,5 +25,16 @@ namespace MyShop.Core.Models
         // Display helpers
         public string ValidationStatus => IsValid ? "✅ Valid" : "❌ Invalid";
         public string ErrorSummary => Errors.Count > 0 ? string.Join(", ", Errors) : string.Empty;
+
+        // Computed property for parsing the first image as MainImage for preview
+        public string? MainImage 
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(ImageUrl)) return null;
+                var urls = ImageUrl.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
+                return urls.Length > 0 ? urls[0].Trim() : null;
+            }
+        }
     }
 }

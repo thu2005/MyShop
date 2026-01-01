@@ -47,7 +47,7 @@ public class DashboardService : IDashboardService
                         product {
                             id
                             name
-                            imageUrl
+                            mainImage
                             price
                         }
                         quantity
@@ -124,7 +124,7 @@ public class DashboardService : IDashboardService
                 lowStockProducts(threshold: $threshold) {
                     id
                     name
-                    imageUrl
+                    mainImage
                     price
                     stock
                 }

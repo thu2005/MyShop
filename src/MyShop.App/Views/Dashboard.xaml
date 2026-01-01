@@ -10,7 +10,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    Background="#F5F7FA">
 
     <Page.Resources>
         <converters:BoolToColorConverter x:Key="BoolToColorConverter"/>
@@ -35,7 +35,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Text="Dashboard" FontSize="24" FontWeight="Bold" Foreground="{ThemeResource TextFillColorPrimaryBrush}"/>
+                    <TextBlock Text="Dashboard" FontSize="30" FontWeight="Bold" Foreground="#0C2B4E"/>
                     <TextBlock Text="Home > Dashboard" 
                                FontSize="14" 
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
@@ -57,12 +57,12 @@
 
                 <controls:StatCard Grid.Column="0"
                                    Title="Total Products"
-                                   Value="{x:Bind ViewModel.Stats.TotalProducts, Mode=OneWay, Converter={StaticResource CurrencyConverter}}"
+                                   Value="{x:Bind ViewModel.Stats.TotalProducts, Mode=OneWay}"
                                    IconGlyph="&#xE7F8;"/>
 
                 <controls:StatCard Grid.Column="1"
                                    Title="Today Orders"
-                                   Value="{x:Bind ViewModel.Stats.TodayOrders, Mode=OneWay, Converter={StaticResource CurrencyConverter}}"
+                                   Value="{x:Bind ViewModel.Stats.TodayOrders, Mode=OneWay}"
                                    IconGlyph="&#xE7BF;"/>
 
                 <controls:StatCard Grid.Column="2"
@@ -143,15 +143,15 @@
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <Grid Grid.Column="0" Width="40" Height="40" Margin="0,0,12,0">
-                                            <Ellipse Fill="#1D546C"/>
+                                            <Ellipse Fill="#ffffffff"/>
                                             <Ellipse>
                                                 <Ellipse.Fill>
-                                                    <ImageBrush ImageSource="{x:Bind Product.ImageUrl, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" Stretch="UniformToFill"/>
+                                                    <ImageBrush ImageSource="{x:Bind Product.MainImage, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" Stretch="UniformToFill"/>
                                                 </Ellipse.Fill>
                                             </Ellipse>
                                         </Grid>
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                            <TextBlock Text="{x:Bind Product.Name}" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{x:Bind Product.Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{x:Bind Product.Name}"/>
                                             <TextBlock Text="{x:Bind Product.Price, Converter={StaticResource CurrencyConverter}}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                                         </StackPanel>
                                         <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="12,0,0,0">
@@ -274,15 +274,15 @@
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <Grid Grid.Column="0" Width="40" Height="40" Margin="0,0,12,0">
-                                            <Ellipse Fill="#1D546C"/>
+                                            <Ellipse Fill="#ffffffff"/>
                                             <Ellipse>
                                                 <Ellipse.Fill>
-                                                    <ImageBrush ImageSource="{x:Bind ImageUrl, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" Stretch="UniformToFill"/>
+                                                    <ImageBrush ImageSource="{x:Bind MainImage, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" Stretch="UniformToFill"/>
                                                 </Ellipse.Fill>
                                             </Ellipse>
                                         </Grid>
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                            <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{x:Bind Name}"/>
                                             <TextBlock Text="{x:Bind Price, Converter={StaticResource CurrencyConverter}}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                                         </StackPanel>
                                         <TextBlock Grid.Column="2" VerticalAlignment="Center" FontWeight="Bold">

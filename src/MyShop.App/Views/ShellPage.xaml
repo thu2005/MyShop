@@ -10,6 +10,7 @@
 
     <Page.Resources>
         <converters:RoleToVisibilityConverter x:Key="RoleToVisibilityConverter" />
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
     </Page.Resources>
 
     <NavigationView x:Name="NavView" 
@@ -41,6 +42,33 @@
         </NavigationView.PaneHeader>
 
         <NavigationView.FooterMenuItems>
+            <!-- Trial Banner as NavigationViewItem -->
+            <NavigationViewItem x:Name="TrialBannerItem"
+                                Tag="Trial" 
+                                SelectsOnInvoked="False"
+                                DoubleTapped="DebugBanner_DoubleTapped"
+                                Visibility="{x:Bind ViewModel.ShowTrialBanner, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}"
+                                Background="#FFF3CD"
+                                Height="40"
+                                ToolTipService.ToolTip="{x:Bind ViewModel.LicenseStatusMessage, Mode=OneWay}">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE7BA;" Foreground="#856404"/>
+                </NavigationViewItem.Icon>
+                <NavigationViewItem.Content>
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="TRIAL VERSION" 
+                                   FontWeight="Bold" 
+                                   FontSize="12"
+                                   Foreground="#856404"/>
+                        <TextBlock Text="{x:Bind ViewModel.LicenseStatusMessage, Mode=OneWay}" 
+                                   FontSize="11"
+                                   Foreground="#856404"
+                                   TextWrapping="WrapWholeWords"
+                                   MaxWidth="180"/>
+                    </StackPanel>
+                </NavigationViewItem.Content>
+            </NavigationViewItem>
+            
             <NavigationViewItem Content="HELP" Tag="Help" Icon="Help" FontWeight="SemiBold" SelectsOnInvoked="False"/>
         </NavigationView.FooterMenuItems>
 
@@ -57,6 +85,7 @@
 
             <NavigationViewItem Content="ORDER LIST" Tag="Orders" Icon="List" FontWeight="SemiBold"/>
             <NavigationViewItem Content="CUSTOMERS" Tag="Customers" Icon="People" FontWeight="SemiBold"/>
+            <NavigationViewItem Content="DISCOUNTS" Tag="Discounts" Icon="Tag" FontWeight="SemiBold"/>
             <NavigationViewItem Content="REPORT" Tag="Reports" Icon="Document" FontWeight="SemiBold"/>
             <NavigationViewItem Content="STAFF ACCOUNTS" 
                                 Tag="Users" 
@@ -101,6 +130,7 @@
                                                     Command="{x:Bind ViewModel.AdminPanelCommand}"
                                                     Visibility="{x:Bind ViewModel.UserRole, Mode=OneWay, Converter={StaticResource RoleToVisibilityConverter}, ConverterParameter='ADMIN'}"/>
                                     <MenuFlyoutSeparator />
+                                    <MenuFlyoutItem x:Name="DebugResetLicenseMenuItem" Text="🔧 Reset License (Debug)" Click="OnDebugResetLicenseClick"/>
                                     <MenuFlyoutItem Text="Logout" Icon="Cancel" Command="{x:Bind ViewModel.LogoutCommand}"/>
                                 </MenuFlyout>
                             </Button.Flyout>
@@ -108,7 +138,7 @@
                     </StackPanel>
                 </Grid>
 
-                <Frame x:Name="ContentFrame" Grid.Row="1" Background="#F5F5F5"/>
+                <Frame x:Name="ContentFrame" Grid.Row="1" Background="#F5F7FA"/>
             </Grid>
         </NavigationView.Content>
     </NavigationView>

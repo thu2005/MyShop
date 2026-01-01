@@ -45,6 +45,12 @@ export const productResolvers = {
           orderBy,
           include: {
             category: true,
+            images: {
+              orderBy: [
+                { isMain: 'desc' },
+                { displayOrder: 'asc' },
+              ],
+            },
           },
         }),
         context.prisma.product.count({ where }),
@@ -66,6 +72,12 @@ export const productResolvers = {
         where: { id },
         include: {
           category: true,
+          images: {
+            orderBy: [
+              { isMain: 'desc' },
+              { displayOrder: 'asc' },
+            ],
+          },
         },
       });
 
@@ -85,6 +97,12 @@ export const productResolvers = {
         where: { sku },
         include: {
           category: true,
+          images: {
+            orderBy: [
+              { isMain: 'desc' },
+              { displayOrder: 'asc' },
+            ],
+          },
         },
       });
 
@@ -107,6 +125,12 @@ export const productResolvers = {
         },
         include: {
           category: true,
+          images: {
+            orderBy: [
+              { isMain: 'desc' },
+              { displayOrder: 'asc' },
+            ],
+          },
         },
         orderBy: {
           stock: 'asc',
@@ -157,11 +181,43 @@ export const productResolvers = {
         });
       }
 
-      const product = await context.prisma.product.create({
-        data: input,
-        include: {
-          category: true,
-        },
+      // Extract imageUrls from input
+      const { imageUrls, ...productData } = input;
+
+      // Create product with images in a transaction
+      const product = await context.prisma.$transaction(async (tx) => {
+        const newProduct = await tx.product.create({
+          data: productData,
+          include: {
+            category: true,
+          },
+        });
+
+        // Create product images if provided
+        if (imageUrls && imageUrls.length > 0) {
+          await tx.productImage.createMany({
+            data: imageUrls.map((url: string, index: number) => ({
+              productId: newProduct.id,
+              imageUrl: url,
+              displayOrder: index,
+              isMain: index === 0, // First image is main
+            })),
+          });
+        }
+
+        // Fetch product with images
+        return tx.product.findUnique({
+          where: { id: newProduct.id },
+          include: {
+            category: true,
+            images: {
+              orderBy: [
+                { isMain: 'desc' },
+                { displayOrder: 'asc' },
+              ],
+            },
+          },
+        });
       });
 
       return product;
@@ -207,12 +263,49 @@ export const productResolvers = {
         }
       }
 
-      const product = await context.prisma.product.update({
-        where: { id },
-        data: input,
-        include: {
-          category: true,
-        },
+      // Extract imageUrls and mainImageIndex from input
+      const { imageUrls, mainImageIndex, ...productData } = input;
+
+      // Update product with images in a transaction
+      const product = await context.prisma.$transaction(async (tx) => {
+        // Update product data
+        await tx.product.update({
+          where: { id },
+          data: productData,
+        });
+
+        // Update images if provided
+        if (imageUrls && imageUrls.length > 0) {
+          // Delete existing images
+          await tx.productImage.deleteMany({
+            where: { productId: id },
+          });
+
+          // Create new images
+          const mainIndex = mainImageIndex !== undefined ? mainImageIndex : 0;
+          await tx.productImage.createMany({
+            data: imageUrls.map((url: string, index: number) => ({
+              productId: id,
+              imageUrl: url,
+              displayOrder: index,
+              isMain: index === mainIndex,
+            })),
+          });
+        }
+
+        // Fetch product with images
+        return tx.product.findUnique({
+          where: { id },
+          include: {
+            category: true,
+            images: {
+              orderBy: [
+                { isMain: 'desc' },
+                { displayOrder: 'asc' },
+              ],
+            },
+          },
+        });
       });
 
       return product;
@@ -289,6 +382,44 @@ export const productResolvers = {
       return context.prisma.category.findUnique({
         where: { id: parent.categoryId },
       });
+    },
+    images: async (parent: any, _: any, context: Context) => {
+      // If images are already included (and is array), return them
+      if (parent.images && Array.isArray(parent.images)) return parent.images;
+
+      // Otherwise fetch from database
+      return context.prisma.productImage.findMany({
+        where: { productId: parent.id },
+        orderBy: [
+          { isMain: 'desc' },
+          { displayOrder: 'asc' },
+        ],
+      });
+    },
+    mainImage: async (parent: any, _: any, context: Context) => {
+      // 1. Try to get from parent.images if available
+      if (parent.images && Array.isArray(parent.images)) {
+        const mainImg = parent.images.find((img: any) => img.isMain);
+        return mainImg?.imageUrl || parent.images[0]?.imageUrl || null;
+      }
+
+      // 2. Fetch directly from database if not in parent (Lazy Load)
+      const mainImg = await context.prisma.productImage.findFirst({
+        where: {
+          productId: parent.id,
+          isMain: true
+        },
+      });
+
+      if (mainImg) return mainImg.imageUrl;
+
+      // 3. Fallback to any first image
+      const firstImg = await context.prisma.productImage.findFirst({
+        where: { productId: parent.id },
+        orderBy: { displayOrder: 'asc' }
+      });
+
+      return firstImg?.imageUrl || null;
     },
   },
 };
