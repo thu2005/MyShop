@@ -38,3 +38,6 @@ prisma/migrations/
 # Temporary files
 *.tmp
 temp/
+
+# Backups
+backups/
