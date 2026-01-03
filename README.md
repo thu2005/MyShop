@@ -2,33 +2,127 @@
 
 A modern desktop application for managing products, orders, customers, and generating business reports. Built with a **Modern Fullstack Architecture** using **WinUI 3 (Frontend)** and **Node.js (Express) + GraphQL (Backend)**.
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![.NET 8.0](https://img.shields.io/badge/.NET-8.0-blue)
+![Node.js](https://img.shields.io/badge/Node.js-18+-green)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)
+
+---
+
+## 📋 Table of Contents
+- [Features](#-features)
+- [Architecture](#-architecture)
+- [Prerequisites](#-prerequisites)
+- [Getting Started](#-getting-started)
+- [Project Structure](#-project-structure)
+- [Advanced Features](#-advanced-features)
+- [Testing](#-testing)
+- [Troubleshooting](#-troubleshooting)
+- [Team Resources](#-team-resources)
+- [License](#-license)
+
+---
+
+## ✨ Features
+
+### Core Functionality
+- **Product Management**: Add, edit, delete products and categories with real-time inventory tracking
+- **Order Processing**: Create, manage, and track orders with automatic commission calculation
+- **Customer Management**: Comprehensive customer database with membership tiers (Member, Standard)
+- **Dashboard & Analytics**: Real-time business insights with interactive charts and reports
+- **User Authentication**: Secure JWT-based authentication with role-based access control
+- **Print System**: Generate professional PDF invoices and reports
+
+### Advanced Features
+- **GraphQL API**: Modern, efficient data fetching with flexible queries
+- **Auto-Save**: Automatic data persistence when creating orders and adding products
+- **Advanced Search & Filtering**: Multi-criteria search with customizable sorting (ascending/descending)
+- **Discount System**: Flexible promotion management with member-exclusive deals
+- **Commission System**: Automatic sales commission calculation based on KPI performance
+- **Trial Mode**: 15-day full-feature trial period with registration after expiry
+- **MVVM Architecture**: Clean separation of concerns for maintainable code
+- **Dependency Injection**: Modular, testable, and loosely-coupled components
+- **Onboarding System**: Interactive first-time user guidance
+- **Database Backup/Restore**: Built-in data protection and recovery tools
+- **Code Obfuscation**: Protection against reverse engineering
+
+### Role-Based Access Control (RBAC)
+Three distinct user roles with different permissions:
+
+#### **ADMIN** - Full System Access
+- Complete control over products, categories, and pricing (including purchase prices)
+- Add, edit, delete staff accounts
+- Access all orders and customer data
+- View comprehensive reports: profit margins, revenue, and staff performance
+- Manage discount campaigns
+- Separate onboarding experience
+
+#### **MANAGER** - Operational Control
+- Manage sales operations and view commission data
+- Access store-wide revenue reports
+- Monitor all orders and customer interactions
+- Cannot modify products or staff accounts
+- Cannot view purchase prices or profit margins
+
+#### **STAFF** - Sales Focus
+- View products and prices (excluding purchase prices)
+- Create and manage own orders only
+- View personal commission for each order
+- Access own performance metrics only
+- Cannot create discounts or access other staff's data
+- Simplified onboarding experience
+
+---
+
+## 🏗️ Architecture
+
+### Technology Stack
+- **Frontend**: WinUI 3, MVVM Pattern, .NET 8.0, GraphQL Client
+- **Backend**: Node.js, Express.js, Apollo Server, TypeScript
+- **Database**: PostgreSQL 15 (Dockerized)
+- **ORM**: Prisma (TypeScript-first ORM)
+- **Security**: JWT Authentication, BCrypt Password Hashing, Role-Based Access Control
+
+### Design Patterns
+- **MVVM (Model-View-ViewModel)**: Clear separation between UI and business logic
+- **Repository Pattern**: Centralized data access with `GraphQLRepositoryBase`
+- **Dependency Injection**: Loose coupling and testability
+- **Strategy Pattern**: Flexible sorting and discount calculation
+- **Factory Pattern**: Dynamic report generation (Daily, Weekly, Monthly, Yearly)
+- **Command Pattern**: Order operations (Create, Update, Cancel)
+
 ---
 
 ## 🔧 Prerequisites
 
 Install these before starting:
 
-| Software | Required | Purpose |
-|----------|----------|----------|
-| Visual Studio 2022 | ✅ | Frontend (Load .NET Desktop & WinUI 3 workloads) |
-| .NET 8.0 SDK | ✅ | Frontend development |
-| Node.js (v18+) | ✅ | Backend development (TypeScript) |
-| Docker Desktop | ✅ | PostgreSQL Database container |
+| Software | Version | Purpose |
+|----------|---------|---------|
+| **Visual Studio 2022** | Latest | Frontend development (with .NET Desktop & WinUI 3 workloads) |
+| **.NET SDK** | 8.0+ | .NET application development |
+| **Node.js** | 18+ | Backend development |
+| **npm** | 9+ | Package management (comes with Node.js) |
+| **Docker Desktop** | Latest | PostgreSQL database container |
+| **Git** | Latest | Version control |
 
----
-
-## 🏗️ Architecture
-
-- **Frontend**: WinUI 3, MVVM, GraphQL-Client (.NET).
-- **Backend**: Node.js, **Express**, Apollo Server, **TypeScript**, **Prisma ORM**.
-- **Database**: PostgreSQL (Dockerized).
-- **Security**: JWT Authentication, BCrypt Hashing, RBAC (Role-Based Access Control).
+### Visual Studio Workloads Required
+- .NET Desktop Development
+- Windows Application Development (with WinUI 3)
+- Windows 10 SDK (10.0.19041.0 or higher)
 
 ---
 
 ## 🚀 Getting Started
 
-### 1. Backend & Database Setup
+### 1. Clone the Repository
+```bash
+git clone https://github.com/d1nhnguyen/myshop.git
+cd myshop
+```
+
+### 2. Backend & Database Setup
+
 ```bash
 # Navigate to backend folder
 cd src/MyShop.Backend
@@ -39,6 +133,9 @@ docker-compose up -d
 # Install dependencies
 npm install
 
+# Generate Prisma Client
+npx prisma generate
+
 # Seed the database (REQUIRED for first-time setup)
 npm run seed
 
@@ -46,279 +143,319 @@ npm run seed
 npm run dev
 ```
 
-### 2. Frontend Setup
-1. Open `src/MyShop.sln` in **Visual Studio 2022**.
-2. Restore NuGet packages.
-3. Set **MyShop.App** as Startup Project.
-4. Press `F5` to run.
-5. **Note:** Use the **Config Screen** (on the Login page) to change the Server URL if not running on localhost.
+**Backend will run on:** `http://localhost:4000`  
+**GraphQL Playground:** `http://localhost:4000/graphql`
 
-### 🔑 Default Dev Accounts (Pre-seeded)
+### 3. Frontend Setup
 
-| Username | Password | Role |
-|----------|----------|----------|
-| `admin` | `Admin@123456` | **ADMIN** |
-| `manager1` | `Password@123` | **MANAGER** |
-| `staff1` | `Password@123` | **STAFF** |
+1. Open `src/MyShop.sln` in **Visual Studio 2022**
+2. Right-click solution → **Restore NuGet Packages**
+3. Set **MyShop.App** as Startup Project (right-click → Set as Startup Project)
+4. Build the solution: **Build → Build Solution** (or `Ctrl+Shift+B`)
+5. Run the application: Press `F5` or click **Debug → Start Debugging**
 
----
+### 4. First Login
 
-## 📖 Team Resources
+Use one of the pre-seeded accounts:
 
-| Target | Guide Link |
-|----------|----------|
-| **Division** | [Team Work Division (Who does What?)](docs/team-work-division.md) |
-| **Workflow** | [How to implement a Vertical Slice (5 Steps)](feature-development.md) |
-| **Security** | [Security & RBAC Technical Guide](docs/security-and-rbac.md) |
-| **Data Access** | [GraphQL Repository Base Pattern](src/MyShop.Data/Repositories/Base/GraphQLRepositoryBase.cs) |
+| Username | Password | Role | Description |
+|----------|----------|------|-------------|
+| `admin` | `Admin@123456` | **ADMIN** | Full system access |
+| `manager1` | `Password@123` | **MANAGER** | Operations management |
+| `staff1` | `Password@123` | **STAFF** | Sales representative |
+
+**Note:** If the backend is not running on `localhost:4000`, click the **Config** button on the login screen to set a custom server URL.
 
 ---
 
 ## 📁 Project Structure
 
-- `src/MyShop.App`: WinUI Views, ViewModels, and UI Logic.
-- `src/MyShop.Core`: Domain Models, Interfaces, and Security Services.
-- `src/MyShop.Data`: GraphQL Data Access Layer (Repositories).
-- `src/MyShop.Backend`: Node.js Express & Apollo Server source.
+```
+myshop/
+├── src/
+│   ├── MyShop.App/              # WinUI 3 Frontend
+│   │   ├── Views/               # XAML UI screens
+│   │   ├── ViewModels/          # MVVM ViewModels
+│   │   ├── Controls/            # Reusable UI components
+│   │   ├── Converters/          # Data binding converters
+│   │   └── Dialogs/             # Modal dialogs
+│   │
+│   ├── MyShop.Core/             # Business Logic Layer
+│   │   ├── Models/              # Domain models
+│   │   ├── Services/            # Business services
+│   │   ├── Interfaces/          # Service contracts
+│   │   ├── Commands/            # Command pattern implementations
+│   │   ├── Strategies/          # Strategy pattern (sorting, discounts)
+│   │   ├── Factories/           # Factory pattern (reports)
+│   │   ├── Helpers/             # Utility classes
+│   │   └── DTOs/                # Data Transfer Objects
+│   │
+│   ├── MyShop.Data/             # Data Access Layer
+│   │   ├── Repositories/        # GraphQL repositories
+│   │   └── Base/                # Repository base classes
+│   │
+│   └── MyShop.Backend/          # Node.js Backend
+│       ├── src/
+│       │   ├── graphql/         # GraphQL schema & resolvers
+│       │   ├── prisma/          # Database schema & migrations
+│       │   ├── middleware/      # Auth, error handling
+│       │   └── utils/           # Helper functions
+│       ├── docker-compose.yml   # PostgreSQL container config
+│       └── package.json         # Node dependencies
+│
+├── tools/                       # Build scripts & utilities
+├── docs/                        # Additional documentation
+└── README.md                    # This file
+```
+
+---
+
+## 🎯 Advanced Features
+
+### 1. Auto-Save System
+Automatic data persistence for:
+- Order creation (saves in real-time as you add items)
+- Product management (auto-saves after each field change)
+- Customer information updates
+
+### 2. Advanced Search & Filtering
+Multi-criteria search with support for:
+- **Products**: Name, SKU, category, price range, stock level
+- **Orders**: Order ID, customer name, date range, status, payment method
+- **Customers**: Name, phone, email, membership tier
+- **Customizable Sorting**: Any field, ascending or descending
+
+### 3. Discount System
+Flexible promotion engine:
+- **Percentage-based discounts**: e.g., 20% off
+- **Fixed amount discounts**: e.g., $10 off
+- **Member-exclusive promotions**: Accessible only to Member tier customers
+- **Time-bound campaigns**: Start and end dates
+- **Automatic calculation**: Applied at checkout
+
+### 4. Commission System
+Automatic sales commission based on performance:
+- **Per-order commission**: Displayed in real-time when staff creates orders
+- **KPI-based bonuses**: Additional rewards for high performers
+- **Staff can view**: Personal commission in orders and reports
+- **Admin can view**: All staff performance metrics
+
+### 5. Trial Mode System
+15-day full-feature trial:
+- First-time users get complete access to all features
+- After 15 days, registration/activation required
+- Activation code or license key system
+- Trial period tracking and expiration notifications
+
+### 6. Database Backup & Restore
+Built-in data protection:
+- **Manual backup**: Create database snapshots
+- **Scheduled backups**: Automated daily/weekly backups
+- **One-click restore**: Recover from any backup point
+- **Export formats**: SQL dump, CSV
+
+### 7. Onboarding System
+Interactive first-use experience:
+- **Role-specific tutorials**: Different guides for Admin vs Staff
+- **Step-by-step walkthrough**: Key features and workflows
+- **Interactive tooltips**: Contextual help throughout the app
+- **Skip option**: Can be bypassed for experienced users
+
+### 8. Printing & Reporting
+Professional document generation:
+- **Order invoices**: PDF generation with company branding
+- **Sales reports**: Daily, weekly, monthly, yearly
+- **Staff performance reports**: Commission summaries
+- **Inventory reports**: Stock levels and valuation
+- **Export to PDF/XPS**: For printing or digital distribution
+
+---
+
+## 🧪 Testing
+
+To ensure the application logic works correctly, run the unit tests included in the solution.
+
+### Running Tests
+
+```bash
+# From project root
+
+# 1. Clean previous build artifacts
+dotnet clean
+
+# 2. Build the solution
+dotnet build
+
+# 3. Run all unit tests
+dotnet test
+
+```
+
+### Test Coverage
+- Unit tests for business logic (Services, Commands, Strategies)
+- Integration tests for GraphQL repositories
+- UI component tests for ViewModels
 
 ---
 
 ## 🐛 Troubleshooting
 
-### Port 5432 (Postgres) already in use
-Check if you have a local PostgreSQL installed:
-`netstat -ano | findstr :5432`
-Stop the local service or change the port in `docker-compose.yml`.
+### Port 5432 (PostgreSQL) already in use
+
+**Problem**: Docker container can't start because port 5432 is already occupied.
+
+**Solution**:
+```bash
+# Check what's using the port
+netstat -ano | findstr :5432
+
+# Stop local PostgreSQL service (if installed)
+# On Windows: Services → PostgreSQL → Stop
+
+# Or change port in docker-compose.yml:
+ports:
+  - "5433:5432"  # Maps local 5433 to container 5432
+```
 
 ### Backend "npm install" fails
-Make sure you have Node.js v18+ installed. Try clearing cache:
-`npm cache clean --force`
+
+**Problem**: Dependencies fail to install.
+
+**Solutions**:
+```bash
+# Ensure Node.js v18+ is installed
+node --version
+
+# Clear npm cache
+npm cache clean --force
+
+# Delete node_modules and package-lock.json
+rm -rf node_modules package-lock.json
+
+# Reinstall
+npm install
+```
 
 ### WinUI "Windows SDK" missing
-Ensure you installed the **Windows 10 SDK (10.0.19041.0)** via Visual Studio Installer.
+
+**Problem**: Visual Studio can't find Windows SDK.
+
+**Solution**:
+1. Open **Visual Studio Installer**
+2. Click **Modify** on Visual Studio 2022
+3. Go to **Individual Components** tab
+4. Search for "Windows 10 SDK (10.0.19041.0)"
+5. Check the box and click **Modify**
 
 ### Database connection errors
-Verify Docker is running and the container is UP:
-`docker-compose ps`
 
----
-# MyShop - Team Work Division (Fullstack)
+**Problem**: Backend can't connect to PostgreSQL.
 
-## 👑 Person 1: Infrastructure & Authentication
-**Role:** Team Lead + Architecture
-
-### 🌐 Backend Layer (src/MyShop.Backend)
-- `prisma/schema.prisma` (Shared Base)
-- `src/graphql/resolvers/auth.resolver.ts` (Login/JWT Logic)
-- `src/graphql/resolvers/user.resolver.ts`
-- `src/index.ts` (Server Configuration)
-
-### 🎨 UI Layer (Presentation - src/MyShop.App)
-- `Views/LoginScreen.xaml`
-- `Views/LoginScreen.xaml.cs`
-- `Views/ConfigScreen.xaml`
-- `Views/ConfigScreen.xaml.cs`
-- `ViewModels/LoginViewModel.cs`
-- `ViewModels/ConfigViewModel.cs`
-
-### 💼 Business Layer (Application Logic - src/MyShop.Core)
-- `Services/AuthService.cs`
-- `Services/ConfigService.cs`
-- `Services/EncryptionService.cs`
-- `Services/AuthorizationService.cs`
-- `Helpers/SessionManager.cs`
-
-### 💾 Data Layer (Database Access - src/MyShop.Data)
-- `Repositories/Base/GraphQLRepositoryBase.cs` (⭐ Shared Base Class)
-- `Repositories/GraphQLUserRepository.cs`
-- `../../MyShop.Core/Models/User.cs`
-
-### 🔌 Interfaces (src/MyShop.Core)
-- `Interfaces/Repositories/IRepository.cs`
-- `Interfaces/Repositories/IUserRepository.cs`
-- `Interfaces/Services/IAuthService.cs`
-- `Interfaces/Services/IConfigService.cs`
-- `Interfaces/Services/IAuthorizationService.cs`
-
----
-
-## 🛍️ Person 2: Products Management
-**Role:** Products Feature Owner
-
-### 🌐 Backend Layer (src/MyShop.Backend)
-- `prisma/schema.prisma` (Products & Category)
-- `src/graphql/resolvers/product.resolver.ts`
-- `src/graphql/resolvers/category.resolver.ts`
-
-### 🎨 UI Layer (Presentation - src/MyShop.App)
-- `Views/ProductsScreen.xaml`
-- `Views/ProductsScreen.xaml.cs`
-- `Views/Dialogs/AddProductDialog.xaml`
-- `Views/Dialogs/EditProductDialog.xaml`
-- `ViewModels/ProductViewModel.cs`
-- `ViewModels/ProductDetailViewModel.cs`
-
-### 💼 Business Layer (Application Logic - src/MyShop.Core)
-- `Services/ProductService.cs`
-- `Services/CategoryService.cs`
-- `Services/ImportService.cs`
-- `Strategies/Sorting/ISortStrategy.cs`
-- `Strategies/Sorting/SortByNameStrategy.cs`
-- `Strategies/Sorting/SortByPriceStrategy.cs`
-- `Strategies/Sorting/SortByStockStrategy.cs`
-- `Strategies/Sorting/SortByPopularityStrategy.cs`
-- `Helpers/ExcelImporter.cs`
-
-### 💾 Data Layer (Database Access - src/MyShop.Data)
-- `Repositories/GraphQLProductRepository.cs`
-- `Repositories/GraphQLCategoryRepository.cs`
-- `../../MyShop.Core/Models/Product.cs`
-- `../../MyShop.Core/Models/Category.cs`
-
-### 🔌 Interfaces (src/MyShop.Core)
-- `Interfaces/Repositories/IProductRepository.cs`
-- `Interfaces/Repositories/ICategoryRepository.cs`
-- `Interfaces/Services/IProductService.cs`
-- `Interfaces/Services/ICategoryService.cs`
-
----
-
-## 📦 Person 3: Orders Management
-**Role:** Orders Feature Owner
-
-### 🌐 Backend Layer (src/MyShop.Backend)
-- `prisma/schema.prisma` (Orders & OrderItem)
-- `src/graphql/resolvers/order.resolver.ts`
-
-### 🎨 UI Layer (Presentation - src/MyShop.App)
-- `Views/OrdersScreen.xaml`
-- `Views/OrdersScreen.xaml.cs`
-- `Views/Dialogs/CreateOrderDialog.xaml`
-- `Views/Dialogs/OrderDetailsDialog.xaml`
-- `ViewModels/OrderViewModel.cs`
-- `ViewModels/OrderDetailViewModel.cs`
-- `ViewModels/CreateOrderViewModel.cs`
-
-### 💼 Business Layer (Application Logic - src/MyShop.Core)
-- `Services/OrderService.cs`
-- `Services/OrderItemService.cs`
-- `Services/PrintService.cs`
-- `Commands/CreateOrderCommand.cs`
-- `Commands/UpdateOrderStatusCommand.cs`
-- `Commands/CancelOrderCommand.cs`
-- `Helpers/PdfGenerator.cs`
-
-### 💾 Data Layer (Database Access - src/MyShop.Data)
-- `Repositories/GraphQLOrderRepository.cs`
-- `Repositories/GraphQLOrderItemRepository.cs`
-- `../../MyShop.Core/Models/Order.cs`
-- `../../MyShop.Core/Models/OrderItem.cs`
-- `../../MyShop.Core/Models/OrderStatus.cs` (Enum)
-
-### 🔌 Interfaces (src/MyShop.Core)
-- `Interfaces/Repositories/IOrderRepository.cs`
-- `Interfaces/Repositories/IOrderItemRepository.cs`
-- `Interfaces/Services/IOrderService.cs`
-- `Interfaces/Services/IPrintService.cs`
-
----
-
-## 📊 Person 4: Dashboard & Reports
-**Role:** Analytics & Reporting Feature Owner
-
-### 🌐 Backend Layer (src/MyShop.Backend)
-- `src/graphql/resolvers/dashboard.resolver.ts`
-
-### 🎨 UI Layer (Presentation - src/MyShop.App)
-- `Views/Dashboard.xaml`
-- `Views/Dashboard.xaml.cs`
-- `Views/ReportScreen.xaml`
-- `Views/ReportScreen.xaml.cs`
-- `ViewModels/DashboardViewModel.cs`
-- `ViewModels/ReportViewModel.cs`
-- `Controls/RevenueChart.xaml`
-- `Controls/SalesChart.xaml`
-- `Controls/StatCard.xaml`
-- `Converters/ChartDataConverter.cs`
-
-### 💼 Business Layer (Application Logic - src/MyShop.Core)
-- `Services/ReportService.cs`
-- `Services/StatisticsService.cs`
-- `Factories/IReportFactory.cs`
-- `Factories/ReportFactory.cs`
-- `Factories/Reports/DailyReport.cs`
-- `Factories/Reports/WeeklyReport.cs`
-- `Factories/Reports/MonthlyReport.cs`
-- `Factories/Reports/YearlyReport.cs`
-
-### 💾 Data Layer (Database Access - src/MyShop.Data)
-- (Uses Repositories from P2 & P3)
-- `../../MyShop.Core/DTOs/ReportDto.cs`
-- `../../MyShop.Core/DTOs/DashboardSummaryDto.cs`
-
-### 🔌 Interfaces (src/MyShop.Core)
-- `Interfaces/Services/IReportService.cs`
-- `Interfaces/Services/IStatisticsService.cs`
-- `Interfaces/Factories/IReportFactory.cs`
-
----
-
-## 👥 Person 5: Customers, Discounts & Shared Features
-**Role:** Customer Management & Shared UI Owner
-
-### 🌐 Backend Layer (src/MyShop.Backend)
-- `prisma/schema.prisma` (Customer & Discount)
-- `src/graphql/resolvers/customer.resolver.ts`
-- `src/graphql/resolvers/discount.resolver.ts`
-
-### 🎨 UI Layer (Presentation - src/MyShop.App)
-- `Views/CustomersScreen.xaml`
-- `Views/CustomersScreen.xaml.cs`
-- `Views/SettingsScreen.xaml`
-- `Views/SettingsScreen.xaml.cs`
-- `Views/Dialogs/AddCustomerDialog.xaml`
-- `ViewModels/CustomerViewModel.cs`
-- `ViewModels/SettingsViewModel.cs`
-- `Controls/PaginationControl.xaml` (🔥 Shared)
-- `Controls/SearchBox.xaml` (🔥 Shared)
-- `Controls/DateRangePicker.xaml` (🔥 Shared)
-- `Controls/FilterPanel.xaml` (🔥 Shared)
-- `Controls/LoadingSpinner.xaml` (🔥 Shared)
-
-### 💼 Business Layer (Application Logic - src/MyShop.Core)
-- `Services/CustomerService.cs`
-- `Services/DiscountService.cs`
-- `Services/AutoSaveService.cs`
-- `Services/OnboardingService.cs`
-- `Strategies/Discounts/IDiscountStrategy.cs`
-- `Helpers/ResponsiveLayoutHelper.cs`
-- `Helpers/SettingsManager.cs`
-
-### 💾 Data Layer (Database Access - src/MyShop.Data)
-- `Repositories/GraphQLCustomerRepository.cs`
-- `Repositories/GraphQLDiscountRepository.cs`
-- `../../MyShop.Core/Models/Customer.cs`
-- `../../MyShop.Core/Models/Discount.cs`
-- `../../MyShop.Core/Models/DiscountType.cs` (Enum)
-- `../../MyShop.Core/Models/AppSettings.cs`
-
-### 🔌 Interfaces (src/MyShop.Core)
-- `Interfaces/Repositories/ICustomerRepository.cs`
-- `Interfaces/Repositories/IDiscountRepository.cs`
-- `Interfaces/Services/ICustomerService.cs`
-- `Interfaces/Services/IDiscountService.cs`
-- `Interfaces/Strategies/IDiscountStrategy.cs`
-
-## 🧪 Running Tests
-
-To ensure the application logic works correctly, you can run the unit tests included in the solution. We recommend cleaning and rebuilding the project before running tests to ensure all dependencies are up to date.
-
-Run the following commands from the project root:
-
+**Solutions**:
 ```bash
-# 1. Clean previous build artifacts
-dotnet clean 
-# 2. Build the solution to check for compilation errors
-dotnet build
-# 3. Execute all unit tests
-dotnet test
+# 1. Check if Docker is running
+docker ps
+
+# 2. Check if container is UP
+docker-compose ps
+
+# 3. View container logs
+docker-compose logs postgres
+
+# 4. Restart containers
+docker-compose down
+docker-compose up -d
+
+# 5. Verify connection string in .env file
+# Should be: postgresql://user:password@localhost:5432/myshop
+```
+
+### Frontend can't connect to backend
+
+**Problem**: "Failed to connect to server" error.
+
+**Solutions**:
+1. Ensure backend is running (`npm run dev` in `src/MyShop.Backend`)
+2. Check backend console for errors
+3. Click **Config** button on login screen
+4. Verify server URL (default: `http://localhost:4000`)
+5. Check Windows Firewall isn't blocking port 4000
+
+### GraphQL query errors
+
+**Problem**: "GraphQL error: ..." messages.
+
+**Solutions**:
+1. Open GraphQL Playground: `http://localhost:4000/graphql`
+2. Test queries directly in the playground
+3. Check Prisma schema is in sync: `npx prisma generate`
+4. Re-seed database if needed: `npm run seed`
+
+---
+
+## 📖 Team Resources
+
+For detailed technical documentation:
+
+| Document | Description |
+|----------|-------------|
+| [Team Work Division](docs/team-work-division.md) | Who does what? Responsibilities by person |
+| [Feature Development Guide](feature-development.md) | How to implement a vertical slice (5 steps) |
+| [Security & RBAC Guide](docs/security-and-rbac.md) | Authentication, authorization, and role management |
+| [RBAC Implementation](RBAC.md) | Detailed role-based access control setup |
+| [Trial System](TrialSystem.md) | 15-day trial mode implementation details |
+| [GraphQL Repository Base](src/MyShop.Data/Repositories/Base/GraphQLRepositoryBase.cs) | Base class for data access pattern |
+
+---
+
+## 🤝 Contributing
+
+### Development Workflow
+
+1. **Create a feature branch**
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+2. **Make your changes**
+   - Follow the existing code style
+   - Update tests if needed
+   - Add documentation for new features
+
+3. **Test your changes**
+   ```bash
+   dotnet test
+   ```
+
+4. **Commit with clear messages**
+   ```bash
+   git commit -m "feat: add customer export functionality"
+   ```
+
+5. **Push and create a pull request**
+   ```bash
+   git push origin feature/your-feature-name
+   ```
+
+### Code Style Guidelines
+- **C#**: Follow Microsoft C# Coding Conventions
+- **TypeScript**: Use ESLint configuration in `MyShop.Backend`
+- **XAML**: Keep view logic minimal, use ViewModels
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- Built with [WinUI 3](https://github.com/microsoft/microsoft-ui-xaml)
+- Powered by [Apollo GraphQL](https://www.apollographql.com/)
+- Database by [PostgreSQL](https://www.postgresql.org/)
+- ORM by [Prisma](https://www.prisma.io/)
+
+---
+
