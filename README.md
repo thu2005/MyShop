@@ -165,42 +165,64 @@ Use one of the pre-seeded accounts:
 ---
 
 ## 📁 Project Structure
-
 ```
 myshop/
 ├── src/
-│   ├── MyShop.App/              # WinUI 3 Frontend
-│   │   ├── Views/               # XAML UI screens
-│   │   ├── ViewModels/          # MVVM ViewModels
-│   │   ├── Controls/            # Reusable UI components
+│   ├── MyShop.App/              # WinUI 3 Frontend Application
+│   │   ├── Assets/              # Images, fonts, and static resources
+│   │   ├── Controls/            # Reusable custom UI controls
 │   │   ├── Converters/          # Data binding converters
-│   │   └── Dialogs/             # Modal dialogs
+│   │   ├── Helpers/             # UI utility classes
+│   │   ├── Models/              # View-specific models
+│   │   ├── Services/            # Frontend services (auth, config, etc.)
+│   │   ├── ViewModels/          # MVVM ViewModels
+│   │   │   └── Base/            # Base ViewModel classes
+│   │   └── Views/               # XAML UI screens
+│   │       └── Dialogs/         # Modal dialog windows
 │   │
 │   ├── MyShop.Core/             # Business Logic Layer
-│   │   ├── Models/              # Domain models
-│   │   ├── Services/            # Business services
-│   │   ├── Interfaces/          # Service contracts
-│   │   ├── Commands/            # Command pattern implementations
-│   │   ├── Strategies/          # Strategy pattern (sorting, discounts)
-│   │   ├── Factories/           # Factory pattern (reports)
-│   │   ├── Helpers/             # Utility classes
-│   │   └── DTOs/                # Data Transfer Objects
+│   │   ├── Helpers/             # Utility classes and extensions
+│   │   ├── Interfaces/          # Service and repository contracts
+│   │   │   ├── Repositories/    # Repository interfaces
+│   │   │   ├── Services/        # Service interfaces
+│   │   │   └── Strategies/      # Strategy pattern interfaces
+│   │   ├── Models/              # Domain models and entities
+│   │   │   └── DTOs/            # Data Transfer Objects
+│   │   ├── Services/            # Business logic services
+│   │   └── Strategies/          # Strategy implementations (sorting, discounts)
 │   │
 │   ├── MyShop.Data/             # Data Access Layer
-│   │   ├── Repositories/        # GraphQL repositories
-│   │   └── Base/                # Repository base classes
+│   │   └── Repositories/        # GraphQL repository implementations
+│   │       └── Base/            # Base repository class (GraphQLRepositoryBase)
 │   │
-│   └── MyShop.Backend/          # Node.js Backend
-│       ├── src/
-│       │   ├── graphql/         # GraphQL schema & resolvers
-│       │   ├── prisma/          # Database schema & migrations
-│       │   ├── middleware/      # Auth, error handling
-│       │   └── utils/           # Helper functions
-│       ├── docker-compose.yml   # PostgreSQL container config
-│       └── package.json         # Node dependencies
+│   ├── MyShop.Backend/          # Node.js + Express + GraphQL Backend
+│   │   ├── prisma/              # Database schema and migrations
+│   │   │   └── migrations/      # Database migration history
+│   │   ├── src/                 # TypeScript source code
+│   │   │   ├── config/          # Application configuration
+│   │   │   ├── graphql/         # GraphQL schema and resolvers
+│   │   │   │   ├── resolvers/   # Query and mutation resolvers
+│   │   │   │   └── typeDefs/    # GraphQL type definitions
+│   │   │   ├── middleware/      # Express middleware (auth, error handling)
+│   │   │   ├── types/           # TypeScript type definitions
+│   │   │   └── utils/           # Helper functions and utilities
+│   │   ├── uploads/             # File upload storage
+│   │   │   └── products/        # Product images
+│   │   ├── docker-compose.yml   # PostgreSQL container configuration
+│   │   └── package.json         # Node.js dependencies
+│   │
+│   └── MyShop.Tests/            # Unit and Integration Tests
+│       ├── Mocks/               # Mock objects for testing
+│       └── UnitTests/           # Test files
+│           ├── Repositories/    # Repository tests
+│           ├── Services/        # Service tests
+│           └── Strategies/      # Strategy tests
 │
-├── tools/                       # Build scripts & utilities
+├── tools/                       # Build scripts and development utilities
 ├── docs/                        # Additional documentation
+├── RBAC.md                      # Role-Based Access Control documentation
+├── TrialSystem.md               # Trial mode implementation details
+├── feature-development.md       # Development workflow guide
 └── README.md                    # This file
 ```
 
