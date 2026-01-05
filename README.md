@@ -7,9 +7,41 @@ A modern desktop application for managing products, orders, customers, and gener
 ![Node.js](https://img.shields.io/badge/Node.js-18+-green)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)
 
+
+---
+
+## 🎬 Demo
+
+**Youtube Demo:** https://www.youtube.com/watch?v=ABGB2nRtMBY
+
+### Onboarding
+![Onboarding Demo](docs/demo/onboarding.gif)
+
+### Dashboard & Analytics
+![Dashboard Demo](docs/demo/dashboard.gif)
+
+### Product Management
+![Product Management Demo](docs/demo/product1.gif)
+
+### Order Processing
+![Order Processing Demo](docs/demo/order.gif)
+
+### Customer Management
+![Customer Management Demo](docs/demo/customer.gif)
+
+### Discount Management
+![Discount Management Demo](docs/demo/discount.gif)
+
+### Staff Management
+![Staff Management Demo](docs/demo/staff.gif)
+
+### Report Management
+![Report Management Demo](docs/demo/report.gif)
+
 ---
 
 ## 📋 Table of Contents
+- [Demo](#-demo)
 - [Features](#-features)
 - [Architecture](#-architecture)
 - [Prerequisites](#-prerequisites)

@@ -38,6 +38,7 @@ namespace MyShop.App.ViewModels
         private decimal? _minPrice = null;
         private decimal? _maxPrice = null;
         private string _primarySort = null;
+        private string _secondarySort = null;
 
         // --- Pagination Properties ---
         private int _currentPage = 1;
@@ -188,7 +189,7 @@ namespace MyShop.App.ViewModels
             // 4. Sort (Service)
             if (!string.IsNullOrEmpty(_primarySort))
             {
-                filtered = _productService.SortProducts(filtered, _primarySort);
+                filtered = _productService.SortProducts(filtered, _primarySort, _secondarySort);
             }
 
             // 5. Pagination Logic
@@ -271,6 +272,7 @@ namespace MyShop.App.ViewModels
         public void SetSorting(string primarySort, string secondarySort)
         {
             _primarySort = primarySort;
+            _secondarySort = secondarySort;
             FilterProducts();
         }
     }

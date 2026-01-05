@@ -35,20 +35,21 @@ namespace MyShop.App.Views
                 await ShowTrialExpiredDialog("Add Customer");
                 return;
             }
-            var dialog = new ContentDialog
-            {
-                XamlRoot = this.XamlRoot,
-                Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style,
-                Title = "New Customer",
-                PrimaryButtonText = "Save",
-                CloseButtonText = "Cancel",
-                PrimaryButtonStyle = this.Resources["DialogPrimaryButtonStyle"] as Style
-            };
 
             var stackPanel = new StackPanel { Spacing = 16, Width = 400 };
-            var nameBox = new TextBox { Header = "Customer Name", PlaceholderText = "Enter full name" };
-            var phoneBox = new TextBox { Header = "Phone Number", PlaceholderText = "Enter phone number" };
-            var emailBox = new TextBox { Header = "Email", PlaceholderText = "Enter email address" };
+            
+            // Error message TextBlock (hidden by default)
+            var errorText = new TextBlock 
+            { 
+                Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red),
+                TextWrapping = TextWrapping.Wrap,
+                Visibility = Visibility.Collapsed,
+                Margin = new Thickness(0, 0, 0, 8)
+            };
+            
+            var nameBox = new TextBox { Header = "Customer Name *", PlaceholderText = "Enter full name" };
+            var phoneBox = new TextBox { Header = "Phone Number *", PlaceholderText = "Enter phone number" };
+            var emailBox = new TextBox { Header = "Email", PlaceholderText = "Enter email address (Optional)" };
             var addressBox = new TextBox { Header = "Address", PlaceholderText = "Enter address (Optional)", AcceptsReturn = true, Height = 80 };
             var memberSwitch = new ToggleSwitch 
             { 
@@ -81,13 +82,48 @@ namespace MyShop.App.Views
                 }
             }
 
+            stackPanel.Children.Add(errorText);
             stackPanel.Children.Add(nameBox);
             stackPanel.Children.Add(phoneBox);
             stackPanel.Children.Add(emailBox);
             stackPanel.Children.Add(addressBox);
             stackPanel.Children.Add(memberSwitch);
 
-            dialog.Content = stackPanel;
+            var dialog = new ContentDialog
+            {
+                XamlRoot = this.XamlRoot,
+                Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style,
+                Title = "New Customer",
+                PrimaryButtonText = "Save",
+                CloseButtonText = "Cancel",
+                PrimaryButtonStyle = this.Resources["DialogPrimaryButtonStyle"] as Style,
+                Content = stackPanel
+            };
+
+            // Validate on PrimaryButtonClick
+            dialog.PrimaryButtonClick += (s, args) =>
+            {
+                var errors = new System.Collections.Generic.List<string>();
+                if (string.IsNullOrWhiteSpace(nameBox.Text))
+                {
+                    errors.Add("• Customer Name is required");
+                }
+                if (string.IsNullOrWhiteSpace(phoneBox.Text))
+                {
+                    errors.Add("• Phone Number is required");
+                }
+
+                if (errors.Count > 0)
+                {
+                    errorText.Text = string.Join("\n", errors);
+                    errorText.Visibility = Visibility.Visible;
+                    args.Cancel = true; // Prevent dialog from closing
+                }
+            };
+
+            // Hide error when user starts typing
+            nameBox.TextChanged += (s, args) => errorText.Visibility = Visibility.Collapsed;
+            phoneBox.TextChanged += (s, args) => errorText.Visibility = Visibility.Collapsed;
 
             // Auto-Save Logic
             async void OnFieldChanged(object s, object args)
@@ -129,15 +165,18 @@ namespace MyShop.App.Views
 
             var result = await dialog.ShowAsync();
 
+            // Cancel auto-save when dialog closes
+            _customerAutoSaveCts?.Cancel();
+
             if (result == ContentDialogResult.Primary)
             {
                 var newCustomer = new MyShop.Core.Models.Customer
                 {
-                    Name = nameBox.Text,
-                    Phone = phoneBox.Text,
-                    Email = emailBox.Text,
+                    Name = nameBox.Text.Trim(),
+                    Phone = phoneBox.Text.Trim(),
+                    Email = string.IsNullOrWhiteSpace(emailBox.Text) ? null : emailBox.Text.Trim(),
+                    Address = string.IsNullOrWhiteSpace(addressBox.Text) ? null : addressBox.Text.Trim(),
                     IsMember = memberSwitch.IsOn,
-                    Address = addressBox.Text,
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now
                 };

@@ -103,6 +103,11 @@ export const customerResolvers = {
         ...input,
       };
 
+      // Handle properties that should be null if empty/falsy
+      if (!customerData.email) delete customerData.email;
+      if (!customerData.address) delete customerData.address;
+      if (!customerData.notes) delete customerData.notes;
+
       if (input.isMember) {
         customerData.memberSince = new Date();
       }
@@ -146,6 +151,11 @@ export const customerResolvers = {
       }
 
       const updateData: any = { ...input };
+
+      // Handle properties that should be null if empty/falsy
+      if (updateData.email === '') updateData.email = null;
+      if (updateData.address === '') updateData.address = null;
+      if (updateData.notes === '') updateData.notes = null;
 
       // Set memberSince if becoming a member
       if (input.isMember && !existingCustomer.isMember) {
