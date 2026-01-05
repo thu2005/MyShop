@@ -541,20 +541,20 @@ namespace MyShop.App.Views
                 return;
             }
 
-             var dialog = new ContentDialog
-            {
-                XamlRoot = this.XamlRoot,
-                Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style,
-                Title = "New Customer",
-                PrimaryButtonText = "Save",
-                CloseButtonText = "Cancel",
-                PrimaryButtonStyle = this.Resources["DialogPrimaryButtonStyle"] as Style
-            };
-
             var stackPanel = new StackPanel { Spacing = 16, Width = 400 };
-            var nameBox = new TextBox { Header = "Customer Name", PlaceholderText = "Enter full name" };
-            var phoneBox = new TextBox { Header = "Phone Number", PlaceholderText = "Enter phone number" };
-            var emailBox = new TextBox { Header = "Email", PlaceholderText = "Enter email address" };
+            
+            // Error message TextBlock (hidden by default)
+            var errorText = new TextBlock 
+            { 
+                Foreground = new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red),
+                TextWrapping = TextWrapping.Wrap,
+                Visibility = Visibility.Collapsed,
+                Margin = new Thickness(0, 0, 0, 8)
+            };
+            
+            var nameBox = new TextBox { Header = "Customer Name *", PlaceholderText = "Enter full name" };
+            var phoneBox = new TextBox { Header = "Phone Number *", PlaceholderText = "Enter phone number" };
+            var emailBox = new TextBox { Header = "Email", PlaceholderText = "Enter email address (Optional)" };
             var addressBox = new TextBox { Header = "Address", PlaceholderText = "Enter address (Optional)", AcceptsReturn = true, Height = 80 };
             var memberSwitch = new ToggleSwitch 
             { 
@@ -572,14 +572,48 @@ namespace MyShop.App.Views
             memberSwitch.Resources["ToggleSwitchFillOnPointerOver"] = new Microsoft.UI.Xaml.Media.SolidColorBrush(colorHover);
             memberSwitch.Resources["ToggleSwitchFillOnPressed"] = new Microsoft.UI.Xaml.Media.SolidColorBrush(colorPressed);
 
-
+            stackPanel.Children.Add(errorText);
             stackPanel.Children.Add(nameBox);
             stackPanel.Children.Add(phoneBox);
             stackPanel.Children.Add(emailBox);
             stackPanel.Children.Add(addressBox);
             stackPanel.Children.Add(memberSwitch);
 
-            dialog.Content = stackPanel;
+            var dialog = new ContentDialog
+            {
+                XamlRoot = this.XamlRoot,
+                Style = Application.Current.Resources["DefaultContentDialogStyle"] as Style,
+                Title = "New Customer",
+                PrimaryButtonText = "Save",
+                CloseButtonText = "Cancel",
+                PrimaryButtonStyle = this.Resources["DialogPrimaryButtonStyle"] as Style,
+                Content = stackPanel
+            };
+
+            // Validate on PrimaryButtonClick - prevent closing if invalid
+            dialog.PrimaryButtonClick += (s, args) =>
+            {
+                var errors = new System.Collections.Generic.List<string>();
+                if (string.IsNullOrWhiteSpace(nameBox.Text))
+                {
+                    errors.Add("• Customer Name is required");
+                }
+                if (string.IsNullOrWhiteSpace(phoneBox.Text))
+                {
+                    errors.Add("• Phone Number is required");
+                }
+
+                if (errors.Count > 0)
+                {
+                    errorText.Text = string.Join("\n", errors);
+                    errorText.Visibility = Visibility.Visible;
+                    args.Cancel = true; // Prevent dialog from closing
+                }
+            };
+
+            // Hide error when user starts typing
+            nameBox.TextChanged += (s, args) => errorText.Visibility = Visibility.Collapsed;
+            phoneBox.TextChanged += (s, args) => errorText.Visibility = Visibility.Collapsed;
 
             var result = await dialog.ShowAsync();
 
@@ -587,9 +621,10 @@ namespace MyShop.App.Views
             {
                 var newCustomer = new Customer
                 {
-                    Name = nameBox.Text,
-                    Phone = phoneBox.Text,
-                    Email = emailBox.Text,
+                    Name = nameBox.Text.Trim(),
+                    Phone = phoneBox.Text.Trim(),
+                    Email = string.IsNullOrWhiteSpace(emailBox.Text) ? null : emailBox.Text.Trim(),
+                    Address = string.IsNullOrWhiteSpace(addressBox.Text) ? null : addressBox.Text.Trim(),
                     IsMember = memberSwitch.IsOn,
                     Notes = "",
                     CreatedAt = DateTime.Now,
@@ -602,13 +637,29 @@ namespace MyShop.App.Views
                     _customers.Add(added);
                     _selectedCustomer = added;
                     CustomerSuggestBox.Text = added.Name;
+                    ClearCustomerButton.Visibility = Visibility.Visible;
+                    
+                    // Clear draft after successfully adding customer
+                    ClearDraft();
                 }
                 catch (Exception ex)
                 {
-                     var errorDialog = new ContentDialog
+                    string errorMessage = "Failed to create customer: " + ex.Message;
+                    
+                    // Check for specific error types
+                    if (ex.Message.Contains("Unique constraint") && ex.Message.Contains("email"))
+                    {
+                        errorMessage = "A customer with this email address already exists. Please use a different email or leave it blank.";
+                    }
+                    else if (ex.Message.Contains("Unique constraint") && ex.Message.Contains("phone"))
+                    {
+                        errorMessage = "A customer with this phone number already exists.";
+                    }
+                    
+                    var errorDialog = new ContentDialog
                     {
                         Title = "Error",
-                        Content = "Failed to create customer: " + ex.Message,
+                        Content = errorMessage,
                         CloseButtonText = "OK",
                         XamlRoot = this.XamlRoot
                     };
