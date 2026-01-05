@@ -1063,9 +1063,9 @@ async function seed() {
         let imageUrls = productImages[item.sku];
 
         if (!imageUrls || imageUrls.length === 0) {
-           imageUrls = [
+          imageUrls = [
             `https://placehold.co/600x400/333333/ffffff/png?text=${encodeURIComponent(item.name)}\\n(${item.sku})`
-           ];
+          ];
         }
 
         const product = await prisma.product.create({
@@ -1095,30 +1095,38 @@ async function seed() {
 
     // 5. Customers
     console.log('Seeding customers...');
+
+    // Helper to get random date in last N months
+    const getRandomPastDate = (monthsAgo: number) => {
+      const now = new Date();
+      const past = new Date(now.getTime() - monthsAgo * 30 * 24 * 60 * 60 * 1000);
+      return new Date(past.getTime() + Math.random() * (now.getTime() - past.getTime()));
+    };
+
     const customerData = [
-      { name: 'John Smith', email: 'john.smith@example.com', phone: '0901234567', address: '123 Main St, New York, NY', isMember: true, memberSince: new Date('2024-01-01') },
+      { name: 'John Smith', email: 'john.smith@example.com', phone: '0901234567', address: '123 Main St, New York, NY', isMember: true, memberSince: getRandomPastDate(10) },
       { name: 'Emily Johnson', email: 'emily.j@example.com', phone: '0902345678', address: '456 Market St, San Francisco, CA', isMember: false },
-      { name: 'Michael Williams', email: 'mike.w@example.com', phone: '0903456789', address: '789 Broadway, Los Angeles, CA', isMember: true, memberSince: new Date('2024-06-15') },
+      { name: 'Michael Williams', email: 'mike.w@example.com', phone: '0903456789', address: '789 Broadway, Los Angeles, CA', isMember: true, memberSince: getRandomPastDate(6) },
       { name: 'Sarah Brown', email: 'sarah.b@example.com', phone: '0904567890', address: '321 Elm St, Chicago, IL', isMember: false },
-      { name: 'David Jones', email: 'david.j@example.com', phone: '0905678901', address: '654 Pine St, Houston, TX', isMember: true, memberSince: new Date('2024-03-20') },
-      { name: 'Jennifer Garcia', email: 'jen.garcia@example.com', phone: '0906789012', address: '987 Oak Ave, Miami, FL', isMember: true, memberSince: new Date('2024-02-10') },
+      { name: 'David Jones', email: 'david.j@example.com', phone: '0905678901', address: '654 Pine St, Houston, TX', isMember: true, memberSince: getRandomPastDate(9) },
+      { name: 'Jennifer Garcia', email: 'jen.garcia@example.com', phone: '0906789012', address: '987 Oak Ave, Miami, FL', isMember: true, memberSince: getRandomPastDate(11) },
       { name: 'Robert Miller', email: 'rob.miller@example.com', phone: '0907890123', address: '147 Maple Dr, Seattle, WA', isMember: false },
       { name: 'Jessica Davis', email: 'jess.davis@example.com', phone: '0908901234', address: '258 Cedar Ln, Boston, MA', isMember: false },
-      { name: 'William Rodriguez', email: 'will.rod@example.com', phone: '0909012345', address: '369 Birch Rd, Denver, CO', isMember: true, memberSince: new Date('2024-05-01') },
-      { name: 'Elizabeth Martinez', email: 'liz.martinez@example.com', phone: '0900123456', address: '741 Spruce Ct, Atlanta, GA', isMember: true, memberSince: new Date('2024-07-20') },
+      { name: 'William Rodriguez', email: 'will.rod@example.com', phone: '0909012345', address: '369 Birch Rd, Denver, CO', isMember: true, memberSince: getRandomPastDate(7) },
+      { name: 'Elizabeth Martinez', email: 'liz.martinez@example.com', phone: '0900123456', address: '741 Spruce Ct, Atlanta, GA', isMember: true, memberSince: getRandomPastDate(5) },
       { name: 'James Anderson', email: 'james.a@example.com', phone: '0911234567', address: '852 Willow Way, Phoenix, AZ', isMember: false },
       { name: 'Linda Taylor', email: 'linda.t@example.com', phone: '0912345678', address: '963 Aspen Pl, Portland, OR', isMember: false },
       // New customers
-      { name: 'Christopher Lee', email: 'chris.lee@example.com', phone: '0913456789', address: '159 Valley Rd, Austin, TX', isMember: true, memberSince: new Date('2024-04-12') },
+      { name: 'Christopher Lee', email: 'chris.lee@example.com', phone: '0913456789', address: '159 Valley Rd, Austin, TX', isMember: true, memberSince: getRandomPastDate(8) },
       { name: 'Patricia White', email: 'pat.white@example.com', phone: '0914567890', address: '753 Hill St, Nashville, TN', isMember: false },
-      { name: 'Daniel Harris', email: 'dan.harris@example.com', phone: '0915678901', address: '951 Lake Dr, Detroit, MI', isMember: true, memberSince: new Date('2024-08-05') },
+      { name: 'Daniel Harris', email: 'dan.harris@example.com', phone: '0915678901', address: '951 Lake Dr, Detroit, MI', isMember: true, memberSince: getRandomPastDate(4) },
       { name: 'Nancy Clark', email: 'nancy.clark@example.com', phone: '0916789012', address: '357 River Ln, Minneapolis, MN', isMember: false },
-      { name: 'Matthew Lewis', email: 'matt.lewis@example.com', phone: '0917890123', address: '486 Forest Ave, Tampa, FL', isMember: true, memberSince: new Date('2024-09-18') },
+      { name: 'Matthew Lewis', email: 'matt.lewis@example.com', phone: '0917890123', address: '486 Forest Ave, Tampa, FL', isMember: true, memberSince: getRandomPastDate(3) },
       { name: 'Karen Walker', email: 'karen.w@example.com', phone: '0918901234', address: '624 Mountain Rd, Cleveland, OH', isMember: false },
-      { name: 'Thomas Hall', email: 'tom.hall@example.com', phone: '0919012345', address: '792 Beach Blvd, San Diego, CA', isMember: true, memberSince: new Date('2024-01-25') },
+      { name: 'Thomas Hall', email: 'tom.hall@example.com', phone: '0919012345', address: '792 Beach Blvd, San Diego, CA', isMember: true, memberSince: getRandomPastDate(12) },
       { name: 'Betty Allen', email: 'betty.allen@example.com', phone: '0920123456', address: '135 Park Ave, Philadelphia, PA', isMember: false },
-      { name: 'Charles Young', email: 'charles.y@example.com', phone: '0921234567', address: '246 Garden St, Charlotte, NC', isMember: true, memberSince: new Date('2024-06-30') },
-      { name: 'Sandra King', email: 'sandra.king@example.com', phone: '0922345678', address: '864 Sunset Dr, Indianapolis, IN', isMember: true, memberSince: new Date('2024-03-08') },
+      { name: 'Charles Young', email: 'charles.y@example.com', phone: '0921234567', address: '246 Garden St, Charlotte, NC', isMember: true, memberSince: getRandomPastDate(6) },
+      { name: 'Sandra King', email: 'sandra.king@example.com', phone: '0922345678', address: '864 Sunset Dr, Indianapolis, IN', isMember: true, memberSince: getRandomPastDate(9) },
     ];
     const customers: Customer[] = [];
     for (const cus of customerData) {
@@ -1138,9 +1146,18 @@ async function seed() {
       const numberOfOrdersToSeed = 100;
       const COMMISSION_RATE = 3; // 3% commission
 
+      // Date ranges for realistic demo data
+      const today = new Date();
+      const last7Days = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const last30Days = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+
       for (let i = 1; i <= numberOfOrdersToSeed; i++) {
-        const orderDate = getRandomDate(new Date('2024-01-01'), new Date());
-        const orderNum = `ORD-2024-${i.toString().padStart(3, '0')}`;
+        // 70% of orders in last 7 days, 30% in last 30 days for fresh demo data
+        const isRecent = Math.random() < 0.7;
+        const orderDate = isRecent
+          ? getRandomDate(last7Days, today)
+          : getRandomDate(last30Days, last7Days);
+        const orderNum = `ORD-${today.getFullYear()}-${i.toString().padStart(3, '0')}`;
         const status = statuses[Math.floor(Math.random() * statuses.length)];
         const selectedUser = getRandomUser();
         const numItems = Math.floor(Math.random() * 4) + 1;
