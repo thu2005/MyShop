@@ -724,19 +724,16 @@ namespace MyShop.App.Views
                 OrderNumber = _editingOrderId.HasValue ? _originalOrderNumber : "ORD-" + DateTime.Now.Ticks.ToString().Substring(10)
             };
 
-            // Only set status when editing (for UpdateOrder mutation)
-            if (_editingOrderId.HasValue)
+            // Set status from ComboBox (for both create and edit)
+            var selectedStatus = MyShop.Core.Models.OrderStatus.PENDING;
+            if (StatusComboBox.SelectedItem is ComboBoxItem item && item.Tag is string tag)
             {
-                var selectedStatus = MyShop.Core.Models.OrderStatus.PENDING;
-                if (StatusComboBox.SelectedItem is ComboBoxItem item && item.Tag is string tag)
+                if (Enum.TryParse<MyShop.Core.Models.OrderStatus>(tag, out var parsed))
                 {
-                    if (Enum.TryParse<MyShop.Core.Models.OrderStatus>(tag, out var parsed))
-                    {
-                        selectedStatus = parsed;
-                    }
+                    selectedStatus = parsed;
                 }
-                newOrder.Status = selectedStatus;
             }
+            newOrder.Status = selectedStatus;
 
             if (_editingOrderId.HasValue)
             {
