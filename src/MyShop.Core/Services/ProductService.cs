@@ -62,18 +62,36 @@ namespace MyShop.App.Services
             return query.ToList();
         }
 
-        public List<Product> SortProducts(IEnumerable<Product> products, string sortOption)
+        public List<Product> SortProducts(IEnumerable<Product> products, string sortOption, string secondarySortOption = null)
         {
-            return sortOption switch
+            // Apply primary sort
+            IOrderedEnumerable<Product> orderedProducts = sortOption switch
             {
-                "PriceAsc" => products.OrderBy(p => p.Price).ToList(),
-                "PriceDesc" => products.OrderByDescending(p => p.Price).ToList(),
-                "NameAsc" => products.OrderBy(p => p.Name).ToList(),
-                "NameDesc" => products.OrderByDescending(p => p.Name).ToList(),
-                "StockAsc" => products.OrderBy(p => p.Stock).ToList(),
-                "StockDesc" => products.OrderByDescending(p => p.Stock).ToList(),
-                _ => products.ToList(),
+                "PriceAsc" => products.OrderBy(p => p.Price),
+                "PriceDesc" => products.OrderByDescending(p => p.Price),
+                "NameAsc" => products.OrderBy(p => p.Name),
+                "NameDesc" => products.OrderByDescending(p => p.Name),
+                "StockAsc" => products.OrderBy(p => p.Stock),
+                "StockDesc" => products.OrderByDescending(p => p.Stock),
+                _ => products.OrderBy(p => p.Id), // Default sort by ID
             };
+
+            // Apply secondary sort if provided
+            if (!string.IsNullOrEmpty(secondarySortOption))
+            {
+                orderedProducts = secondarySortOption switch
+                {
+                    "PriceAsc" => orderedProducts.ThenBy(p => p.Price),
+                    "PriceDesc" => orderedProducts.ThenByDescending(p => p.Price),
+                    "NameAsc" => orderedProducts.ThenBy(p => p.Name),
+                    "NameDesc" => orderedProducts.ThenByDescending(p => p.Name),
+                    "StockAsc" => orderedProducts.ThenBy(p => p.Stock),
+                    "StockDesc" => orderedProducts.ThenByDescending(p => p.Stock),
+                    _ => orderedProducts, // No secondary sort
+                };
+            }
+
+            return orderedProducts.ToList();
         }
     }
 }
